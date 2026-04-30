@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, ChangeEvent, FormEvent, ReactNode } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, FlaskConical as Flask } from "lucide-react";
+import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -22,7 +22,7 @@ const SettingsIcon = ({ className }: { className?: string }) => (
 
 const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => void }) => {
   useEffect(() => {
-    const timer = setTimeout(onEnter, 5000);
+    const timer = setTimeout(onEnter, 1500);
     return () => clearTimeout(timer);
   }, [onEnter]);
 
@@ -303,26 +303,29 @@ const slides = [
 
 function HomeContent({ isDark }: { isDark: boolean }) {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center p-8 select-none pointer-events-none">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 select-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center"
       >
-        <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-          alt="Loading Loop" 
-          className={`w-16 h-16 ${isDark ? "filter brightness-0 invert" : ""}`} 
-          referrerPolicy="no-referrer"
-        />
+        <div className="relative group">
+          <div className="absolute -inset-8 bg-purple-500/20 blur-[80px] rounded-full opacity-60" />
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+            alt="Loading" 
+            className={`w-16 h-16 relative z-10 ${isDark ? "filter brightness-0 invert" : ""}`} 
+            referrerPolicy="no-referrer"
+          />
+        </div>
       </motion.div>
     </div>
   );
 }
 
 
-function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdmin, setIsDev, setIsDark, setLiquidGlass, setIsSidebarRight, setUseSidebar, onAlert }: { 
+function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdmin, setIsDev, setIsDark, setLiquidGlass, setIsSidebarRight, setUseSidebar, onAlert, isFloating, setIsFloating }: { 
   isDark: boolean, 
   featureFlags: any, 
   setFeatureFlags: (f: any) => void,
@@ -333,11 +336,13 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   setLiquidGlass: (l: "glassy" | "tinted") => void,
   setIsSidebarRight: (r: boolean) => void,
   setUseSidebar: (s: boolean) => void,
-  onAlert: (title: string, msg: string) => void
+  onAlert: (title: string, msg: string) => void,
+  isFloating?: boolean,
+  setIsFloating?: (f: boolean) => void
 }) {
-  const [history, setHistory] = useState<string[]>(["Vplay Canary Operator Console [Version 28000.1]", "Type /help for all available commands."]);
+  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.1]", "Type /help for all available commands."]);
   const [input, setInput] = useState("");
-  const [currentView, setCurrentView] = useState<"terminal" | "language" | "code" | "flags">("terminal");
+  const [currentView, setCurrentView] = useState<"terminal" | "code" | "flags">("terminal");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const availableFlags = [
@@ -345,7 +350,9 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
     { id: 'xaml_view_test', name: 'XAML View', desc: 'Sử dụng chế độ xem tối giản với màu nền xám đậm (Solid Dark Gray)' },
     { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả' },
     { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc' },
-    { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' }
+    { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' },
+    { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' },
+    { id: 'music_background', name: 'Background music', desc: 'Phát nhạc trong nền khi đang sử dụng web (Yêu cầu XAML View)' }
   ];
 
   useEffect(() => {
@@ -359,129 +366,125 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
     const fullCmd = input.trim();
     const args = fullCmd.split(" ");
     const cmd = args[0].toLowerCase();
-    const newHistory = [...history, `> ${fullCmd}`];
+    const newHistory = [...history, { type: 'input', text: fullCmd }];
     
     if (cmd === "/bypass") {
       setUser({ uid: "bypass-user", email: "bypass@vplay.canary", displayName: "Bypass Operator" });
       setIsAdmin(true);
       setIsDev(true);
-      newHistory.push("AUTH BYPASS SUCCESSFUL: Operator privileges granted.");
+      newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push("Vplay Canary SMR26", "Build: 28000.1 (Experimental)", "Environment: Cloud Sandbox");
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.1 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
         setUseSidebar(true);
-        newHistory.push("Interface changed to Desktop.");
+        newHistory.push({ type: 'text', text: "Interface changed to Desktop." });
       } else if (mode === "mobile") {
         setUseSidebar(false);
-        newHistory.push("Interface changed to Mobile.");
+        newHistory.push({ type: 'text', text: "Interface changed to Mobile." });
       } else {
-        newHistory.push("Usage: /interface (desktop/mobile)");
+        newHistory.push({ type: 'text', text: "Usage: /interface (desktop/mobile)" });
       }
     } else if (cmd === "/liquid" && args[1]?.toLowerCase() === "glass") {
       const mode = args[2]?.toLowerCase();
       if (mode === "glassy" || mode === "tinted") {
         setLiquidGlass(mode);
-        newHistory.push(`Liquid glass mode set to: ${mode}`);
+        newHistory.push({ type: 'text', text: `Liquid glass mode set to: ${mode}` });
       } else {
-        newHistory.push("Usage: /liquid glass (glassy/tinted)");
+        newHistory.push({ type: 'text', text: "Usage: /liquid glass (glassy/tinted)" });
       }
     } else if (cmd === "/sidebar" && args[1]?.toLowerCase() === "pos") {
       const pos = args[2]?.toLowerCase();
-      if (pos === "ltr") {
+      if (pos === "left") {
         setIsSidebarRight(false);
-        newHistory.push("Sidebar position: LTR (Left)");
-      } else if (pos === "rtl") {
+        newHistory.push({ type: 'text', text: "Sidebar position: LEFT" });
+      } else if (pos === "right") {
         setIsSidebarRight(true);
-        newHistory.push("Sidebar position: RTL (Right)");
+        newHistory.push({ type: 'text', text: "Sidebar position: RIGHT" });
       } else {
-        newHistory.push("Usage: /sidebar pos (ltr/rtl)");
+        newHistory.push({ type: 'text', text: "Usage: /sidebar pos left|right" });
       }
     } else if (cmd === "/ui" && args[1]?.toLowerCase() === "mode") {
       const mode = args[2]?.toLowerCase();
       if (mode === "light") {
         setIsDark(false);
-        newHistory.push("UI mode: Light");
+        newHistory.push({ type: 'text', text: "UI mode: Light" });
       } else if (mode === "dark") {
         setIsDark(true);
-        newHistory.push("UI mode: Dark");
+        newHistory.push({ type: 'text', text: "UI mode: Dark" });
       } else {
-        newHistory.push("Usage: /ui mode (light/dark)");
+        newHistory.push({ type: 'text', text: "Usage: /ui mode (light/dark)" });
       }
-    } else if (cmd === "/features" && args[1]?.toLowerCase() === "flag") {
-      const action = args[2]?.toLowerCase();
-      const idArg = args[3]?.toLowerCase();
-      if ((action === "/enable" || action === "/disable") && idArg?.startsWith("/id:")) {
-        const flagId = idArg.replace("/id:", "");
-        if (availableFlags.find(f => f.id === flagId)) {
-          const newState = action === "/enable";
-          setFeatureFlags({ ...featureFlags, [flagId]: newState });
-          newHistory.push(`Feature flag [${flagId}] marked as ${newState ? "ENABLED" : "DISABLED"}.`);
+    } else if (cmd === "/experimental") {
+      const action = args[1]?.toLowerCase();
+      const target = args[2]?.toLowerCase();
+      
+      if (action === "/enable" || action === "/disable") {
+        const newState = action === "/enable";
+        if (target === "/all") {
+          const updatedFlags = { ...featureFlags };
+          availableFlags.forEach(f => { updatedFlags[f.id] = newState; });
+          setFeatureFlags(updatedFlags);
+          newHistory.push({ type: 'text', text: `ALL experimental features have been ${newState ? "ENABLED" : "DISABLED"}.` });
+        } else if (target?.startsWith("/id:")) {
+          const flagId = target.replace("/id:", "");
+          if (availableFlags.find(f => f.id === flagId)) {
+            setFeatureFlags({ ...featureFlags, [flagId]: newState });
+            newHistory.push({ type: 'text', text: `Experimental feature [${flagId}] marked as ${newState ? "ENABLED" : "DISABLED"}.` });
+          } else {
+            newHistory.push({ type: 'error', text: `Error: Invalid flag ID [${flagId}].` });
+          }
         } else {
-          newHistory.push(`Error: Invalid flag ID [${flagId}].`);
+          newHistory.push({ type: 'text', text: "Usage: /experimental /enable|/disable /id:<id> or /all" });
         }
       } else {
-        newHistory.push("Usage: /features flag /enable|/disable /id:<flag_id>");
+        newHistory.push({ type: 'text', text: "Usage: /experimental /enable|/disable /id:<id> or /all" });
       }
-    } else if (fullCmd.toLowerCase() === "/show flags") {
-      newHistory.push("AVAILABLE FEATURE FLAGS:");
+    } else if (fullCmd.toLowerCase() === "/show experiments") {
+      newHistory.push({ type: 'text', text: "AVAILABLE EXPERIMENTAL FEATURES:" });
       availableFlags.forEach(f => {
-        newHistory.push(`[${f.id}] : ${f.name} - ${f.desc} (${featureFlags[f.id] ? "ON" : "OFF"})`);
+        newHistory.push({ 
+          type: 'experiment', 
+          name: f.name, 
+          id: f.id, 
+          desc: f.desc, 
+          status: featureFlags[f.id] 
+        });
       });
-    } else if (cmd === "/language") {
-      setCurrentView("language");
-      newHistory.push("Opening Language Editor...");
+    } else if (cmd === "/experiments" && args[1]?.toLowerCase() === "gui") {
+      setCurrentView("flags");
+      newHistory.push({ type: 'text', text: "Opening Experimental Control Panel..." });
     } else if (cmd === "/code") {
       setCurrentView("code");
-      newHistory.push("Switching to Source Explorer...");
-    } else if (cmd === "/flags") {
-      setCurrentView("flags");
-      newHistory.push("Listing feature flags...");
+      newHistory.push({ type: 'text', text: "Switching to Source Explorer..." });
     } else if (cmd === "/help") {
-      newHistory.push(
-        "Available commands:",
-        "/bypass - Bypass authentication",
-        "/version - Show application version",
-        "/interface (desktop/mobile) - Set interface mode",
-        "/liquid glass (glassy/tinted) - Set liquid glass effect",
-        "/sidebar pos (ltr/rtl) - Set sidebar position",
-        "/ui mode (light/dark) - Set UI color theme",
-        "/features flag /enable|/disable /id:<id> - Control flags",
-        "/show flags - List all flags with IDs and descriptions",
-        "/language - Edit language file",
-        "/code - Read-only source explorer",
-        "/flags - Manage feature flags",
-        "/clear - Clear console"
-      );
+      const helpCommands = [
+        { cmd: "/bypass", desc: "Bypass authentication" },
+        { cmd: "/version", desc: "Show application version" },
+        { cmd: "/interface (desktop/mobile)", desc: "Set interface mode" },
+        { cmd: "/liquid glass (glassy/tinted)", desc: "Set liquid glass effect" },
+        { cmd: "/sidebar pos left|right", desc: "Set sidebar position" },
+        { cmd: "/ui mode (light/dark)", desc: "Set UI color theme" },
+        { cmd: "/experimental /enable|/disable /id:<id>|/all", desc: "Control experimental flags" },
+        { cmd: "/show experiments", desc: "List all experiments with details" },
+        { cmd: "/experiments gui", desc: "Visual experiment management" },
+        { cmd: "/code", desc: "Read-only source explorer" },
+        { cmd: "/clear", desc: "Clear console" }
+      ];
+      newHistory.push({ type: 'text', text: "Available commands:" });
+      helpCommands.forEach(h => {
+        newHistory.push({ type: 'help', command: h.cmd, desc: h.desc });
+      });
     } else if (cmd === "/clear") {
       setHistory([]);
     } else {
-      newHistory.push(`Unknown command: ${cmd}`);
+      newHistory.push({ type: 'error', text: `Unknown command: ${cmd}` });
     }
 
     setHistory(newHistory);
     setInput("");
   };
-
-  if (currentView === "language") {
-    return (
-      <div className="p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black flex items-center gap-3">
-            <Globe size={24} /> LANGUAGE EDITOR
-          </h2>
-          <button onClick={() => setCurrentView("terminal")} className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 font-bold uppercase text-[10px] tracking-widest transition-all">Quay lại</button>
-        </div>
-        <div className={`p-8 rounded-[32px] border ${isDark ? "bg-[#1a1c23] border-white/5" : "bg-white border-slate-200"} h-[600px] flex items-center justify-center`}>
-          <div className="text-center space-y-4">
-            <Settings2 size={48} className="mx-auto opacity-20" />
-            <p className="font-bold opacity-40 uppercase tracking-widest text-xs">Language file editor is locked in canary build.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (currentView === "code") {
     return (
@@ -518,7 +521,7 @@ export default function App() {
       <div className="p-8 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-black flex items-center gap-3">
-            <Sparkles size={24} /> FEATURE FLAGS
+            <Sparkles size={24} /> EXPERIMENTAL
           </h2>
           <button onClick={() => setCurrentView("terminal")} className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 font-bold uppercase text-[10px] tracking-widest transition-all">Quay lại</button>
         </div>
@@ -530,7 +533,7 @@ export default function App() {
                 <p className="text-[10px] opacity-40 font-mono">{flag.id}</p>
               </div>
               <button 
-                onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /features flag /enable /id:${flag.id}`)}
+                onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /experimental /enable /id:${flag.id}`)}
                 className={`w-12 h-6 rounded-full relative transition-colors ${featureFlags[flag.id] ? "bg-purple-500" : "bg-slate-600"}`}
               >
                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${featureFlags[flag.id] ? "left-7" : "left-1"}`} />
@@ -543,21 +546,50 @@ export default function App() {
   }
 
   return (
-    <div className="p-8 h-full flex flex-col space-y-6">
-      <h2 className="text-2xl font-black flex items-center gap-3">
-        <Terminal size={24} /> OPERATOR CONSOLE
-      </h2>
+    <div className={`p-8 h-full flex flex-col space-y-6 ${isFloating ? "p-4 space-y-4" : ""}`}>
+      <div className="flex items-center justify-between">
+        <h2 className={`${isFloating ? "text-lg" : "text-2xl"} font-black flex items-center gap-3`}>
+          <Terminal size={isFloating ? 18 : 24} /> OPERATOR CONSOLE
+        </h2>
+        {!isFloating && setIsFloating && (
+          <button 
+            onClick={() => setIsFloating(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 font-bold uppercase text-[10px] tracking-widest transition-all"
+          >
+            <ExternalLink size={14} /> Open As Window
+          </button>
+        )}
+      </div>
       
       <div 
         ref={scrollRef}
-        className={`flex-1 p-6 font-mono text-sm overflow-auto rounded-[32px] border ${isDark ? "bg-black/90 border-white/10 text-slate-300" : "bg-slate-900 border-slate-700 text-slate-300"}`}
+        className={`flex-1 p-6 font-mono text-sm overflow-auto rounded-[32px] border ${isDark ? "bg-black/90 border-white/10 text-slate-300" : "bg-slate-900 border-slate-700 text-slate-300"} ${isFloating ? "p-4 rounded-2xl text-xs" : ""}`}
       >
         <div className="space-y-1">
-          {history.map((line, i) => (
-            <div key={i} className={line.startsWith("> ") ? "text-purple-400 font-bold" : ""}>{line}</div>
-          ))}
+          {history.map((line, i) => {
+             if (typeof line === 'string') return <div key={i}>{line}</div>;
+             if (line.type === 'input') return <div key={i} className="text-purple-400 font-bold">{`> ${line.text}`}</div>;
+             if (line.type === 'help') return (
+               <div key={i} className="flex gap-2">
+                 <span className="text-yellow-400 min-w-[200px]">{line.command}</span>
+                 <span className="text-white">{`- ${line.desc}`}</span>
+               </div>
+             );
+             if (line.type === 'experiment') return (
+               <div key={i} className="grid grid-cols-[150px_150px_1fr_80px] gap-4 py-1 border-b border-white/5 last:border-0">
+                 <span className="text-[#cddc39] font-bold">{line.name}</span>
+                 <span className="text-[#4fc3f7]">{line.id}</span>
+                 <span className="text-white truncate">{line.desc}</span>
+                 <span className={line.status ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                   {line.status ? "ON" : "OFF"}
+                 </span>
+               </div>
+             );
+             if (line.type === 'error') return <div key={i} className="text-red-400">{line.text}</div>;
+             return <div key={i} className="text-slate-300">{line.text}</div>;
+          })}
           <form onSubmit={handleCommand} className="flex gap-2 items-center">
-            <span className="text-green-500 font-bold">{"C:\\CANARY>"}</span>
+            <span className="text-green-500 font-bold">{"data/canary/operator>"}</span>
             <input 
               autoFocus
               className="flex-1 bg-transparent border-none outline-none text-white selection:bg-purple-500/50"
@@ -2637,26 +2669,32 @@ function SettingsContent({
         </div>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-8">
+          <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-6" : "grid grid-cols-1 gap-8"}>
             <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
                 <Sun size={14} className="text-amber-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Chủ đề hệ thống</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}>
                 <button 
                   onClick={() => setIsDark(false)}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${!isDark ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${!isDark ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <Sun size={20} className={!isDark ? "text-white" : "text-slate-400"} />
-                  <span className="text-xs font-bold text-left">Sáng</span>
+                  <div className="flex items-center gap-3">
+                    <Sun size={20} className={!isDark ? "text-white" : "text-slate-400"} />
+                    <span className="text-xs font-bold text-left">Sáng</span>
+                  </div>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && !isDark && <CheckCircle2 size={16} />}
                 </button>
                 <button 
                   onClick={() => setIsDark(true)}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${isDark ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${isDark ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <Moon size={20} className={isDark ? "text-white" : "text-slate-400"} />
-                  <span className="text-xs font-bold text-left">Tối</span>
+                  <div className="flex items-center gap-3">
+                    <Moon size={20} className={isDark ? "text-white" : "text-slate-400"} />
+                    <span className="text-xs font-bold text-left">Tối</span>
+                  </div>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && isDark && <CheckCircle2 size={16} />}
                 </button>
               </div>
             </div>
@@ -2666,20 +2704,26 @@ function SettingsContent({
                 <Monitor size={14} className="text-blue-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Kiểu giao diện</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}>
                 <button 
                   onClick={() => setUseSidebar(true)}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${useSidebar ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${useSidebar ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <Monitor size={20} className={useSidebar ? "text-white" : "text-slate-400"} />
-                  <span className="text-xs font-bold text-left">Desktop</span>
+                  <div className="flex items-center gap-3">
+                    <Monitor size={20} className={useSidebar ? "text-white" : "text-slate-400"} />
+                    <span className="text-xs font-bold text-left">Desktop</span>
+                  </div>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && useSidebar && <CheckCircle2 size={16} />}
                 </button>
                 <button 
                   onClick={() => setUseSidebar(false)}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${!useSidebar ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${!useSidebar ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <MousePointer2 size={20} className={!useSidebar ? "text-white" : "text-slate-400"} />
-                  <span className="text-xs font-bold text-left">Touch</span>
+                  <div className="flex items-center gap-3">
+                    <MousePointer2 size={20} className={!useSidebar ? "text-white" : "text-slate-400"} />
+                    <span className="text-xs font-bold text-left">Touch</span>
+                  </div>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && !useSidebar && <CheckCircle2 size={16} />}
                 </button>
               </div>
             </div>
@@ -2689,22 +2733,28 @@ function SettingsContent({
                 <Droplet size={14} className="text-cyan-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Liquid Glass Effect</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}>
                 <button 
                   onClick={() => !useSidebar && setLiquidGlass("glassy")}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${liquidGlass === "glassy" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${liquidGlass === "glassy" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <Droplet size={20} className={liquidGlass === "glassy" ? "text-white" : "text-slate-400"} />
-                  <span className="text-xs font-bold text-left">Glassy</span>
+                  <div className="flex items-center gap-3">
+                    <Droplet size={20} className={liquidGlass === "glassy" ? "text-white" : "text-slate-400"} />
+                    <span className="text-xs font-bold text-left">Glassy</span>
+                  </div>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && liquidGlass === "glassy" && <CheckCircle2 size={16} />}
                 </button>
                 <button 
                   onClick={() => !useSidebar && setLiquidGlass("tinted")}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${liquidGlass === "tinted" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex-row items-center justify-between" : ""} ${liquidGlass === "tinted" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
                 >
-                  <div className="w-5 h-5 rounded-lg bg-teal-500/20 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-teal-500" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-lg bg-teal-500/20 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-teal-500" />
+                    </div>
+                    <span className="text-xs font-bold text-left">Tinted</span>
                   </div>
-                  <span className="text-xs font-bold text-left">Tinted</span>
+                  {featureFlags.xaml_view_test && featureFlags.settings_vertical && liquidGlass === "tinted" && <CheckCircle2 size={16} />}
                 </button>
               </div>
             </div>
@@ -2769,7 +2819,7 @@ function SettingsContent({
               <Flask size={24} />
             </div>
             <div>
-              <h3 className={`font-semibold text-xl tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Features Flag</h3>
+              <h3 className={`font-semibold text-xl tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Experimental</h3>
               <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"} font-medium`}>Kích hoạt và trải nghiệm sớm các tính năng sắp ra mắt của Vplay</p>
             </div>
           </div>
@@ -2787,13 +2837,15 @@ function SettingsContent({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
           {([
             { id: 'vids_for_uploads', name: 'Vids', desc: 'Kích hoạt tính năng cho phép các user tự đăng tải video của bản thân lên web', active: featureFlags.vids_for_uploads },
             { id: 'xaml_view_test', name: 'XAML View', desc: 'Sử dụng chế độ xem tối giản với màu nền xám đậm (Solid Dark Gray)', active: featureFlags.xaml_view_test },
             { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả', active: featureFlags.sidebar_resizable },
             { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc', active: featureFlags.multiview_experimental },
-            { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation }
+            { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
+            { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
+            { id: 'music_background', name: 'Background music', desc: 'Phát nhạc trong nền khi đang sử dụng web (Yêu cầu XAML View)', active: featureFlags.music_background }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -2806,7 +2858,7 @@ function SettingsContent({
                 <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"} font-medium leading-relaxed`}>{flag.desc}</p>
               </div>
               <button 
-                onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /features flag /enable /id:${flag.id}`)}
+                onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /experimental /enable /id:${flag.id}`)}
                 className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-all duration-300 ${flag.active ? "bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.4)]" : "bg-slate-700 hover:bg-slate-600"}`}
               >
                 <motion.div 
@@ -3191,8 +3243,46 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
 }
 
 function App() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isDev, setIsDev] = useState(() => {
+    return localStorage.getItem("vplay_dev_mode") === "true";
+  });
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState("Trang chủ");
+  const [isDark, setIsDark] = useState(true); 
+  const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>(() => {
+    try {
+      const saved = localStorage.getItem("vplay_feature_flags");
+      const defaults = { 
+        multiview_experimental: false, 
+        disable_animation: false, 
+        vids_for_uploads: true, 
+        sidebar_resizable: false, 
+        xaml_view_test: false,
+        settings_vertical: false,
+        music_background: false
+      };
+      if (!saved) return defaults;
+      const parsed = JSON.parse(saved);
+      return { ...defaults, ...parsed };
+    } catch (e) {
+      return { 
+        multiview_experimental: false, 
+        disable_animation: false, 
+        vids_for_uploads: true, 
+        sidebar_resizable: false, 
+        xaml_view_test: false,
+        settings_vertical: false,
+        music_background: false
+      };
+    }
+  });
+  const [isConsoleFloating, setIsConsoleFloating] = useState(false);
+  const [isConsoleMinimized, setIsConsoleMinimized] = useState(false);
+  const [isConsoleMaximized, setIsConsoleMaximized] = useState(false);
+  const [windowPos, setWindowPos] = useState({ x: 100, y: 100 });
   const [lastTab, setLastTab] = useState("Trang chủ");
   const [prevTab, setPrevTab] = useState("Trang chủ");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -3208,9 +3298,31 @@ function App() {
   const [isPinningEnabled, setIsPinningEnabled] = useState(() => {
     return localStorage.getItem("vplay_pinning") === "true";
   });
-
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(window.innerWidth >= 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [activeChannel, setActiveChannel] = useState(channels[0]);
+  const [sortOrder, setSortOrder] = useState<"default" | "az" | "za">("default");
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<Channel[]>([]);
+  const [showDevSettings, setShowDevSettings] = useState(false);
+  const [showDevPrompt, setShowDevPrompt] = useState(false);
+  const [devPass, setDevPass] = useState("");
+  const [devError, setDevError] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem("vplay_sidebar_width");
+    return saved ? parseInt(saved, 10) : 320;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem("vplay_favorites");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [customAlert, setCustomAlert] = useState<{ title: string, message: string } | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -3227,14 +3339,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem("vplay_pinning", isPinningEnabled.toString());
   }, [isPinningEnabled]);
-  const [activeChannel, setActiveChannel] = useState(channels[0]);
-  const [sortOrder, setSortOrder] = useState<"default" | "az" | "za">("default");
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-  const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>(() => {
-    const saved = localStorage.getItem("vplay_feature_flags");
-    return saved ? JSON.parse(saved) : { multiview_experimental: false, disable_animation: false, vids_for_uploads: true, sidebar_resizable: false, xaml_view_test: false };
-  });
 
   useEffect(() => {
     localStorage.setItem("vplay_feature_flags", JSON.stringify(featureFlags));
@@ -3264,10 +3368,6 @@ function App() {
       setPrevTab(activeTab);
     }
   }, [activeTab]);
-  const [isDark, setIsDark] = useState(true); // Default to dark for better gradient look
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<Channel[]>([]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
@@ -3287,11 +3387,6 @@ function App() {
       setIsSearchLoading(false);
     }
   }, [searchQuery]);
-
-  const [showDevSettings, setShowDevSettings] = useState(false);
-  const [showDevPrompt, setShowDevPrompt] = useState(false);
-  const [devPass, setDevPass] = useState("");
-  const [devError, setDevError] = useState(false);
 
   useEffect(() => {
     if (searchQuery.toLowerCase() === "devmode") {
@@ -3313,15 +3408,6 @@ function App() {
       setDevPass("");
     }
   };
-
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userData, setUserData] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem("vplay_sidebar_width");
-    return saved ? parseInt(saved, 10) : 320;
-  });
-  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     if (isResizing) {
@@ -3366,10 +3452,6 @@ function App() {
     };
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  const [isDev, setIsDev] = useState(() => {
-    return localStorage.getItem("vplay_dev_mode") === "true";
-  });
-
   useEffect(() => {
     localStorage.setItem("vplay_dev_mode", isDev.toString());
   }, [isDev]);
@@ -3377,14 +3459,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem("vplay_sidebar", useSidebar.toString());
   }, [useSidebar]);
-
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem("vplay_favorites");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [customAlert, setCustomAlert] = useState<{ title: string, message: string } | null>(null);
 
   useEffect(() => {
     localStorage.setItem("vplay_favorites", JSON.stringify(favorites));
@@ -3477,7 +3551,7 @@ function App() {
 
   const tabs = baseTabs.filter(t => {
     if (t.id === "Quản trị" && !isDev && !isAdmin) return false;
-    if (t.id === "Vids" && !featureFlags.vids_for_uploads) return false;
+    if (t.id === "Vids" && !featureFlags?.vids_for_uploads) return false;
     return true;
   });
 
@@ -3492,16 +3566,16 @@ function App() {
 
   return (
     <MotionConfig 
-      transition={featureFlags.disable_animation ? { duration: 0 } : undefined}
-      reducedMotion={featureFlags.disable_animation ? "always" : "user"}
+      transition={featureFlags?.disable_animation ? { duration: 0 } : undefined}
+      reducedMotion={featureFlags?.disable_animation ? "always" : "user"}
     >
       <div className={`${
-        featureFlags.xaml_view_test
+        featureFlags?.xaml_view_test
           ? "bg-[#1a1c23] text-white"
           : (isDark 
               ? "bg-gradient-to-br from-rose-950 via-purple-950 to-red-950 text-white" 
               : "bg-gradient-to-br from-rose-200 via-purple-200 to-red-100 text-slate-950")
-      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags.disable_animation ? "reduce-animations" : ""}`}>
+      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""}`}>
       {/* Global Immersive Background Blur */}
       <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
         <AnimatePresence mode="wait">
@@ -3677,38 +3751,59 @@ function App() {
           <AnimatePresence mode="wait">
             <motion.div
               key={displayTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              initial={featureFlags?.xaml_view_test ? { y: 30, opacity: 0 } : { opacity: 0, x: 20 }}
+              animate={{ y: 0, opacity: 1, x: 0 }}
+              exit={featureFlags?.xaml_view_test ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, x: -20 }}
+              transition={featureFlags?.xaml_view_test ? { duration: 0.3, ease: [0.23, 1, 0.32, 1] } : { duration: 0.4, ease: "easeOut" }}
               className="h-full flex flex-col"
             >
-              {displayTab === "Trang chủ" && (
+              {(displayTab === "Trang chủ") && (
                 <HomeContent isDark={isDark} />
               )}
-              {displayTab === "Bảo tàng" && (
-                <HomeContent isDark={isDark} />
+              {displayTab === "Lưu trữ" && (
+                <EventsContent isDark={isDark} liquidGlass={liquidGlass} />
               )}
               {displayTab === "Quản trị" && (isAdmin || isDev) && (
-                <HomeContent isDark={isDark} />
+                <AdminContent isDark={isDark} liquidGlass={liquidGlass} />
               )}
-              {displayTab === "Debug" && (isAdmin || isDev) && (
-                <DebugContent 
-                  isDark={isDark} 
-                  featureFlags={featureFlags} 
-                  setFeatureFlags={(f) => {
-                    setFeatureFlags(f);
-                    localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
-                  }}
-                  setUser={setUser}
-                  setIsAdmin={setIsAdmin}
-                  setIsDev={setIsDev}
-                  setIsDark={setIsDark}
-                  setLiquidGlass={setLiquidGlass}
-                  setIsSidebarRight={setIsSidebarRight}
-                  setUseSidebar={setUseSidebar}
-                  onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
-                />
+              {displayTab === "Debug" && (
+                <div className="h-full">
+                  {!isConsoleFloating ? (
+                    <DebugContent 
+                      isDark={isDark} 
+                      featureFlags={featureFlags} 
+                      setFeatureFlags={(f) => {
+                        setFeatureFlags(f);
+                        localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
+                      }}
+                      setUser={setUser}
+                      setIsAdmin={setIsAdmin}
+                      setIsDev={setIsDev}
+                      setIsDark={setIsDark}
+                      setLiquidGlass={setLiquidGlass}
+                      setIsSidebarRight={setIsSidebarRight}
+                      setUseSidebar={setUseSidebar}
+                      onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
+                      setIsFloating={setIsConsoleFloating}
+                    />
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
+                      <div className={`p-8 rounded-full ${isDark ? "bg-white/5" : "bg-black/5"} animate-pulse`}>
+                        <Terminal size={48} className="opacity-20" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-xl uppercase tracking-widest opacity-40">Console Popped Out</h3>
+                        <p className="text-sm opacity-30">Phòng điều khiển hiện đang được mở trong cửa sổ riêng.</p>
+                      </div>
+                      <button 
+                        onClick={() => setIsConsoleFloating(false)}
+                        className="px-6 py-3 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold transition-all shadow-lg active:scale-95"
+                      >
+                        Thu hồi về chính chủ
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               {displayTab === "Phát sóng" && (
                 <TVContent 
@@ -3731,15 +3826,46 @@ function App() {
               {displayTab === "Vids" && (
                 <VidsContent isDark={isDark} user={user} liquidGlass={liquidGlass} onLogin={handleLogin} />
               )}
-              {displayTab === "Lưu trữ" && (
-                <EventsContent isDark={isDark} liquidGlass={liquidGlass} />
-              )}
               {displayTab === "Cài đặt" && (
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 max-w-4xl mx-auto w-full">
-                    <div className="flex items-center gap-4 mb-10">
-                      <Settings className={`w-10 h-10 ${isDark ? "text-white" : "text-slate-900"}`} />
-                      <h2 className={`text-3xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Cài đặt</h2>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-4 rounded-3xl ${isDark ? "bg-white/5" : "bg-slate-100"}`}>
+                        <Settings className={`w-10 h-10 ${isDark ? "text-white" : "text-slate-900"}`} />
+                      </div>
+                      <div>
+                        <h2 className={`text-4xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Cài đặt</h2>
+                        <p className={`mt-2 ${isDark ? "text-slate-400" : "text-slate-500"}`}>Quản lý trải nghiệm và cấu hình hệ thống Vplay</p>
+                      </div>
                     </div>
+                    {(featureFlags?.xaml_view_test && featureFlags?.music_background) && (
+                      <div className="relative group">
+                         <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                         <div className={`relative px-4 py-2 rounded-xl flex items-center gap-3 ${isDark ? "bg-[#1a1c23]" : "bg-white"} border border-white/5`}>
+                            <motion.div
+                              animate={{ 
+                                scale: [1, 1.2, 1],
+                                opacity: [0.7, 1, 0.7]
+                              }}
+                              transition={{ repeat: Infinity, duration: 2 }}
+                            >
+                              <Music size={16} className="text-purple-500" />
+                            </motion.div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500">Music Playing</span>
+                         </div>
+                         <div className="hidden">
+                           <iframe 
+                            width="0" 
+                            height="0" 
+                            src="https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1" 
+                            title="Background Music"
+                            allow="autoplay"
+                            frameBorder="0"
+                           />
+                         </div>
+                      </div>
+                    )}
+                  </div>
                   <SettingsContent 
                     isDark={isDark} 
                     setIsDark={setIsDark} 
@@ -3768,7 +3894,7 @@ function App() {
               {displayTab === "Update Logs" && (
                 <UpdateLogsContent isDark={isDark} onBack={() => setActiveTab("Cài đặt")} />
               )}
-              {displayTab === "Quản trị" && (isAdmin || isDev) && <AdminContent isDark={isDark} liquidGlass={liquidGlass} />}
+
             </motion.div>
           </AnimatePresence>
         </div>
@@ -4058,6 +4184,16 @@ function App() {
                   <SettingsIcon className={`w-6 h-6 ${activeTab === "Cài đặt" ? "text-purple-500" : ""}`} />
                   {isSidebarExpanded && <span className="font-bold text-base">Cài đặt</span>}
                 </button>
+
+                <button
+                  onClick={() => window.open("https://vplay-beta-fa8k.vercel.app", "_blank")}
+                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all w-full h-[50px] relative overflow-hidden ${
+                    isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-slate-50"
+                  } ${!isSidebarExpanded ? "justify-center" : ""}`}
+                >
+                  <ExternalLink size={24} className="hover:scale-110 transition-transform" />
+                  {isSidebarExpanded && <span className="font-bold text-base whitespace-nowrap">Switch to Dev</span>}
+                </button>
               </div>
             </motion.div>
           </>
@@ -4245,6 +4381,98 @@ function App() {
           Some features may or may not made their way to Dev and final releases
         </div>
       </div>
+
+      {/* Floating Operator Window */}
+      <AnimatePresence>
+        {isConsoleFloating && (
+          <motion.div
+            drag
+            dragMomentum={false}
+            dragListener={!isConsoleMaximized}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              y: 0,
+              width: isConsoleMinimized ? 300 : (isConsoleMaximized ? "100vw" : 800),
+              height: isConsoleMinimized ? 48 : (isConsoleMaximized ? "100vh" : 500),
+              x: isConsoleMaximized ? 0 : undefined,
+              top: isConsoleMaximized ? 0 : (isConsoleMinimized ? "auto" : undefined),
+              bottom: isConsoleMinimized ? 20 : undefined,
+              left: isConsoleMaximized ? 0 : (isConsoleMinimized ? 20 : undefined),
+              zIndex: 99999
+            }}
+            exit={{ opacity: 0, scale: 0.8, y: 100 }}
+            className={`fixed shadow-2xl flex flex-col overflow-hidden border transition-all duration-300 ${
+              isDark ? "bg-[#11141d] border-white/10" : "bg-white border-slate-200"
+            } ${isConsoleMaximized ? "rounded-none" : "rounded-2xl"}`}
+          >
+            {/* Title Bar */}
+            <div 
+              className={`h-12 flex items-center justify-between px-4 select-none cursor-move ${
+                isDark ? "bg-white/5" : "bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Terminal size={18} className="text-purple-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Operator Console</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setIsConsoleMinimized(!isConsoleMinimized)}
+                  className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+                >
+                  <Minus size={14} />
+                </button>
+                <button 
+                  onClick={() => setIsConsoleMaximized(!isConsoleMaximized)}
+                  className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+                >
+                  {isConsoleMaximized ? <Minimize2 size={14} /> : <Square size={12} />}
+                </button>
+                <button 
+                  onClick={() => setIsConsoleFloating(false)}
+                  className={`p-2 rounded-lg transition-colors hover:bg-red-500 hover:text-white`}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Window Content */}
+            {!isConsoleMinimized && (
+              <div className="flex-1 overflow-hidden">
+                <DebugContent 
+                  isDark={isDark} 
+                  featureFlags={featureFlags} 
+                  setFeatureFlags={(f) => {
+                    setFeatureFlags(f);
+                    localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
+                  }}
+                  setUser={setUser}
+                  setIsAdmin={setIsAdmin}
+                  setIsDev={setIsDev}
+                  setIsDark={setIsDark}
+                  setLiquidGlass={setLiquidGlass}
+                  setIsSidebarRight={setIsSidebarRight}
+                  setUseSidebar={setUseSidebar}
+                  onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
+                  isFloating={true}
+                />
+              </div>
+            )}
+            
+            {/* Resize Handle (Simulation) */}
+            {!isConsoleMaximized && !isConsoleMinimized && (
+              <div className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize opacity-20 hover:opacity-100 transition-opacity">
+                <div className="w-1 h-1 bg-white absolute right-1 bottom-1 rounded-full" />
+                <div className="w-1 h-1 bg-white absolute right-3 bottom-1 rounded-full" />
+                <div className="w-1 h-1 bg-white absolute right-1 bottom-3 rounded-full" />
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   </MotionConfig>
 );
