@@ -21,8 +21,22 @@ const SettingsIcon = ({ className }: { className?: string }) => (
 );
 
 const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => void }) => {
+  const [isConfiguring, setIsConfiguring] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(onEnter, 5000);
+    const configuring = sessionStorage.getItem("vplay_configuring_experiments") === "true";
+    setIsConfiguring(configuring);
+    
+    // Default 10s, but if configuring experiments, stay for 30s
+    const duration = configuring ? 30000 : 10000;
+    
+    const timer = setTimeout(() => {
+      if (configuring) {
+        sessionStorage.removeItem("vplay_configuring_experiments");
+      }
+      onEnter();
+    }, duration);
+    
     return () => clearTimeout(timer);
   }, [onEnter]);
 
@@ -58,7 +72,7 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
             transition={{ delay: 0.5, duration: 1 }}
             className="text-white/40 text-sm md:text-base font-medium tracking-[0.2em] uppercase text-center max-w-xs md:max-w-none"
           >
-            Gói trọn Việt Nam trong tầm mắt bạn
+            {isConfiguring ? "Hệ thống đang áp dụng các thay đổi" : "Gói trọn Việt Nam trong tầm mắt bạn"}
           </motion.p>
           
           <motion.div
@@ -73,7 +87,9 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
               className="w-8 h-8 filter brightness-0 invert" 
               referrerPolicy="no-referrer"
             />
-            <span className="text-white/60 text-xl font-medium tracking-tight">Chào mừng!</span>
+            <span className="text-white/60 text-xl font-medium tracking-tight">
+              {isConfiguring ? "Configuring Experiments..." : "Chào mừng!"}
+            </span>
           </motion.div>
         </div>
       </motion.div>
@@ -301,14 +317,14 @@ const slides = [
   }
 ];
 
-function HomeContent({ isDark }: { isDark: boolean }) {
+function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 select-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col items-center"
+        className="flex flex-col items-center space-y-12"
       >
         <div className="relative group">
           <div className="absolute -inset-8 bg-purple-500/20 blur-[80px] rounded-full opacity-60" />
@@ -319,6 +335,21 @@ function HomeContent({ isDark }: { isDark: boolean }) {
             referrerPolicy="no-referrer"
           />
         </div>
+
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          onClick={onSwitchToDev}
+          className={`px-8 py-3 rounded-2xl flex items-center gap-3 border group transition-all relative overflow-hidden ${
+            isDark ? "bg-white/5 border-white/10 text-white/60 hover:text-white" : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Zap size={18} className="text-purple-500" />
+          <span className="text-sm font-bold tracking-tight">Switch to Vplay Dev</span>
+          <ArrowRight size={16} className="translate-x-0 group-hover:translate-x-1 transition-transform" />
+        </motion.button>
       </motion.div>
     </div>
   );
@@ -2462,7 +2493,16 @@ function SettingsContent({
   };
 
   const toggleFlag = (id: string) => {
-    setFeatureFlags(prev => ({ ...prev, [id]: !prev[id] }));
+    setFeatureFlags(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      localStorage.setItem("vplay_feature_flags", JSON.stringify(next));
+      
+      // Start configuration sequence
+      sessionStorage.setItem("vplay_configuring_experiments", "true");
+      window.location.reload();
+      
+      return next;
+    });
   };
 
   return (
@@ -3243,6 +3283,7 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
 }
 
 function App() {
+  const [showDevConfirm, setShowDevConfirm] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDev, setIsDev] = useState(() => {
     return localStorage.getItem("vplay_dev_mode") === "true";
@@ -3732,6 +3773,35 @@ function App() {
         </AnimatePresence>
 
         <LiquidModal 
+          isOpen={showDevConfirm} 
+          onClose={() => setShowDevConfirm(false)} 
+          isDark={isDark}
+          title="Switch to Vplay Dev"
+          description="Bạn sẽ được chuyển đến một phiên bản Vplay được hoàn thiện và tối ưu hoá hơn - Vplay Dev. Bạn có muốn chuyển đổi phiên bản ngay không?"
+          liquidGlass={liquidGlass}
+        >
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => {
+                setShowDevConfirm(false);
+                window.open("https://vplay-beta-fa8k.vercel.app", "_blank");
+              }}
+              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
+            >
+              Chuyển đổi ngay
+            </button>
+            <button 
+              onClick={() => setShowDevConfirm(false)}
+              className={`w-full py-3 rounded-3xl font-bold transition-all ${
+                isDark ? "bg-white/5 text-slate-400 hover:text-white" : "bg-black/5 text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Hủy
+            </button>
+          </div>
+        </LiquidModal>
+
+        <LiquidModal 
           isOpen={!!customAlert} 
           onClose={() => setCustomAlert(null)} 
           isDark={isDark}
@@ -3758,7 +3828,7 @@ function App() {
               className="h-full flex flex-col"
             >
               {(displayTab === "Trang chủ") && (
-                <HomeContent isDark={isDark} />
+                <HomeContent isDark={isDark} onSwitchToDev={() => setShowDevConfirm(true)} />
               )}
               {displayTab === "Lưu trữ" && (
                 <EventsContent isDark={isDark} liquidGlass={liquidGlass} />
@@ -3775,6 +3845,10 @@ function App() {
                       setFeatureFlags={(f) => {
                         setFeatureFlags(f);
                         localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
+                        
+                        // Start configuration sequence
+                        sessionStorage.setItem("vplay_configuring_experiments", "true");
+                        window.location.reload();
                       }}
                       setUser={setUser}
                       setIsAdmin={setIsAdmin}
@@ -4176,7 +4250,7 @@ function App() {
                 </button>
 
                 <button
-                  onClick={() => window.open("https://vplay-beta-fa8k.vercel.app", "_blank")}
+                  onClick={() => setShowDevConfirm(true)}
                   className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all w-full h-[50px] relative overflow-hidden ${
                     isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-slate-50"
                   } ${!isSidebarExpanded ? "justify-center" : ""}`}
@@ -4438,6 +4512,10 @@ function App() {
                   setFeatureFlags={(f) => {
                     setFeatureFlags(f);
                     localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
+                    
+                    // Start configuration sequence
+                    sessionStorage.setItem("vplay_configuring_experiments", "true");
+                    window.location.reload();
                   }}
                   setUser={setUser}
                   setIsAdmin={setIsAdmin}
