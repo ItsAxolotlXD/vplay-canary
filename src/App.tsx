@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback, ChangeEvent, FormEvent, ReactNode } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
+import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -355,6 +355,53 @@ function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev
 }
 
 
+function BrowserContent({ initialUrl = "https://www.google.com/search?q=Vplay+TV&igu=1" }: { initialUrl?: string }) {
+  const [url, setUrl] = useState(initialUrl);
+  const [inputUrl, setInputUrl] = useState(initialUrl);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleGo = (e: FormEvent) => {
+    e.preventDefault();
+    let target = inputUrl;
+    if (!target.startsWith("http")) target = "https://" + target;
+    setUrl(target);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-[#f0f0f0]">
+      <div className="flex items-center gap-2 p-2 bg-[#e0e0e0] border-b border-black/10">
+        <div className="flex items-center gap-1">
+          <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><ChevronLeft size={16} /></button>
+          <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><ChevronRight size={16} /></button>
+          <button onClick={() => setUrl(url)} className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><RotateCcw size={16} /></button>
+        </div>
+        <form onSubmit={handleGo} className="flex-1 flex items-center bg-white rounded-lg px-3 py-1.5 border border-black/5 shadow-sm">
+          <Globe size={14} className="text-slate-400 mr-2" />
+          <input 
+            className="flex-1 bg-transparent outline-none text-xs text-slate-700 font-medium"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+          />
+        </form>
+        <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><Star size={16} className="text-yellow-500" /></button>
+        <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><Menu size={16} /></button>
+      </div>
+      <div className="flex-1 bg-white relative">
+        <iframe 
+          ref={iframeRef}
+          src={url} 
+          className="w-full h-full border-none"
+          title="V-Browser"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        />
+        <div className="absolute top-0 left-0 w-full p-2 bg-blue-500/10 text-[10px] font-bold text-blue-600 border-b border-blue-500/20 pointer-events-none">
+          SECURE CONNECTION • V-BROWSER PROXY ACTIVE
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdmin, setIsDev, setIsDark, setLiquidGlass, setIsSidebarRight, setUseSidebar, onAlert, isFloating, setIsFloating }: { 
   isDark: boolean, 
   featureFlags: any, 
@@ -376,6 +423,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const availableFlags = [
+    { id: 'windows_mode', name: 'Vplay OS (preview)', desc: 'Chuyển sang giao diện hệ điều hành thông minh và tiện lợi.' },
     { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả' },
     { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc' },
     { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' },
@@ -679,7 +727,7 @@ function IndividualPlayer({ channel, isMuted, volume, isDark }: { channel: Chann
   );
 }
 
-function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user, onLogin, isDev, liquidGlass, sortOrder, setSortOrder, showSplash, featureFlags, searchQuery }: { 
+function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user, onLogin, isDev, liquidGlass, sortOrder, setSortOrder, showSplash, featureFlags, searchQuery, minimalMode = false }: { 
   active: Channel, 
   setActive: (ch: Channel) => void, 
   isDark: boolean,
@@ -693,7 +741,8 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
   setSortOrder: (val: "default" | "az" | "za") => void,
   showSplash?: boolean,
   featureFlags: { [key: string]: boolean },
-  searchQuery: string
+  searchQuery: string,
+  minimalMode?: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -1095,6 +1144,8 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
         </div>
       </LiquidModal>
 
+      {/* ADVERTISEMENT BANNER REMOVED */}
+      
       {/* VIDEO PLAYER */}
       <div className={`bg-black mb-6 flex items-center justify-center border shadow-2xl relative overflow-hidden group ${
         isMultiview ? "aspect-auto min-h-[400px]" : "aspect-video"
@@ -1474,158 +1525,162 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
         </div>
       </div>
 
-      {/* FILTERS */}
-      <div className="mt-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-1">
-            {["Tất cả", "VTV", "HTV", "VTVcab", "Thiết yếu", "Địa phương", "Phát thanh", "Hoạt động", "Bảo trì"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-5 py-2.5 md:px-4 md:py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  filterType === type
-                    ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
-                    : isDark
-                    ? "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
-                    : "bg-white/10 border-white/20 text-slate-600 hover:bg-white/20"
-                } ${liquidGlass ? "backdrop-blur-md" : ""}`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            {/* Desktop Sort Button */}
-            <button
-              onClick={() => {
-                if (sortOrder === "default") setSortOrder("az");
-                else if (sortOrder === "az") setSortOrder("za");
-                else setSortOrder("default");
-              }}
-              className={`hidden md:flex p-3.5 md:p-3 rounded-xl border transition-all items-center gap-2 ${
-                isDark 
-                  ? "bg-slate-800/50 border-slate-700/50 text-white" 
-                  : "bg-white/50 border-white/60 text-slate-900"
-              } ${liquidGlass ? "backdrop-blur-md" : ""}`}
-              title={sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "Sắp xếp A-Z" : "Sắp xếp Z-A"}
-            >
-              <Filter className="h-5 w-5" />
-              <span className="text-sm font-medium">
-                {sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "A-Z" : "Z-A"}
-              </span>
-            </button>
-
-            {/* Mobile Sort Dropdown */}
-            <div className="relative md:hidden flex-1">
-              <button
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className={`w-full p-3.5 rounded-xl border transition-all flex items-center justify-center gap-2 ${
-                  isDark 
-                    ? "bg-white/5 border-white/5 text-white" 
-                    : "bg-white/10 border-white/20 text-slate-900"
-                } ${liquidGlass ? "backdrop-blur-md" : ""}`}
-              >
-                <Sliders className="h-5 w-5" />
-                <span className="text-sm font-bold uppercase tracking-wider">Sort</span>
-                <span className="ml-auto text-[10px] opacity-50">
-                  {sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "A-Z" : "Z-A"}
-                </span>
-              </button>
-              
-              <AnimatePresence>
-                {showSortMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className={`absolute top-full left-0 right-0 mt-2 z-50 p-2 border shadow-2xl ${
-                      isDark ? "bg-slate-900/95 border-white/10" : "bg-white/95 border-black/5"
-                    } ${liquidGlass ? "rounded-2xl backdrop-blur-3xl" : "rounded-xl"}`}
+      {!minimalMode && (
+        <>
+          {/* FILTERS */}
+          <div className="mt-8">
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+              <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-1">
+                {["Tất cả", "VTV", "HTV", "VTVcab", "Thiết yếu", "Địa phương", "Phát thanh", "Hoạt động", "Bảo trì"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-5 py-2.5 md:px-4 md:py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      filterType === type
+                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
+                        : isDark
+                        ? "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                        : "bg-white/10 border-white/20 text-slate-600 hover:bg-white/20"
+                    } ${liquidGlass ? "backdrop-blur-md" : ""}`}
                   >
-                    {[
-                      { id: "default", label: "Mặc định" },
-                      { id: "az", label: "Sắp xếp A-Z" },
-                      { id: "za", label: "Sắp xếp Z-A" }
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        onClick={() => {
-                          setSortOrder(opt.id as any);
-                          setShowSortMenu(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                          sortOrder === opt.id 
-                            ? "bg-purple-600 text-white" 
-                            : isDark ? "text-white hover:bg-white/5" : "text-slate-900 hover:bg-black/5"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
+                    {type}
+                  </button>
+                ))}
+              </div>
 
-        {/* CHANNEL LIST */}
-        <div className="space-y-16">
-          {filteredCategories.map(cat => (
-            <div key={cat} className="space-y-8">
-              <div className="flex items-center gap-4 px-2">
-                <div className="h-8 w-1.5 bg-purple-500 rounded-full" />
-                <div>
-                  <h3 className={`text-2xl md:text-3xl font-black tracking-tighter uppercase ${isDark ? "text-white" : "text-slate-900"}`}>{cat}</h3>
+              <div className="flex gap-2">
+                {/* Desktop Sort Button */}
+                <button
+                  onClick={() => {
+                    if (sortOrder === "default") setSortOrder("az");
+                    else if (sortOrder === "az") setSortOrder("za");
+                    else setSortOrder("default");
+                  }}
+                  className={`hidden md:flex p-3.5 md:p-3 rounded-xl border transition-all items-center gap-2 ${
+                    isDark 
+                      ? "bg-slate-800/50 border-slate-700/50 text-white" 
+                      : "bg-white/50 border-white/60 text-slate-900"
+                  } ${liquidGlass ? "backdrop-blur-md" : ""}`}
+                  title={sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "Sắp xếp A-Z" : "Sắp xếp Z-A"}
+                >
+                  <Filter className="h-5 w-5" />
+                  <span className="text-sm font-medium">
+                    {sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "A-Z" : "Z-A"}
+                  </span>
+                </button>
+
+                {/* Mobile Sort Dropdown */}
+                <div className="relative md:hidden flex-1">
+                  <button
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className={`w-full p-3.5 rounded-xl border transition-all flex items-center justify-center gap-2 ${
+                      isDark 
+                        ? "bg-white/5 border-white/5 text-white" 
+                        : "bg-white/10 border-white/20 text-slate-900"
+                    } ${liquidGlass ? "backdrop-blur-md" : ""}`}
+                  >
+                    <Sliders className="h-5 w-5" />
+                    <span className="text-sm font-bold uppercase tracking-wider">Sort</span>
+                    <span className="ml-auto text-[10px] opacity-50">
+                      {sortOrder === "default" ? "Mặc định" : sortOrder === "az" ? "A-Z" : "Z-A"}
+                    </span>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showSortMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className={`absolute top-full left-0 right-0 mt-2 z-50 p-2 border shadow-2xl ${
+                          isDark ? "bg-slate-900/95 border-white/10" : "bg-white/95 border-black/5"
+                        } ${liquidGlass ? "rounded-2xl backdrop-blur-3xl" : "rounded-xl"}`}
+                      >
+                        {[
+                          { id: "default", label: "Mặc định" },
+                          { id: "az", label: "Sắp xếp A-Z" },
+                          { id: "za", label: "Sắp xếp Z-A" }
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setSortOrder(opt.id as any);
+                              setShowSortMenu(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                              sortOrder === opt.id 
+                                ? "bg-purple-600 text-white" 
+                                : isDark ? "text-white hover:bg-white/5" : "text-slate-900 hover:bg-black/5"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
-              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
-                {cat === "Phát thanh" ? (
-                  <div className={`col-span-full p-12 rounded-[40px] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all ${
-                    isDark ? "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10" : "border-black/5 bg-black/5 text-slate-500 hover:bg-black/[0.02]"
-                  }`}>
-                    <div className="p-4 rounded-3xl bg-purple-500/10 text-purple-500">
-                      <Sparkles size={32} className="animate-pulse" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-black text-xl tracking-tighter uppercase mb-1">Coming Soon!</p>
-                      <p className="text-xs font-medium opacity-60">Tính năng đang được phát triển để mang lại trải nghiệm âm thanh tốt nhất.</p>
+            </div>
+
+            {/* CHANNEL LIST */}
+            <div className="space-y-16">
+              {filteredCategories.map(cat => (
+                <div key={cat} className="space-y-8">
+                  <div className="flex items-center gap-4 px-2">
+                    <div className="h-8 w-1.5 bg-purple-500 rounded-full" />
+                    <div>
+                      <h3 className={`text-2xl md:text-3xl font-black tracking-tighter uppercase ${isDark ? "text-white" : "text-slate-900"}`}>{cat}</h3>
                     </div>
                   </div>
-                ) : (
-                  filteredChannels.filter(c => c.category === cat).map((ch) => (
-                    <ChannelCard 
-                      key={`${ch.name}-${ch.stream}`} 
-                      ch={ch} 
-                      onClick={() => setActive(ch)} 
-                      isDark={isDark} 
-                      isActive={active.name === ch.name} 
-                      favorites={favorites} 
-                      toggleFavorite={toggleFavorite} 
-                      liquidGlass={liquidGlass}
+                  <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
+                    {cat === "Phát thanh" ? (
+                      <div className={`col-span-full p-12 rounded-[40px] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all ${
+                        isDark ? "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10" : "border-black/5 bg-black/5 text-slate-500 hover:bg-black/[0.02]"
+                      }`}>
+                        <div className="p-4 rounded-3xl bg-purple-500/10 text-purple-500">
+                          <Sparkles size={32} className="animate-pulse" />
+                        </div>
+                        <div className="text-center">
+                          <p className="font-black text-xl tracking-tighter uppercase mb-1">Coming Soon!</p>
+                          <p className="text-xs font-medium opacity-60">Tính năng đang được phát triển để mang lại trải nghiệm âm thanh tốt nhất.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      filteredChannels.filter(c => c.category === cat).map((ch) => (
+                        <ChannelCard 
+                          key={`${ch.name}-${ch.stream}`} 
+                          ch={ch} 
+                          onClick={() => setActive(ch)} 
+                          isDark={isDark} 
+                          isActive={active.name === ch.name} 
+                          favorites={favorites} 
+                          toggleFavorite={toggleFavorite} 
+                          liquidGlass={liquidGlass}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))}
+              {filteredChannels.length === 0 && (
+                <div className="text-center py-20">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800/50 mb-4">
+                    <img 
+                      src="https://static.wikia.nocookie.net/ftv/images/6/63/Search_uci.png/revision/latest?cb=20260411084053&path-prefix=vi" 
+                      alt="Search" 
+                      className="h-10 w-10 object-contain" 
+                      referrerPolicy="no-referrer" 
                     />
-                  ))
-                )}
-              </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-400">Không tìm thấy kênh nào</h3>
+                  <p className="text-slate-500">Thử tìm kiếm với từ khóa khác</p>
+                </div>
+              )}
             </div>
-          ))}
-          {filteredChannels.length === 0 && (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800/50 mb-4">
-                <img 
-                  src="https://static.wikia.nocookie.net/ftv/images/6/63/Search_uci.png/revision/latest?cb=20260411084053&path-prefix=vi" 
-                  alt="Search" 
-                  className="h-10 w-10 object-contain" 
-                  referrerPolicy="no-referrer" 
-                />
-              </div>
-              <h3 className="text-xl font-bold text-slate-400">Không tìm thấy kênh nào</h3>
-              <p className="text-slate-500">Thử tìm kiếm với từ khóa khác</p>
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -2393,7 +2448,9 @@ function SettingsContent({
   backgroundMusicOption,
   setBackgroundMusicOption,
   customMusicId,
-  setCustomMusicId
+  setCustomMusicId,
+  searchBoxPosition,
+  setSearchBoxPosition
 }: { 
   isDark: boolean, 
   setIsDark: (val: boolean) => void, 
@@ -2419,7 +2476,9 @@ function SettingsContent({
   backgroundMusicOption: string,
   setBackgroundMusicOption: (val: string) => void,
   customMusicId: string,
-  setCustomMusicId: (val: string) => void
+  setCustomMusicId: (val: string) => void,
+  searchBoxPosition: string,
+  setSearchBoxPosition: (val: string) => void
 }) {
   const [name, setName] = useState(userData?.displayName || user?.displayName || "");
   const [avatar, setAvatar] = useState(userData?.photoURL || user?.photoURL || "");
@@ -2870,6 +2929,32 @@ function SettingsContent({
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 px-1">
+                    <Search size={14} className="text-orange-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Search box position</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => setSearchBoxPosition("sidebar")}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${searchBoxPosition === "sidebar" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                    >
+                      <Layout size={20} className={searchBoxPosition === "sidebar" ? "text-white" : "text-slate-400"} />
+                      <span className="text-xs font-bold text-left">Sidebar</span>
+                    </button>
+                    <button 
+                      onClick={() => setSearchBoxPosition("top")}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${searchBoxPosition === "top" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                    >
+                      <div className="w-5 h-5 flex flex-col gap-1">
+                        <div className={`h-1 w-full rounded-full ${searchBoxPosition === "top" ? "bg-white" : "bg-slate-400"}`} />
+                        <div className={`flex-1 w-full rounded border ${searchBoxPosition === "top" ? "border-white/40" : "border-slate-400/40"}`} />
+                      </div>
+                      <span className="text-xs font-bold text-left">Top</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
                     <Pin size={14} className="text-pink-500" />
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Channel Pinning</span>
                   </div>
@@ -2923,6 +3008,7 @@ function SettingsContent({
 
         <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
           {([
+            { id: 'windows_mode', name: 'Vplay OS (preview)', desc: 'Chuyển sang giao diện hệ điều hành thông minh và tiện lợi.', active: featureFlags.windows_mode },
             { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả', active: featureFlags.sidebar_resizable },
             { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc', active: featureFlags.multiview_experimental },
             { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
@@ -3225,7 +3311,512 @@ function AuthModal({ isOpen, onClose, isDark, liquidGlass, setIsDev, setUserData
 );
 }
 
-function SearchBar({ isDark, query, setQuery, onClose, liquidGlass }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted" }) {
+function AppWindowContainer({ 
+  window, 
+  onClose, 
+  onMinimize, 
+  onMaximize,
+  onFocus, 
+  isActive, 
+  children, 
+  isDark 
+}: { 
+  window: AppWindow, 
+  onClose: () => void, 
+  onMinimize: () => void, 
+  onMaximize: () => void,
+  onFocus: () => void, 
+  isActive: boolean,
+  children: ReactNode,
+  isDark: boolean,
+  key?: string | number
+}) {
+  const isMaximized = window.isMaximized;
+
+  const windowVariants = {
+    normal: {
+      scale: 1,
+      opacity: 1,
+      x: 0,
+      y: 0,
+      transition: { type: "spring", damping: 25, stiffness: 300 }
+    },
+    minimized: {
+      scale: 0,
+      opacity: 0,
+      y: 500,
+      transition: { duration: 0.2 }
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={window.isMinimized ? "minimized" : "normal"}
+      variants={windowVariants}
+      exit={{ scale: 0.9, opacity: 0 }}
+      drag={!isMaximized}
+      dragMomentum={false}
+      onMouseDown={onFocus}
+      style={{ zIndex: window.zIndex }}
+      className={`fixed flex flex-col shadow-2xl border overflow-hidden transition-all duration-300 ${
+        isDark ? "bg-[#1c1c1c] border-white/10" : "bg-white border-slate-200"
+      } ${isMaximized ? "inset-0 rounded-none z-[60]" : "top-20 left-20 w-[800px] h-[550px] rounded-xl"}`}
+    >
+      {/* Title Bar */}
+      <div className={`h-10 px-4 flex items-center justify-between select-none cursor-default ${
+        isActive ? (isDark ? "bg-white/5" : "bg-slate-100") : ""
+      }`}>
+        <div className="flex items-center gap-2">
+          {window.type === "tv" ? (
+             <Tv size={14} className="text-purple-500" />
+          ) : window.type === "settings" ? (
+             <Settings size={14} className="text-blue-500" />
+          ) : (
+             <FileCode size={14} className="text-slate-500" />
+          )}
+          <span className="text-xs font-bold truncate max-w-[200px]">{window.title}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onMinimize} className="p-2 hover:bg-white/10 rounded-md transition-colors" title="Minimize">
+            <Minimize2 size={14} />
+          </button>
+          <button onClick={onMaximize} className="p-2 hover:bg-white/10 rounded-md transition-colors" title={isMaximized ? "Restore" : "Maximize"}>
+            <Square size={12} className={isMaximized ? "scale-75" : ""} />
+          </button>
+          <button onClick={onClose} className="p-2 hover:bg-red-500 text-white hover:text-white rounded-md transition-colors group" title="Close">
+            <X size={14} className="group-hover:scale-110" />
+          </button>
+        </div>
+      </div>
+      {/* Content */}
+      <div className="flex-1 overflow-hidden relative">
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+function WindowsDesktop({ 
+  channels, 
+  onOpenApp, 
+  isDark,
+  windows,
+  activeWindowId,
+  setWindows,
+  setActiveWindowId,
+  focusWindow,
+  minimizeWindow,
+  wallpaper,
+  setWallpaper,
+  pinnedNames,
+  setPinnedNames,
+  featureFlags,
+  setFeatureFlags
+}: { 
+  channels: Channel[], 
+  onOpenApp: (type: "settings" | "tv" | "logs" | "browser" | "debug" | "search", props?: any) => void,
+  isDark: boolean,
+  windows: AppWindow[],
+  activeWindowId: string | null,
+  setWindows: Dispatch<SetStateAction<AppWindow[]>>,
+  setActiveWindowId: (id: string | null) => void,
+  focusWindow: (id: string) => void,
+  minimizeWindow: (id: string) => void,
+  wallpaper: string,
+  setWallpaper: (url: string) => void,
+  pinnedNames: string[],
+  setPinnedNames: Dispatch<SetStateAction<string[]>>,
+  featureFlags: any,
+  setFeatureFlags: (flags: any) => void
+}) {
+  const [showStartMenu, setShowStartMenu] = useState(false);
+  const [showDesktopSearch, setShowDesktopSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, ch: Channel | null } | null>(null);
+
+  const filteredChannels = channels.filter(ch => 
+    ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ch.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const desktopChannels = channels.filter(ch => pinnedNames.includes(ch.name));
+
+  const handleContextMenu = (e: MouseEvent, ch: Channel | null = null) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, ch });
+  };
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const changeWallpaper = () => {
+    const url = prompt("Nhập URL hình nền mới:", wallpaper);
+    if (url) setWallpaper(url);
+    setContextMenu(null);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-0 flex flex-col overflow-hidden bg-cover bg-center select-none font-sans" 
+      style={{ backgroundImage: `url(${wallpaper})` }}
+      onClick={() => {
+        setShowStartMenu(false);
+        setShowDesktopSearch(false);
+        setContextMenu(null);
+      }}
+      onContextMenu={(e) => handleContextMenu(e)}
+    >
+      {/* Background Dimming Removed */}
+      
+      <div className="flex-1 p-6 flex flex-col gap-4 content-start relative z-10">
+        <div className="flex flex-col flex-wrap gap-4 h-[calc(100vh-140px)] content-start">
+          {/* Default Icons Only: V-Browser and Update Logs */}
+          <motion.button 
+            drag
+            dragMomentum={false}
+            onDoubleClick={(e: any) => { e.stopPropagation(); onOpenApp("browser"); }}
+            onClick={(e: any) => e.stopPropagation()}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
+              <Globe className="text-white" size={28} />
+            </div>
+            <span className="text-[11px] font-bold text-white text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">V-Browser</span>
+          </motion.button>
+
+          <motion.button 
+            drag
+            dragMomentum={false}
+            onDoubleClick={(e: any) => { e.stopPropagation(); onOpenApp("logs"); }}
+            onClick={(e: any) => e.stopPropagation()}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
+          >
+            <div className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
+              <FileCode className="text-white" size={28} />
+            </div>
+            <span className="text-[11px] font-bold text-white text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Update Logs</span>
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Context Menu */}
+      <AnimatePresence>
+        {contextMenu && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            className={`fixed z-[200] w-48 shadow-2xl border ${
+              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
+            } rounded-lg py-1 backdrop-blur-3xl`}
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contextMenu.ch ? (
+              <button 
+                onClick={() => {
+                  setPinnedNames(prev => prev.filter(name => name !== contextMenu.ch?.name));
+                  setContextMenu(null);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
+                  isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
+                }`}
+              >
+                <X size={14} className="text-red-500" />
+                Delete from Desktop
+              </button>
+            ) : (
+              <div className="space-y-1">
+                <div className="px-3 py-1 text-[9px] font-black uppercase opacity-40">Desktop</div>
+                <button 
+                  onClick={() => onOpenApp("search")}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
+                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
+                  }`}
+                >
+                  <Search size={14} />
+                  Pin to Desktop...
+                </button>
+                <button 
+                  onClick={() => onOpenApp("browser")}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
+                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
+                  }`}
+                >
+                  <Globe size={14} />
+                  Open V-Browser
+                </button>
+                <button 
+                  onClick={changeWallpaper}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
+                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
+                  }`}
+                >
+                  <Palette size={14} />
+                  Change wallpaper
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Start Menu */}
+      <AnimatePresence>
+        {showStartMenu && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            className={`fixed bottom-12 left-2 w-[500px] h-[600px] z-50 rounded-xl flex flex-col shadow-2xl border overflow-hidden ${
+              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
+            } backdrop-blur-3xl`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 flex-1 flex flex-col overflow-hidden">
+               <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold uppercase tracking-widest opacity-50">All Channels</h3>
+                  <div className="flex items-center gap-2">
+                     <button onClick={() => onOpenApp("settings")} className="p-2 hover:bg-white/10 rounded-lg"><Settings size={18} /></button>
+                     <button onClick={() => window.location.reload()} className="p-2 hover:bg-white/10 rounded-lg"><RotateCcw size={18} /></button>
+                  </div>
+               </div>
+               <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+                  {channels.map(ch => (
+                    <div key={ch.name} className="flex items-center group">
+                      <button
+                        onClick={() => {
+                          onOpenApp("tv", { channel: ch });
+                          setShowStartMenu(false);
+                        }}
+                        className="flex-1 flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-all text-left"
+                      >
+                        <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center p-1 border border-white/5 group-hover:bg-white/10 transition-colors">
+                          <img src={ch.logo} alt={ch.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold">{ch.name}</p>
+                          <p className="text-[10px] opacity-40">{ch.category}</p>
+                        </div>
+                      </button>
+                      {!pinnedNames.includes(ch.name) && (
+                        <button 
+                          onClick={() => setPinnedNames(prev => [...prev, ch.name])}
+                          className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg transition-all"
+                          title="Pin to Desktop"
+                        >
+                          <Pin size={14} className="text-blue-500" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+               </div>
+            </div>
+            <div className={`h-16 px-6 flex items-center justify-between border-t border-white/5 ${isDark ? "bg-black/20" : "bg-slate-50"}`}>
+               <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-black">U</div>
+                  <span className="text-xs font-bold">User Account</span>
+               </div>
+               <button className="p-2 hover:bg-white/10 rounded-lg"><LogOut size={16} className="text-red-500" /></button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Search Overlay */}
+      <AnimatePresence>
+        {showDesktopSearch && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            className={`fixed bottom-12 left-1/2 -translateX-1/2 w-[600px] h-[500px] z-50 rounded-xl flex flex-col shadow-2xl border overflow-hidden ${
+              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
+            } backdrop-blur-3xl -translate-x-1/2`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-white/5">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                <input 
+                  autoFocus
+                  placeholder="Type to search channels, settings, or logs..."
+                  className="w-full bg-white/5 border border-white/10 rounded-lg py-3 pl-12 pr-4 outline-none focus:border-purple-500 transition-all font-medium text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+               {searchQuery.length > 0 ? (
+                 <div className="space-y-4">
+                   <div className="space-y-1">
+                      <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Search Results</p>
+                      {filteredChannels.length > 0 ? filteredChannels.map(ch => (
+                        <button
+                          key={ch.name}
+                          onClick={() => {
+                            onOpenApp("tv", { channel: ch });
+                            setShowDesktopSearch(false);
+                            setSearchQuery("");
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 group transition-all text-left"
+                        >
+                          <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center p-1 border border-white/5 group-hover:bg-white/10">
+                            <img src={ch.logo} alt={ch.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold">{ch.name}</p>
+                            <p className="text-[10px] opacity-40">{ch.category}</p>
+                          </div>
+                        </button>
+                      )) : (
+                        <p className="text-center py-10 opacity-30 italic text-sm">No results found</p>
+                      )}
+                   </div>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Suggested</p>
+                       <button onClick={() => onOpenApp("settings")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
+                          <Settings className="text-blue-500" size={20} />
+                          <div className="text-left">
+                             <p className="text-xs font-bold">System Settings</p>
+                             <p className="text-[9px] opacity-40">Configure your Vplay</p>
+                          </div>
+                       </button>
+                       <button onClick={() => onOpenApp("logs")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
+                          <FileCode className="text-slate-500" size={20} />
+                          <div className="text-left">
+                             <p className="text-xs font-bold">Update Logs</p>
+                             <p className="text-[9px] opacity-40">What's new</p>
+                          </div>
+                       </button>
+                    </div>
+                    <div className="space-y-2">
+                       <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Quick Actions</p>
+                       <button onClick={() => onOpenApp("debug")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
+                          <Terminal className="text-purple-500" size={20} />
+                          <div className="text-left">
+                             <p className="text-xs font-bold">Open Console</p>
+                             <p className="text-[9px] opacity-40">Developer tools</p>
+                          </div>
+                       </button>
+                    </div>
+                 </div>
+               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Taskbar */}
+      <div className={`h-14 absolute bottom-0 left-0 w-full z-[9999] flex items-center px-4 gap-1 ${isDark ? "bg-[#1a1a1a]/80 border-white/5" : "bg-white/80 border-black/5"} backdrop-blur-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.1)] border-t`}>
+        {/* Left section (Start & Search) */}
+        <div className="flex items-center gap-1 min-w-[280px]">
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
+            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : "hover:bg-white/5"}`}
+          >
+            <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group">
+               <img src="https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png" className="w-5 h-5 invert transition-transform group-hover:scale-110" alt="Start" />
+            </div>
+          </button>
+
+          {/* New Search Bar style (Sidebar-like) */}
+          <div 
+            onClick={() => onOpenApp("search")}
+            className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-slate-400 hover:bg-black/10"}`}
+          >
+            <Search size={14} />
+            <span className="text-xs font-bold uppercase tracking-widest">Search...</span>
+          </div>
+        </div>
+
+        {/* Center section (Active Apps & Pinned) */}
+        <div className="flex-1 flex items-center justify-center gap-1.5 h-full">
+           <button onClick={() => {}} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Task View">
+              <LayoutDashboard size={20} className={isDark ? "text-white/60" : "text-slate-600"} />
+           </button>
+           <button onClick={() => onOpenApp("browser")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="V-Browser">
+              <Globe size={20} className="text-orange-500" />
+           </button>
+           <button onClick={() => onOpenApp("settings")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Settings">
+              <Settings size={20} className="text-blue-500" />
+           </button>
+           <button onClick={() => onOpenApp("debug")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Operator Console">
+              <Terminal size={20} className="text-purple-500" />
+           </button>
+           
+           <div className="h-5 w-px bg-white/10 mx-1" />
+
+           <AnimatePresence>
+             {windows.map(win => (
+               <motion.button
+                 layout
+                 key={win.id}
+                 onClick={() => {
+                   if (win.isMinimized) {
+                     setWindows(prev => prev.map(w => w.id === win.id ? { ...w, isMinimized: false } : w));
+                     setActiveWindowId(win.id);
+                   } else if (activeWindowId === win.id) {
+                     minimizeWindow(win.id);
+                   } else {
+                     focusWindow(win.id);
+                   }
+                 }}
+                 className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all border-b-2 ${
+                   activeWindowId === win.id 
+                    ? (isDark ? "bg-white/10 border-blue-500" : "bg-black/5 border-blue-600 shadow-sm")
+                    : (isDark ? "bg-black/20 border-transparent hover:bg-white/5" : "bg-white/40 border-transparent hover:bg-black/5")
+                 }`}
+                 title={win.title}
+               >
+                 {win.type === "tv" ? <Tv size={20} className="text-purple-500" /> : win.type === "settings" ? <Settings size={20} className="text-blue-500" /> : win.type === "browser" ? <Globe size={20} className="text-orange-500" /> : win.type === "debug" ? <Terminal size={20} className="text-purple-500" /> : <FileCode size={20} className="text-slate-400" />}
+               </motion.button>
+             ))}
+           </AnimatePresence>
+        </div>
+
+        {/* Right section (System Tray) */}
+        <div className="flex items-center justify-end gap-2 min-w-[280px] h-full">
+          <button 
+             onClick={() => {
+                // EXIT SESSION
+                setFeatureFlags({ ...featureFlags, windows_mode: false });
+             }}
+             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white" : "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white"}`}
+             title="Quay lại giao diện App"
+          >
+             <LogOut size={12} />
+             Exit Session
+          </button>
+
+          <div className="h-5 w-px bg-white/10 mx-1" />
+
+          <div className="flex flex-col items-end leading-tight min-w-[70px]">
+            <span className={`text-[12px] font-bold ${isDark ? "text-white" : "text-slate-950"}`}>
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+            </span>
+            <span className={`text-[10px] font-bold ${isDark ? "text-white/40" : "text-slate-500"}`}>
+              {currentTime.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </span>
+          </div>
+          <div className={`w-1.5 h-10 flex items-center ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"} cursor-pointer ml-1`} title="Show Desktop" onClick={() => windows.forEach(w => !w.isMinimized && minimizeWindow(w.id))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted", isTop?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -3262,26 +3853,26 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass }: { isDark: 
   const textColor = isGlassy ? "text-white" : "text-black";
 
   return (
-    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 h-14 md:h-16 w-full max-w-4xl relative group rounded-2xl overflow-hidden transition-all ${isGlassy ? "bg-white/5" : "bg-black/5"}`}>
+    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 ${isTop ? "h-10 md:h-12" : "h-14 md:h-16"} w-full ${isTop ? "max-w-xl" : "max-w-4xl"} relative group ${isTop ? "rounded-full" : "rounded-2xl"} overflow-hidden transition-all ${isGlassy ? (isTop ? "bg-transparent" : "bg-white/5") : (isTop ? "bg-transparent" : "bg-black/5")}`}>
       <div className="flex items-center gap-1 md:gap-2 flex-1">
-        <Search className={`h-6 w-6 ${iconColor} flex-shrink-0 transition-colors group-focus-within:text-purple-500`} />
+        <Search className={`h-4 w-4 md:h-5 md:w-5 ${iconColor} flex-shrink-0 transition-colors group-focus-within:text-purple-500`} />
         <input
           ref={inputRef}
           type="text"
-          placeholder="Tìm kiếm"
+          placeholder={isTop ? "Find a setting" : "Tìm kiếm"}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={`flex-1 bg-transparent border-none outline-none text-lg font-medium ${textColor} ${placeholderColor}`}
+          className={`flex-1 bg-transparent border-none outline-none ${isTop ? "text-sm" : "text-lg"} font-medium ${textColor} ${placeholderColor}`}
         />
       </div>
-      <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isGlassy ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
+      {!isTop && <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isGlassy ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />}
       <div className="flex items-center gap-4">
         <button 
           onClick={startVoiceSearch}
           className={`p-2 rounded-full transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : `${iconColor} hover:opacity-70`}`}
           title="Đang nghe..."
         >
-          <Mic className="h-7 w-7" />
+          <Mic className={`${isTop ? "h-5 w-5" : "h-7 w-7"}`} />
         </button>
       </div>
     </div>
@@ -3323,7 +3914,79 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
   return <>{children}</>;
 }
 
+interface AppWindow {
+  id: string;
+  title: string;
+  type: "settings" | "tv" | "logs" | "browser" | "debug" | "search";
+  contentProps?: any;
+  isMinimized: boolean;
+  isMaximized: boolean;
+  zIndex: number;
+}
+
 function App() {
+  const [windows, setWindows] = useState<AppWindow[]>([]);
+  const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+  
+  const openWindow = useCallback((type: "settings" | "tv" | "logs" | "browser" | "debug" | "search", props?: any) => {
+    const id = `${type}_${Date.now()}`;
+    const title = type === "settings" ? "Settings" : type === "debug" ? "Operator Console" : type === "search" ? "Search" : props?.channel?.name || "Window";
+    const newWindow: AppWindow = {
+      id,
+      title,
+      type,
+      contentProps: props,
+      isMinimized: false,
+      isMaximized: type === "tv" && window.innerWidth < 1024,
+      zIndex: windows.length + 100
+    };
+    setWindows(prev => [...prev, newWindow]);
+    setActiveWindowId(id);
+  }, [windows]);
+
+  const closeWindow = (id: string) => {
+    setWindows(prev => prev.filter(w => w.id !== id));
+    if (activeWindowId === id) setActiveWindowId(null);
+  };
+
+  const focusWindow = (id: string) => {
+    setActiveWindowId(id);
+    setWindows(prev => prev.map(w => ({
+      ...w,
+      isMinimized: w.id === id ? false : w.isMinimized,
+      zIndex: w.id === id ? Math.max(...prev.map(x => x.zIndex), 100) + 1 : w.zIndex
+    })));
+  };
+
+  const minimizeWindow = (id: string) => {
+    setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: !w.isMinimized } : w));
+  };
+
+  const maximizeWindow = (id: string) => {
+    setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w));
+  };
+
+  const [searchBoxPosition, setSearchBoxPosition] = useState(() => {
+    return localStorage.getItem("vplay_search_position") || "sidebar";
+  });
+
+  const [desktopWallpaper, setDesktopWallpaper] = useState(() => {
+    return localStorage.getItem("vplay_desktop_wallpaper") || "https://4kwallpapers.com/images/walls/thumbs_3t/16795.png";
+  });
+
+  const [pinnedChannelNames, setPinnedChannelNames] = useState<string[]>(() => {
+    const saved = localStorage.getItem("vplay_pinned_channels");
+    // Default some pins if empty? Or keep it clean.
+    return saved ? JSON.parse(saved) : ["VTV1", "VTV3", "HTV7", "VTC1"];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("vplay_desktop_wallpaper", desktopWallpaper);
+  }, [desktopWallpaper]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_pinned_channels", JSON.stringify(pinnedChannelNames));
+  }, [pinnedChannelNames]);
   const [showDevConfirm, setShowDevConfirm] = useState(false);
   const [backgroundMusicOption, setBackgroundMusicOption] = useState(() => {
     return localStorage.getItem("vplay_bg_music_option") || "queue";
@@ -3347,6 +4010,7 @@ function App() {
         multiview_experimental: false, 
         disable_animation: false, 
         sidebar_resizable: false, 
+        windows_mode: false,
         xaml_view_test: true,
         settings_vertical: true,
         music_background: true
@@ -3359,6 +4023,7 @@ function App() {
         multiview_experimental: false, 
         disable_animation: false, 
         sidebar_resizable: false, 
+        windows_mode: false,
         xaml_view_test: true,
         settings_vertical: true,
         music_background: true
@@ -3438,6 +4103,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("vplay_custom_music_id", customMusicId);
   }, [customMusicId]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_search_position", searchBoxPosition);
+  }, [searchBoxPosition]);
 
   const paginate = (newDirection: number) => {
     setDirection(newDirection);
@@ -3787,20 +4456,138 @@ function App() {
         </form>
       </LiquidModal>
 
-      <div 
-        className={`flex-1 flex flex-col min-h-screen relative overflow-hidden transition-[padding] duration-300 ${
-          useSidebar && !isMobile 
-            ? (isSidebarRight 
-                ? "pl-8" 
-                : "pr-8"
-              ) 
-            : "px-0"
-        }`}
-        style={useSidebar && !isMobile ? {
-          paddingRight: isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
-          paddingLeft: !isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
-        } : {}}
-      >
+      {featureFlags.windows_mode ? (
+        <Fragment>
+          <div className="fixed inset-0 z-[40]">
+            <WindowsDesktop 
+              channels={channels} 
+              onOpenApp={openWindow} 
+              isDark={isDark}
+              windows={windows}
+              activeWindowId={activeWindowId}
+              setWindows={setWindows}
+              setActiveWindowId={setActiveWindowId}
+              focusWindow={focusWindow}
+              minimizeWindow={minimizeWindow}
+              wallpaper={desktopWallpaper}
+              setWallpaper={setDesktopWallpaper}
+              pinnedNames={pinnedChannelNames}
+              setPinnedNames={setPinnedChannelNames}
+              featureFlags={featureFlags}
+              setFeatureFlags={setFeatureFlags}
+            />
+            <AnimatePresence>
+              {windows.filter(w => !w.isMinimized).map(win => (
+                <AppWindowContainer
+                  key={win.id}
+                  window={win}
+                  isActive={activeWindowId === win.id}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                  isDark={isDark}
+                >
+                  {win.type === "settings" && (
+                    <div className="h-full overflow-y-auto p-6">
+                      <SettingsContent 
+                          isDark={isDark} 
+                          setIsDark={setIsDark} 
+                          isDev={isDev} 
+                          setIsDev={setIsDev} 
+                          featureFlags={featureFlags}
+                          setFeatureFlags={setFeatureFlags}
+                          liquidGlass={liquidGlass} 
+                          setLiquidGlass={setLiquidGlass}
+                          useSidebar={useSidebar}
+                          setUseSidebar={setUseSidebar}
+                          isSidebarRight={isSidebarRight}
+                          setIsSidebarRight={setIsSidebarRight}
+                          isPinningEnabled={isPinningEnabled}
+                          setIsPinningEnabled={setIsPinningEnabled}
+                          user={user}
+                          userData={userData}
+                          setUserData={setUserData}
+                          onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
+                          onLogin={handleLogin}
+                          favorites={favorites}
+                          onUpdateLogsClick={() => openWindow("logs")}
+                          backgroundMusicOption={backgroundMusicOption}
+                          setBackgroundMusicOption={setBackgroundMusicOption}
+                          customMusicId={customMusicId}
+                          setCustomMusicId={setCustomMusicId}
+                          searchBoxPosition={searchBoxPosition}
+                          setSearchBoxPosition={setSearchBoxPosition}
+                        />
+                    </div>
+                  )}
+                  {win.type === "tv" && (
+                    <div className="h-full bg-black flex flex-col">
+                        <TVContent 
+                          active={win.contentProps.channel} 
+                          setActive={(ch) => openWindow("tv", { channel: ch })} 
+                          isDark={true} 
+                          favorites={favorites} 
+                          toggleFavorite={toggleFavorite} 
+                          user={user}
+                          onLogin={handleLogin}
+                          isDev={isDev}
+                          liquidGlass="glassy"
+                          sortOrder={sortOrder}
+                          setSortOrder={setSortOrder}
+                          showSplash={false}
+                          featureFlags={featureFlags}
+                          searchQuery=""
+                          minimalMode={true}
+                        />
+                    </div>
+                  )}
+                  {win.type === "logs" && (
+                    <UpdateLogsContent isDark={isDark} onBack={() => closeWindow(win.id)} />
+                  )}
+                  {win.type === "browser" && (
+              <BrowserContent initialUrl={win.contentProps?.url} />
+            )}
+            {win.type === "debug" && (
+                    <div className={isDark ? "bg-[#1a1c23] h-full" : "bg-white h-full"}>
+                      <DebugContent 
+                        isDark={isDark}
+                        featureFlags={featureFlags}
+                        setFeatureFlags={setFeatureFlags}
+                        setUser={setUser}
+                        setIsAdmin={setIsAdmin}
+                        setIsDev={setIsDev}
+                        setIsDark={setIsDark}
+                        setLiquidGlass={setLiquidGlass}
+                        setIsSidebarRight={setIsSidebarRight}
+                        setUseSidebar={setUseSidebar}
+                        onAlert={(title, message) => setCustomAlert({ title, message })}
+                        isFloating={true}
+                        setIsFloating={() => {}}
+                      />
+                    </div>
+                  )}
+                </AppWindowContainer>
+              ))}
+            </AnimatePresence>
+          </div>
+        </Fragment>
+      ) : (
+        <Fragment>
+          <div 
+            className={`flex-1 flex flex-col min-h-screen relative overflow-hidden transition-[padding] duration-300 ${
+              useSidebar && !isMobile 
+                ? (isSidebarRight 
+                    ? "pl-8" 
+                    : "pr-8"
+                  ) 
+                : "px-0"
+            }`}
+            style={useSidebar && !isMobile ? {
+              paddingRight: isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
+              paddingLeft: !isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
+            } : {}}
+          >
         {/* Background Watermarks */}
         <div className="fixed top-1/4 -left-20 text-[10vw] font-black opacity-[0.03] select-none pointer-events-none rotate-12 z-0 leading-tight">
           Work in progress<br/>Testing purposes only
@@ -3872,6 +4659,29 @@ function App() {
         </LiquidModal>
 
         <div className={`flex-1 overflow-y-auto pb-32 flex flex-col transition-all duration-1000`}>
+          {searchBoxPosition === "top" && (
+            <div className="flex justify-center p-6 sticky top-0 z-[100]">
+              <div className="relative group w-full max-w-xl transition-all duration-500">
+                <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-[32px] blur opacity-20 group-focus-within:opacity-40 transition duration-500`} />
+                <div className={`relative flex items-center transition-all duration-500 overflow-hidden shadow-2xl ${
+                  liquidGlass === "glassy" 
+                    ? "bg-white/10 backdrop-blur-[120px] border border-white/20 rounded-[32px] h-14" 
+                    : liquidGlass === "tinted"
+                      ? "bg-white/80 backdrop-blur-[100px] border border-white/80 rounded-[32px] h-14"
+                      : "bg-[#1a1c23] border border-white/10 rounded-2xl h-14"
+                }`}>
+                  <SearchBar 
+                    isDark={isDark} 
+                    query={searchQuery} 
+                    setQuery={setSearchQuery} 
+                    onClose={() => {}} 
+                    liquidGlass={liquidGlass}
+                    isTop={true}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={displayTab}
@@ -3882,7 +4692,42 @@ function App() {
               className="h-full flex flex-col"
             >
               {(displayTab === "Trang chủ") && (
-                <HomeContent isDark={isDark} onSwitchToDev={() => setShowDevConfirm(true)} />
+                <div className="flex-1 flex flex-col p-8">
+                  {/* ADVERTISEMENT BANNER */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-10 relative overflow-hidden rounded-[40px] bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 p-8 md:p-12 shadow-2xl border border-white/10 group"
+                  >
+                      <div className="absolute inset-0 bg-[url('https://4kwallpapers.com/images/walls/thumbs_3t/16795.png')] opacity-20 bg-cover bg-center mix-blend-overlay" />
+                      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="space-y-4 text-center md:text-left">
+                          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em]">
+                            <Zap size={12} className="fill-amber-500" />
+                            Early Access
+                          </div>
+                          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none">
+                            Trải nghiệm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Vplay OS</span> ngay!
+                          </h2>
+                          <p className="text-white/70 font-bold text-lg max-w-2xl leading-relaxed">
+                             Vẫn là Vplay mà bạn biết nhưng với giao diện hệ điều hành thông minh và tiện lợi hơn!
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setFeatureFlags({ ...featureFlags, windows_mode: true });
+                          }}
+                          className="px-10 py-5 bg-white hover:bg-slate-100 text-blue-900 rounded-[32px] font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl whitespace-nowrap flex items-center gap-3"
+                        >
+                          Thử ngay bây giờ
+                          <ArrowRight size={18} />
+                        </button>
+                      </div>
+                      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                      <div className="absolute -top-20 -left-20 w-80 h-80 bg-purple-500/20 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                    </motion.div>
+                  <HomeContent isDark={isDark} onSwitchToDev={() => setShowDevConfirm(true)} />
+                </div>
               )}
               {displayTab === "Lưu trữ" && (
                 <EventsContent isDark={isDark} liquidGlass={liquidGlass} />
@@ -4007,6 +4852,8 @@ function App() {
                     setBackgroundMusicOption={setBackgroundMusicOption}
                     customMusicId={customMusicId}
                     setCustomMusicId={setCustomMusicId}
+                    searchBoxPosition={searchBoxPosition}
+                    setSearchBoxPosition={setSearchBoxPosition}
                   />
                 </div>
               )}
@@ -4461,7 +5308,7 @@ function App() {
                 </motion.div>
               </div>
             ) : (
-              (liquidGlass === "glassy" || liquidGlass === "tinted") && (
+              (liquidGlass === "glassy" || liquidGlass === "tinted") && searchBoxPosition === "sidebar" && (
                 <motion.button
                   key="search-circle"
                   layoutId="search-button"
@@ -4491,11 +5338,13 @@ function App() {
           <Tooltip text={hoveredTab || ""} show={!!hoveredTab} targetRect={hoveredTabRect} />
         </motion.div>
       </div>
+        </Fragment>
+      )}
 
       {/* Global Watermark */}
-      <div className="fixed bottom-6 right-6 z-[9999] text-right pointer-events-none select-none opacity-50 mix-blend-difference">
-        <div className="text-[12px] font-black text-white uppercase tracking-[0.2em]">Vplay Canary SMR26 - Build 28000</div>
-        <div className="text-[10px] text-white/90 leading-tight mt-1.5 font-medium">
+      <div className={`fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 ${featureFlags.windows_mode ? "opacity-100" : "opacity-50 mix-blend-difference"}`}>
+        <div className={`text-[12px] font-black uppercase tracking-[0.2em] ${featureFlags.windows_mode ? "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" : "text-white"}`}>Vplay Canary SMR26 - Build 28000</div>
+        <div className={`text-[10px] leading-tight mt-1.5 font-medium ${featureFlags.windows_mode ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" : "text-white/90"}`}>
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
         </div>
