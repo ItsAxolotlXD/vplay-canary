@@ -22,7 +22,7 @@ const SettingsIcon = ({ className }: { className?: string }) => (
 
 const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => void }) => {
   useEffect(() => {
-    const timer = setTimeout(onEnter, 1500);
+    const timer = setTimeout(onEnter, 5000);
     return () => clearTimeout(timer);
   }, [onEnter]);
 
@@ -3853,16 +3853,6 @@ function App() {
                             </motion.div>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500">Music Playing</span>
                          </div>
-                         <div className="hidden">
-                           <iframe 
-                            width="0" 
-                            height="0" 
-                            src="https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1" 
-                            title="Background Music"
-                            allow="autoplay"
-                            frameBorder="0"
-                           />
-                         </div>
                       </div>
                     )}
                   </div>
@@ -4473,6 +4463,19 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {(featureFlags?.xaml_view_test && featureFlags?.music_background) && (
+        <div className="hidden">
+          <iframe 
+            width="0" 
+            height="0" 
+            src="https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1" 
+            title="Background Music"
+            allow="autoplay"
+            frameBorder="0"
+          />
+        </div>
+      )}
     </div>
   </MotionConfig>
 );
