@@ -115,7 +115,6 @@ const Sparkles2 = ({ className }: { className?: string }) => (
 const baseTabs = [
   { name: "Trang chủ", icon: Home, id: "Trang chủ" },
   { name: "Phát sóng", icon: Tv, id: "Phát sóng" },
-  { name: "Vids", icon: Film, id: "Vids" },
   { name: "Bảo tàng lưu trữ", icon: Calendar, id: "Lưu trữ" },
   { name: "Quản trị", icon: Shield, id: "Quản trị" },
   { name: "Cài đặt", icon: Settings, id: "Cài đặt" },
@@ -377,13 +376,10 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const availableFlags = [
-    { id: 'vids_for_uploads', name: 'Vids', desc: 'Kích hoạt tính năng cho phép các user tự đăng tải video của bản thân lên web' },
-    { id: 'xaml_view_test', name: 'XAML View', desc: 'Sử dụng chế độ xem tối giản với màu nền xám đậm (Solid Dark Gray)' },
     { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả' },
     { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc' },
     { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' },
-    { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' },
-    { id: 'music_background', name: 'Background music', desc: 'Phát nhạc trong nền khi đang sử dụng web (Yêu cầu XAML View)' }
+    { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' }
   ];
 
   useEffect(() => {
@@ -2393,7 +2389,11 @@ function SettingsContent({
   onAlert,
   onLogin,
   onUpdateLogsClick,
-  favorites
+  favorites,
+  backgroundMusicOption,
+  setBackgroundMusicOption,
+  customMusicId,
+  setCustomMusicId
 }: { 
   isDark: boolean, 
   setIsDark: (val: boolean) => void, 
@@ -2415,7 +2415,11 @@ function SettingsContent({
   onAlert: (title: string, msg: string) => void,
   onLogin: () => void,
   onUpdateLogsClick: () => void,
-  favorites: string[]
+  favorites: string[],
+  backgroundMusicOption: string,
+  setBackgroundMusicOption: (val: string) => void,
+  customMusicId: string,
+  setCustomMusicId: (val: string) => void
 }) {
   const [name, setName] = useState(userData?.displayName || user?.displayName || "");
   const [avatar, setAvatar] = useState(userData?.photoURL || user?.photoURL || "");
@@ -2799,6 +2803,46 @@ function SettingsContent({
               </div>
             </div>
 
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <Music size={14} className="text-purple-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Background Music</span>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className={`p-4 rounded-2xl border ${isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200 shadow-sm"}`}>
+                  <select 
+                    value={backgroundMusicOption}
+                    onChange={(e) => setBackgroundMusicOption(e.target.value)}
+                    className={`w-full bg-transparent outline-none text-xs font-bold ${isDark ? "text-white" : "text-slate-900"}`}
+                  >
+                    <option value="xp" className={isDark ? "bg-slate-900" : ""}>Track 1: Windows XP Tour Music</option>
+                    <option value="minecraft" className={isDark ? "bg-slate-900" : ""}>Track 2: Minecraft Music Disc</option>
+                    <option value="queue" className={isDark ? "bg-slate-900" : ""}>Queue: Windows XP & Minecraft</option>
+                    <option value="custom" className={isDark ? "bg-slate-900" : ""}>Custom: Youtube Song</option>
+                    <option value="off" className={isDark ? "bg-slate-900" : ""}>Turn off</option>
+                  </select>
+                </div>
+
+                {backgroundMusicOption === "custom" && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2"
+                  >
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-30 ml-2 italic">Dán Youtube ID hoặc Link vào đây</label>
+                    <input 
+                      value={customMusicId}
+                      onChange={(e) => setCustomMusicId(e.target.value)}
+                      placeholder="e.g. 47x_9SErB-Q"
+                      className={`w-full px-5 py-3 rounded-2xl border text-xs font-bold transition-all focus:ring-2 focus:ring-purple-500/20 outline-none ${
+                        isDark ? "bg-white/5 border-white/10 text-white placeholder:text-white/10" : "bg-slate-50 border-slate-200 text-slate-900"
+                      }`}
+                    />
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
             {useSidebar && (
               <>
                 <div className="space-y-3">
@@ -2879,13 +2923,10 @@ function SettingsContent({
 
         <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
           {([
-            { id: 'vids_for_uploads', name: 'Vids', desc: 'Kích hoạt tính năng cho phép các user tự đăng tải video của bản thân lên web', active: featureFlags.vids_for_uploads },
-            { id: 'xaml_view_test', name: 'XAML View', desc: 'Sử dụng chế độ xem tối giản với màu nền xám đậm (Solid Dark Gray)', active: featureFlags.xaml_view_test },
             { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả', active: featureFlags.sidebar_resizable },
             { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc', active: featureFlags.multiview_experimental },
             { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
-            { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
-            { id: 'music_background', name: 'Background music', desc: 'Phát nhạc trong nền khi đang sử dụng web (Yêu cầu XAML View)', active: featureFlags.music_background }
+            { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -3284,6 +3325,12 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
 
 function App() {
   const [showDevConfirm, setShowDevConfirm] = useState(false);
+  const [backgroundMusicOption, setBackgroundMusicOption] = useState(() => {
+    return localStorage.getItem("vplay_bg_music_option") || "queue";
+  });
+  const [customMusicId, setCustomMusicId] = useState(() => {
+    return localStorage.getItem("vplay_custom_music_id") || "";
+  });
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDev, setIsDev] = useState(() => {
     return localStorage.getItem("vplay_dev_mode") === "true";
@@ -3299,11 +3346,10 @@ function App() {
       const defaults = { 
         multiview_experimental: false, 
         disable_animation: false, 
-        vids_for_uploads: true, 
         sidebar_resizable: false, 
-        xaml_view_test: false,
-        settings_vertical: false,
-        music_background: false
+        xaml_view_test: true,
+        settings_vertical: true,
+        music_background: true
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -3312,11 +3358,10 @@ function App() {
       return { 
         multiview_experimental: false, 
         disable_animation: false, 
-        vids_for_uploads: true, 
         sidebar_resizable: false, 
-        xaml_view_test: false,
-        settings_vertical: false,
-        music_background: false
+        xaml_view_test: true,
+        settings_vertical: true,
+        music_background: true
       };
     }
   });
@@ -3331,7 +3376,8 @@ function App() {
   const [hoveredTabRect, setHoveredTabRect] = useState<DOMRect | null>(null);
   const [liquidGlass, setLiquidGlass] = useState<"glassy" | "tinted">("glassy");
   const [useSidebar, setUseSidebar] = useState(() => {
-    return localStorage.getItem("vplay_sidebar") === "true";
+    const saved = localStorage.getItem("vplay_sidebar");
+    return saved === null ? true : saved === "true";
   });
   const [isSidebarRight, setIsSidebarRight] = useState(() => {
     return localStorage.getItem("vplay_sidebar_right") === "true";
@@ -3384,6 +3430,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem("vplay_feature_flags", JSON.stringify(featureFlags));
   }, [featureFlags]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_bg_music_option", backgroundMusicOption);
+  }, [backgroundMusicOption]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_custom_music_id", customMusicId);
+  }, [customMusicId]);
 
   const paginate = (newDirection: number) => {
     setDirection(newDirection);
@@ -3897,9 +3951,6 @@ function App() {
                   searchQuery={searchQuery}
                 />
               )}
-              {displayTab === "Vids" && (
-                <VidsContent isDark={isDark} user={user} liquidGlass={liquidGlass} onLogin={handleLogin} />
-              )}
               {displayTab === "Cài đặt" && (
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 max-w-4xl mx-auto w-full">
                   <div className="flex items-center justify-between">
@@ -3912,7 +3963,7 @@ function App() {
                         <p className={`mt-2 ${isDark ? "text-slate-400" : "text-slate-500"}`}>Quản lý trải nghiệm và cấu hình hệ thống Vplay</p>
                       </div>
                     </div>
-                    {(featureFlags?.xaml_view_test && featureFlags?.music_background) && (
+                    {(featureFlags?.xaml_view_test && featureFlags?.music_background && backgroundMusicOption !== "off") && (
                       <div className="relative group">
                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                          <div className={`relative px-4 py-2 rounded-xl flex items-center gap-3 ${isDark ? "bg-[#1a1c23]" : "bg-white"} border border-white/5`}>
@@ -3952,6 +4003,10 @@ function App() {
                     onLogin={handleLogin}
                     favorites={favorites}
                     onUpdateLogsClick={() => setActiveTab("Update Logs")}
+                    backgroundMusicOption={backgroundMusicOption}
+                    setBackgroundMusicOption={setBackgroundMusicOption}
+                    customMusicId={customMusicId}
+                    setCustomMusicId={setCustomMusicId}
                   />
                 </div>
               )}
@@ -4542,12 +4597,30 @@ function App() {
         )}
       </AnimatePresence>
 
-      {(featureFlags?.xaml_view_test && featureFlags?.music_background) && (
+      {(featureFlags?.xaml_view_test && featureFlags?.music_background && backgroundMusicOption !== "off") && (
         <div className="hidden">
           <iframe 
             width="0" 
             height="0" 
-            src="https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1" 
+            src={(() => {
+              switch (backgroundMusicOption) {
+                case "xp":
+                  return "https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1";
+                case "minecraft":
+                  return "https://www.youtube.com/embed/fl_Xkd-ZS6s?autoplay=1&loop=1&playlist=fl_Xkd-ZS6s&controls=0&showinfo=0&autohide=1";
+                case "queue":
+                  // XP Track (47x_9SErB-Q) followed by Minecraft (fl_Xkd-ZS6s)
+                  return "https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q,fl_Xkd-ZS6s&mute=0&controls=0&showinfo=0&autohide=1&enablejsapi=1&origin=" + window.location.origin;
+                case "custom":
+                  if (!customMusicId) return "";
+                  let id = customMusicId;
+                  if (id.includes("v=")) id = id.split("v=")[1].split("&")[0];
+                  else if (id.includes("youtu.be/")) id = id.split("youtu.be/")[1].split("?")[0];
+                  return `https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&autohide=1`;
+                default:
+                  return "";
+              }
+            })()} 
             title="Background Music"
             allow="autoplay"
             frameBorder="0"
