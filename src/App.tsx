@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
+import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -20,7 +20,22 @@ const SettingsIcon = ({ className }: { className?: string }) => (
   <Settings className={`${className} flex-shrink-0`} />
 );
 
-const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => void }) => {
+const vplayLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi";
+const splashLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi";
+const startIcon = "https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi";
+
+const SplashView = ({ text }: { text: string }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[20000] bg-[#1a1a1a] flex flex-col items-center justify-center gap-6"
+  >
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" className="w-12 h-12 invert" alt="Loading" />
+    <p className="text-white/60 font-black uppercase tracking-[0.2em] text-xs">{text}</p>
+  </motion.div>
+);
+const SplashScreen = ({ isDark, onEnter, isSessionChange = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean }) => {
   const [isConfiguring, setIsConfiguring] = useState(false);
 
   useEffect(() => {
@@ -28,7 +43,7 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
     setIsConfiguring(configuring);
     
     // Default 10s, but if configuring experiments, stay for 30s
-    const duration = configuring ? 30000 : 10000;
+    const duration = configuring || isSessionChange ? (isSessionChange ? 10000 : 30000) : 10000;
     
     const timer = setTimeout(() => {
       if (configuring) {
@@ -38,14 +53,14 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
     }, duration);
     
     return () => clearTimeout(timer);
-  }, [onEnter]);
+  }, [onEnter, isSessionChange]);
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#1a1a1a]"
+      className="fixed inset-0 z-[100001] flex flex-col items-center justify-center bg-[#1a1a1a]"
     >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
@@ -72,7 +87,7 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
             transition={{ delay: 0.5, duration: 1 }}
             className="text-white/40 text-sm md:text-base font-medium tracking-[0.2em] uppercase text-center max-w-xs md:max-w-none"
           >
-            {isConfiguring ? "Hệ thống đang áp dụng các thay đổi" : "Gói trọn Việt Nam trong tầm mắt bạn"}
+            {isSessionChange ? "Vplay Canary OS" : (isConfiguring ? "Hệ thống đang áp dụng các thay đổi" : "Gói trọn Việt Nam trong tầm mắt bạn")}
           </motion.p>
           
           <motion.div
@@ -88,7 +103,7 @@ const SplashScreen = ({ isDark, onEnter }: { isDark: boolean, onEnter: () => voi
               referrerPolicy="no-referrer"
             />
             <span className="text-white/60 text-xl font-medium tracking-tight">
-              {isConfiguring ? "Configuring Experiments..." : "Chào mừng!"}
+              {isSessionChange ? "Preparing new experience..." : (isConfiguring ? "Configuring Experiments..." : "Chào mừng!")}
             </span>
           </motion.div>
         </div>
@@ -168,24 +183,32 @@ function LiquidModal({ isOpen, onClose, children, isDark, title, description, li
   );
 }
 
-function Tooltip({ text, show, targetRect }: { text: string, show: boolean, targetRect: DOMRect | null }) {
+function Tooltip({ text, show, targetRect, isDesktop = false }: { text: string, show: boolean, targetRect: DOMRect | null, isDesktop?: boolean }) {
   return (
     <AnimatePresence>
       {show && targetRect && (
         <motion.div
-          initial={{ opacity: 0, y: 10, scale: 0.8 }}
+          initial={{ opacity: 0, y: isDesktop ? -10 : 10, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.8 }}
+          exit={{ opacity: 0, y: isDesktop ? -10 : 10, scale: 0.8 }}
           style={{ 
             position: 'fixed', 
-            top: targetRect.top - 50, 
+            top: isDesktop ? targetRect.top - 45 : targetRect.top - 50, 
             left: targetRect.left + (targetRect.width / 2),
             translateX: '-50%'
           }}
-          className="px-4 py-2 bg-white/80 backdrop-blur-xl text-slate-900 text-[12px] font-black rounded-2xl whitespace-nowrap pointer-events-none z-[100] shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-white/40"
+          className={`px-3 py-1.5 backdrop-blur-xl text-[10px] font-black rounded-xl whitespace-nowrap pointer-events-none z-[10001] shadow-[0_10px_30px_rgba(0,0,0,0.2)] border ${
+            isDesktop 
+              ? "bg-[#1f1f1f]/90 text-white border-white/10" 
+              : "bg-white/80 text-slate-900 border-white/40"
+          }`}
         >
           {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-white/80" />
+          <div className={`absolute left-1/2 -translate-x-1/2 border-[5px] border-transparent ${
+            isDesktop 
+              ? "top-full border-t-[#1f1f1f]/90" 
+              : "top-full border-t-white/80"
+          }`} />
         </motion.div>
       )}
     </AnimatePresence>
@@ -355,47 +378,61 @@ function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev
 }
 
 
-function BrowserContent({ initialUrl = "https://www.google.com/search?q=Vplay+TV&igu=1" }: { initialUrl?: string }) {
+function BrowserContent({ initialUrl = "https://www.google.com/search?igu=1" }: { initialUrl?: string }) {
   const [url, setUrl] = useState(initialUrl);
   const [inputUrl, setInputUrl] = useState(initialUrl);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleGo = (e: FormEvent) => {
     e.preventDefault();
-    let target = inputUrl;
-    if (!target.startsWith("http")) target = "https://" + target;
+    let target = inputUrl.trim();
+    if (!target) return;
+    
+    // If it's a search term (no dot or starts with search), use google
+    if (!target.includes(".") && !target.startsWith("http")) {
+      target = `https://www.google.com/search?q=${encodeURIComponent(target)}&igu=1`;
+    } else if (!target.startsWith("http")) {
+      target = "https://" + target;
+    }
+    
     setUrl(target);
+    setInputUrl(target);
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f0f0f0]">
-      <div className="flex items-center gap-2 p-2 bg-[#e0e0e0] border-b border-black/10">
-        <div className="flex items-center gap-1">
-          <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><ChevronLeft size={16} /></button>
-          <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><ChevronRight size={16} /></button>
-          <button onClick={() => setUrl(url)} className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><RotateCcw size={16} /></button>
+    <div className="flex flex-col h-full bg-[#f8f9fa]">
+      <div className="flex items-center gap-3 px-4 py-2 bg-white border-b border-black/5 shadow-sm z-10">
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => window.history.back()} className="p-1.5 hover:bg-black/5 rounded-lg transition-colors text-slate-600"><ChevronLeft size={18} /></button>
+          <button onClick={() => window.history.forward()} className="p-1.5 hover:bg-black/5 rounded-lg transition-colors text-slate-600"><ChevronRight size={18} /></button>
+          <button onClick={() => setUrl(prev => prev + "")} className="p-1.5 hover:bg-black/5 rounded-lg transition-colors text-slate-600"><RotateCcw size={18} /></button>
         </div>
-        <form onSubmit={handleGo} className="flex-1 flex items-center bg-white rounded-lg px-3 py-1.5 border border-black/5 shadow-sm">
-          <Globe size={14} className="text-slate-400 mr-2" />
+        <form onSubmit={handleGo} className="flex-1 flex items-center bg-slate-100 rounded-xl px-4 py-2 border border-transparent focus-within:border-blue-500/30 focus-within:bg-white focus-within:shadow-md transition-all">
+          <Globe size={14} className="text-slate-400 mr-3" />
           <input 
-            className="flex-1 bg-transparent outline-none text-xs text-slate-700 font-medium"
+            className="flex-1 bg-transparent outline-none text-xs text-slate-700 font-bold placeholder:text-slate-400"
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
+            placeholder="Nhập URL hoặc tìm kiếm..."
           />
         </form>
-        <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><Star size={16} className="text-yellow-500" /></button>
-        <button className="p-1.5 hover:bg-black/10 rounded-md transition-colors"><Menu size={16} /></button>
+        <button className="p-2 hover:bg-yellow-500/10 rounded-lg transition-colors"><Star size={18} className="text-amber-400" /></button>
+        <button className="p-2 hover:bg-black/5 rounded-lg transition-colors text-slate-600"><Menu size={18} /></button>
       </div>
-      <div className="flex-1 bg-white relative">
+      <div className="flex-1 bg-white relative overflow-hidden">
         <iframe 
           ref={iframeRef}
           src={url} 
           className="w-full h-full border-none"
           title="V-Browser"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          referrerPolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation allow-downloads"
         />
-        <div className="absolute top-0 left-0 w-full p-2 bg-blue-500/10 text-[10px] font-bold text-blue-600 border-b border-blue-500/20 pointer-events-none">
-          SECURE CONNECTION • V-BROWSER PROXY ACTIVE
+        <div className="absolute bottom-4 right-4 animate-pulse">
+           <div className="px-3 py-1 bg-blue-500/10 backdrop-blur-md border border-blue-500/20 rounded-full flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">Vplay Proxy Shield Active</span>
+           </div>
         </div>
       </div>
     </div>
@@ -3312,7 +3349,7 @@ function AuthModal({ isOpen, onClose, isDark, liquidGlass, setIsDev, setUserData
 }
 
 function AppWindowContainer({ 
-  window, 
+  win, 
   onClose, 
   onMinimize, 
   onMaximize,
@@ -3321,24 +3358,50 @@ function AppWindowContainer({
   children, 
   isDark 
 }: { 
-  window: AppWindow, 
+  win: AppWindow, 
   onClose: () => void, 
   onMinimize: () => void, 
   onMaximize: () => void,
   onFocus: () => void, 
   isActive: boolean,
   children: ReactNode,
-  isDark: boolean,
-  key?: string | number
+  isDark: boolean
 }) {
-  const isMaximized = window.isMaximized;
+  const isMaximized = win.isMaximized;
+  const [size, setSize] = useState({ width: win.width || 800, height: win.height || 550 });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: any) => {
+      if (resizeRef.current) {
+        const rect = resizeRef.current.parentElement?.getBoundingClientRect();
+        if (rect) {
+          const newWidth = Math.max(400, e.clientX - rect.left);
+          const newHeight = Math.max(300, e.clientY - rect.top);
+          setSize({ width: newWidth, height: newHeight });
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
 
   const windowVariants = {
     normal: {
       scale: 1,
       opacity: 1,
-      x: 0,
-      y: 0,
       transition: { type: "spring", damping: 25, stiffness: 300 }
     },
     minimized: {
@@ -3349,49 +3412,99 @@ function AppWindowContainer({
     }
   };
 
+  const controlsColorClass = !isDark ? "text-slate-800 hover:text-black" : "text-white/60 hover:text-white";
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
-      animate={window.isMinimized ? "minimized" : "normal"}
+      animate={win.isMinimized ? "minimized" : "normal"}
       variants={windowVariants}
       exit={{ scale: 0.9, opacity: 0 }}
-      drag={!isMaximized}
+      drag={!isMaximized && !isResizing}
       dragMomentum={false}
       onMouseDown={onFocus}
-      style={{ zIndex: window.zIndex }}
-      className={`fixed flex flex-col shadow-2xl border overflow-hidden transition-all duration-300 ${
+      style={{ 
+        zIndex: win.zIndex,
+        width: isMaximized ? "100%" : size.width,
+        height: isMaximized ? "100%" : size.height,
+        left: isMaximized ? 0 : win.x,
+        top: isMaximized ? 0 : win.y
+      }}
+      className={`fixed flex flex-col shadow-2xl border overflow-hidden transition-colors duration-300 ${
         isDark ? "bg-[#1c1c1c] border-white/10" : "bg-white border-slate-200"
-      } ${isMaximized ? "inset-0 rounded-none z-[60]" : "top-20 left-20 w-[800px] h-[550px] rounded-xl"}`}
+      } ${isMaximized ? "inset-0 rounded-none z-[60]" : "rounded-2xl"}`}
     >
+      {/* Resize handles */}
+      {!isMaximized && (
+        <>
+          <div 
+            onMouseDown={(e) => { e.stopPropagation(); setIsResizing(true); }}
+            className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize z-[100] group"
+          >
+            <div className={`absolute bottom-2 right-2 w-2 h-2 rounded-full border border-blue-500/50 opacity-0 group-hover:opacity-100 transition-opacity`} />
+          </div>
+          {/* Edge resizers could be added here for full win11 like experience, but corner is minimum requested */}
+        </>
+      )}
+      
       {/* Title Bar */}
-      <div className={`h-10 px-4 flex items-center justify-between select-none cursor-default ${
-        isActive ? (isDark ? "bg-white/5" : "bg-slate-100") : ""
+      <div className={`h-11 px-4 flex items-center justify-between select-none cursor-default shrink-0 ${
+        isActive ? (isDark ? "bg-white/5" : "bg-slate-50") : ""
       }`}>
-        <div className="flex items-center gap-2">
-          {window.type === "tv" ? (
-             <Tv size={14} className="text-purple-500" />
-          ) : window.type === "settings" ? (
-             <Settings size={14} className="text-blue-500" />
-          ) : (
-             <FileCode size={14} className="text-slate-500" />
-          )}
-          <span className="text-xs font-bold truncate max-w-[200px]">{window.title}</span>
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 flex items-center justify-center">
+            {win.type === "tv" ? (
+               <Tv size={16} className="text-purple-500" />
+            ) : win.type === "settings" ? (
+               <Settings size={16} className="text-blue-500" />
+            ) : win.type === "browser" ? (
+               <Globe size={16} className="text-orange-500" />
+            ) : (
+               <FileCode size={16} className="text-slate-400" />
+            )}
+          </div>
+          <span className={`text-[11px] font-black uppercase tracking-widest truncate max-w-[200px] ${!isDark ? "text-slate-900" : "text-white"}`}>{win.title}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onMinimize} className="p-2 hover:bg-white/10 rounded-md transition-colors" title="Minimize">
-            <Minimize2 size={14} />
+          <button onClick={onMinimize} className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-all ${controlsColorClass}`} title="Minimize">
+            <Minimize2 size={16} />
           </button>
-          <button onClick={onMaximize} className="p-2 hover:bg-white/10 rounded-md transition-colors" title={isMaximized ? "Restore" : "Maximize"}>
-            <Square size={12} className={isMaximized ? "scale-75" : ""} />
+          <button onClick={onMaximize} className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-all ${controlsColorClass}`} title={isMaximized ? "Restore" : "Maximize"}>
+            <Square size={14} className={isMaximized ? "scale-75" : ""} />
           </button>
-          <button onClick={onClose} className="p-2 hover:bg-red-500 text-white hover:text-white rounded-md transition-colors group" title="Close">
-            <X size={14} className="group-hover:scale-110" />
+          <button onClick={onClose} className="p-2 hover:bg-red-500 text-white rounded-lg transition-all group ml-1" title="Close">
+            <X size={16} className={`group-hover:scale-110 transition-transform ${!isDark ? "text-black group-hover:text-white" : "text-white"}`} />
           </button>
         </div>
       </div>
+      
       {/* Content */}
-      <div className="flex-1 overflow-hidden relative">
-        {children}
+      <div className="flex-1 min-h-0 bg-black overflow-hidden relative">
+        {win.type === "tv" && (
+          <TVContent 
+            active={win.contentProps?.channel} 
+            setActive={(ch) => win.contentProps?.onSwitchChannel?.(ch)} 
+            favorites={[]} 
+            toggleFavorite={() => {}} 
+            onLogin={() => {}} 
+            user={null} 
+            isDark={isDark}
+            liquidGlass="glassy"
+            sortOrder="grid"
+            setSortOrder={() => {}}
+            featureFlags={featureFlags}
+            searchQuery=""
+          />
+        )}
+        {win.type === "settings" && (
+          <SettingsContent {...win.contentProps} />
+        )}
+        {win.type === "browser" && (
+          <BrowserContent />
+        )}
+        {win.type === "vplay_web" && (
+          <iframe src="https://vplay-beta-fa8k.vercel.app" className="w-full h-full border-none" title="Vplay Web" />
+        )}
       </div>
     </motion.div>
   );
@@ -3400,10 +3513,11 @@ function AppWindowContainer({
 function WindowsDesktop({ 
   channels, 
   onOpenApp, 
-  isDark,
-  windows,
-  activeWindowId,
-  setWindows,
+  isDark, 
+  setIsDark, 
+  windows, 
+  activeWindowId, 
+  setWindows, 
   setActiveWindowId,
   focusWindow,
   minimizeWindow,
@@ -3412,41 +3526,25 @@ function WindowsDesktop({
   pinnedNames,
   setPinnedNames,
   featureFlags,
-  setFeatureFlags
-}: { 
-  channels: Channel[], 
-  onOpenApp: (type: "settings" | "tv" | "logs" | "browser" | "debug" | "search", props?: any) => void,
-  isDark: boolean,
-  windows: AppWindow[],
-  activeWindowId: string | null,
-  setWindows: Dispatch<SetStateAction<AppWindow[]>>,
-  setActiveWindowId: (id: string | null) => void,
-  focusWindow: (id: string) => void,
-  minimizeWindow: (id: string) => void,
-  wallpaper: string,
-  setWallpaper: (url: string) => void,
-  pinnedNames: string[],
-  setPinnedNames: Dispatch<SetStateAction<string[]>>,
-  featureFlags: any,
-  setFeatureFlags: (flags: any) => void
-}) {
+  setFeatureFlags,
+  taskbarPos,
+  setTaskbarPos,
+  taskbarAlign,
+  setTaskbarAlign,
+  onExitSession,
+  systemVolume,
+  setSystemVolume,
+  musicProgress,
+  setMusicProgress,
+  weatherCity
+}: any) {
+  const [showWidgets, setShowWidgets] = useState(false);
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [showDesktopSearch, setShowDesktopSearch] = useState(false);
+  const [showQuickAccess, setShowQuickAccess] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, ch: Channel | null } | null>(null);
-
-  const filteredChannels = channels.filter(ch => 
-    ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ch.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const desktopChannels = channels.filter(ch => pinnedNames.includes(ch.name));
-
-  const handleContextMenu = (e: MouseEvent, ch: Channel | null = null) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, ch });
-  };
-
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -3454,31 +3552,293 @@ function WindowsDesktop({
     return () => clearInterval(timer);
   }, []);
 
+  const [weatherData, setWeatherData] = useState<{ temp: number, condition: string }>({ temp: 28, condition: "Partly Sunny" });
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=10.75&longitude=106.67&current_weather=true");
+        const data = await res.json();
+        if (data.current_weather) {
+          setWeatherData({
+            temp: Math.round(data.current_weather.temperature),
+            condition: data.current_weather.weathercode <= 3 ? "Clear/Partly Cloudy" : "Cloudy/Rainy"
+          });
+        }
+      } catch (e) {
+        console.error("Weather fetch failed", e);
+      }
+    };
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 600000); // 10 mins
+    return () => clearInterval(interval);
+  }, []);
+
+  const [pinnedWidgets, setPinnedWidgets] = useState<any[]>(() => {
+    return [
+      { id: 'weather', type: 'weather', size: 'medium' },
+      { id: 'stocks', type: 'stocks', size: 'small' },
+      { id: 'sports', type: 'sports', size: 'small' }
+    ];
+  });
+  const [showWidgetGallery, setShowWidgetGallery] = useState(false);
+
+  const addWidget = (type: string, size: string) => {
+    const newWidget = { id: Date.now().toString(), type, size };
+    setPinnedWidgets([...pinnedWidgets, newWidget]);
+    setShowWidgetGallery(false);
+  };
+
+  const handleExitSession = () => {
+    setShowExitConfirm(true);
+    setShowQuickAccess(false);
+  };
+
+  const confirmExit = () => {
+    setShowExitConfirm(false);
+    onExitSession();
+  };
+
   const changeWallpaper = () => {
     const url = prompt("Nhập URL hình nền mới:", wallpaper);
     if (url) setWallpaper(url);
     setContextMenu(null);
   };
 
+  const pinnedChannels = channels.filter((ch: Channel) => pinnedNames.includes(ch.name));
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+  const [hoveredTabRect, setHoveredTabRect] = useState<DOMRect | null>(null);
+
   return (
     <div 
-      className="fixed inset-0 z-0 flex flex-col overflow-hidden bg-cover bg-center select-none font-sans" 
-      style={{ backgroundImage: `url(${wallpaper})` }}
+      className="fixed inset-0 z-0 flex flex-col overflow-hidden select-none font-sans" 
       onClick={() => {
         setShowStartMenu(false);
         setShowDesktopSearch(false);
+        setShowQuickAccess(false);
+        setShowWidgets(false);
         setContextMenu(null);
       }}
-      onContextMenu={(e) => handleContextMenu(e)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY, ch: null });
+      }}
     >
-      {/* Background Dimming Removed */}
+      {/* Dynamic Wallpaper */}
+      <div 
+        className="fixed inset-0 w-full h-full -z-10 transition-all duration-1000 shadow-inner"
+        style={{ 
+          backgroundImage: `url(${wallpaper})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center' 
+        }}
+      />
+
+      {/* Watermark only on Desktop */}
+      <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
+        <div className="text-[12px] font-black uppercase tracking-[0.2em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary SMR26 - Build 28000.01</div>
+        <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+          Working in progress - For testing purposes only so there will be lots of bugs<br />
+          Some features may or may not made their way to Dev and final releases
+        </div>
+      </div>
+      
+      {/* Search and Start icon URL fixes in desktop icons if any */}
+      
+      {/* Widgets Dashboard */}
+      <AnimatePresence>
+        {showWidgets && (
+          <motion.div
+            initial={{ opacity: 0, x: -100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={`fixed top-4 bottom-4 left-4 w-[500px] z-[5001] rounded-[32px] flex flex-col shadow-2xl border overflow-hidden backdrop-blur-xl p-8 gap-6 ${
+              isDark ? "bg-[#1a1a1a]/80 border-white/10 text-white" : "bg-white/80 border-black/10 text-black shadow-2xl"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <LayoutDashboard size={24} className="text-blue-500" />
+                <h2 className="text-xl font-black uppercase tracking-tighter">Bảng tiện ích</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}>
+                   <Sparkles size={18} className="text-amber-500" />
+                </button>
+                <button className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}>
+                   <Settings size={18} />
+                </button>
+                <button onClick={() => setShowWidgets(false)} className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}>
+                   <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-4 space-y-6 custom-scrollbar">
+              {pinnedWidgets.map((widget, idx) => {
+                if (widget.type === 'weather') {
+                  return (
+                    <div key={widget.id} className={`p-6 rounded-[32px] border flex flex-col gap-6 relative overflow-hidden group transition-all hover:scale-[1.02] ${isDark ? "bg-white/5 border-white/5" : "bg-black/5 border-black/5"}`}>
+                       <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                          <button onClick={() => setPinnedWidgets(prev => prev.filter(w => w.id !== widget.id))} className="p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"><X size={12} /></button>
+                          <button className="p-2 bg-white/10 rounded-lg"><Settings size={12} /></button>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                             <MapPin size={14} className="opacity-40" />
+                             <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{weatherCity || "Hồ Chí Minh"}, Việt Nam</span>
+                          </div>
+                          <button className="text-[10px] font-black uppercase tracking-widest text-blue-500">Xem chi tiết</button>
+                       </div>
+                       <div className="flex items-center gap-8">
+                          <div className="flex items-center gap-4">
+                             <Cloud size={widget.size === 'large' ? 80 : 64} className="text-blue-400 drop-shadow-xl" />
+                             <div>
+                                <p className={`${widget.size === 'large' ? 'text-6xl' : 'text-5xl'} font-black tracking-tighter`}>{weatherData.temp}°C</p>
+                                <p className="text-sm font-bold opacity-40 uppercase tracking-widest">{weatherData.condition}</p>
+                             </div>
+                          </div>
+                          {widget.size !== 'small' && (
+                            <div className="flex-1 border-l border-white/10 pl-8 grid grid-cols-2 gap-4">
+                               <div>
+                                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Độ ẩm</p>
+                                  <p className="text-sm font-bold">64%</p>
+                               </div>
+                               <div>
+                                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Gió</p>
+                                  <p className="text-sm font-bold">12 km/h</p>
+                               </div>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                  );
+                }
+                
+                if (widget.type === 'stocks' || widget.type === 'sports') {
+                  return (
+                    <div key={widget.id} className={`p-5 rounded-[28px] border flex flex-col gap-3 relative group ${isDark ? "bg-white/5 border-white/5" : "bg-black/5 border-black/5"}`}>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button onClick={() => setPinnedWidgets(prev => prev.filter(w => w.id !== widget.id))} className="p-1.5 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"><X size={10} /></button>
+                      </div>
+                      <div className={`flex items-center gap-2 ${widget.type === 'stocks' ? 'text-blue-400' : 'text-rose-500'}`}>
+                         {widget.type === 'stocks' ? <TrendingUp size={16} /> : <Star size={16} />}
+                         <span className="text-[10px] font-black uppercase tracking-widest">{widget.type === 'stocks' ? 'Chứng khoán' : 'Thể thao'}</span>
+                      </div>
+                      <div>
+                         <p className="text-xl font-black">{widget.type === 'stocks' ? 'VN-Index' : 'V-League'}</p>
+                         <p className={`text-sm font-bold ${widget.type === 'stocks' ? 'text-emerald-500' : 'opacity-40'}`}>
+                           {widget.type === 'stocks' ? '+1.24%' : 'Đang cập nhật...'}
+                         </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+
+              {/* News / Top Stories */}
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 px-2">Tin tức hàng đầu</h3>
+                <div className="grid grid-cols-1 gap-3">
+                   {[
+                     { title: "Vplay OS Canary SMR26 - Bản cập nhật lớn nhất năm", time: "2 giờ trước", category: "Công nghệ", img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80" },
+                     { title: "Ra mắt giao diện Windows Mode cho trải nghiệm TV mới", time: "5 giờ trước", category: "Giải trí", img: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=400&q=80" }
+                   ].map((item, i) => (
+                     <div key={i} className={`p-4 rounded-[28px] border flex gap-4 transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/5 hover:bg-white/10" : "bg-black/5 border-black/5 hover:bg-black/10"}`}>
+                        <img src={item.img} className="w-20 h-20 rounded-2xl object-cover" alt="News" />
+                        <div className="flex-1 flex flex-col justify-center gap-1">
+                           <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">{item.category}</span>
+                           <p className="text-sm font-bold leading-snug">{item.title}</p>
+                           <span className="text-[9px] font-bold opacity-40 uppercase tracking-widest">{item.time}</span>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-20">Vplay Widgets Engine</span>
+              <div className="flex items-center gap-3">
+                 <button 
+                   onClick={() => setShowWidgetGallery(true)}
+                   className={`flex items-center gap-2 p-2 px-4 rounded-xl transition-all ${isDark ? "bg-blue-500 text-white hover:bg-blue-400" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                 >
+                    <Plus size={14} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Thêm widget</span>
+                 </button>
+              </div>
+            </div>
+
+            {/* Widget Gallery Overlay */}
+            <AnimatePresence>
+              {showWidgetGallery && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className={`absolute inset-0 z-[5002] rounded-[32px] p-8 flex flex-col gap-6 ${isDark ? "bg-[#121212]/98 text-white" : "bg-slate-50/98 text-black"}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-black uppercase tracking-tighter">Thư viện tiện ích</h2>
+                    <button onClick={() => setShowWidgetGallery(false)} className="p-2 hover:bg-white/10 rounded-lg"><X size={20} /></button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar grid grid-cols-1 gap-4">
+                    {[
+                      { type: 'weather', name: 'Thời tiết', icon: Cloud, sizes: ['small', 'medium', 'large'] },
+                      { type: 'stocks', name: 'Tài chính', icon: TrendingUp, sizes: ['small'] },
+                      { type: 'sports', name: 'Thể thao', icon: Star, sizes: ['small'] }
+                    ].map(item => (
+                      <div key={item.type} className={`p-6 rounded-3xl border ${isDark ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"} flex flex-col gap-4`}>
+                        <div className="flex items-center gap-3">
+                          <item.icon className="text-blue-500" size={24} />
+                          <span className="font-bold">{item.name}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          {item.sizes.map(size => (
+                            <button
+                              key={size}
+                              onClick={() => addWidget(item.type, size)}
+                              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${isDark ? "bg-blue-600 hover:bg-blue-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+                            >
+                              Thêm ({size})
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className="flex-1 p-6 flex flex-col gap-4 content-start relative z-10">
         <div className="flex flex-col flex-wrap gap-4 h-[calc(100vh-140px)] content-start">
-          {/* Default Icons Only: V-Browser and Update Logs */}
           <motion.button 
-            drag
-            dragMomentum={false}
+            drag dragMomentum={false}
+            onDoubleClick={(e: any) => { e.stopPropagation(); window.open("https://vplay-beta-fa8k.vercel.app", "_blank"); }}
+            onClick={(e: any) => e.stopPropagation()}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
+          >
+            <div className={`w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform overflow-hidden`}>
+              <img 
+                src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
+                className="w-full h-full object-cover" 
+                alt="Vplay" 
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <span className="text-[11px] font-bold text-white text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Vplay Web</span>
+          </motion.button>
+
+          <motion.button 
+            drag dragMomentum={false}
             onDoubleClick={(e: any) => { e.stopPropagation(); onOpenApp("browser"); }}
             onClick={(e: any) => e.stopPropagation()}
             className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
@@ -3490,8 +3850,7 @@ function WindowsDesktop({
           </motion.button>
 
           <motion.button 
-            drag
-            dragMomentum={false}
+            drag dragMomentum={false}
             onDoubleClick={(e: any) => { e.stopPropagation(); onOpenApp("logs"); }}
             onClick={(e: any) => e.stopPropagation()}
             className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
@@ -3504,64 +3863,146 @@ function WindowsDesktop({
         </div>
       </div>
 
-      {/* Context Menu */}
+      {/* Quick Access Menu */}
       <AnimatePresence>
-        {contextMenu && (
+        {showQuickAccess && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            className={`fixed z-[200] w-48 shadow-2xl border ${
-              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
-            } rounded-lg py-1 backdrop-blur-3xl`}
-            style={{ top: contextMenu.y, left: contextMenu.x }}
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className={`fixed ${taskbarPos === 'bottom' ? 'bottom-16' : 'top-16'} right-4 w-80 z-[10000] rounded-3xl shadow-2xl border backdrop-blur-3xl p-6 flex flex-col gap-6 ${
+              isDark ? "bg-[#1a1a1a]/95 border-white/10 text-white" : "bg-white/95 border-black/10 text-black shadow-2xl"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {contextMenu.ch ? (
-              <button 
-                onClick={() => {
-                  setPinnedNames(prev => prev.filter(name => name !== contextMenu.ch?.name));
-                  setContextMenu(null);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
-                  isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
-                }`}
-              >
-                <X size={14} className="text-red-500" />
-                Delete from Desktop
-              </button>
-            ) : (
-              <div className="space-y-1">
-                <div className="px-3 py-1 text-[9px] font-black uppercase opacity-40">Desktop</div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40">System Volume</span>
+                  <span className="text-[10px] font-bold opacity-40">{systemVolume}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Volume2 size={16} className="opacity-40" />
+                  <input 
+                    type="range" 
+                    min="0" max="100" 
+                    value={systemVolume} 
+                    onChange={(e) => setSystemVolume(parseInt(e.target.value))}
+                    className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Music size={12} className="text-purple-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Background Music</span>
+                  </div>
+                  <span className="text-[10px] font-bold opacity-40">{Math.floor(musicProgress / 60)}:{String(musicProgress % 60).padStart(2, '0')}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" max="360" 
+                  value={musicProgress} 
+                  onChange={(e) => setMusicProgress(parseInt(e.target.value))}
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-widest opacity-60">System settings</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsDark(false)}
+                    className={`p-2 rounded-xl border transition-all ${!isDark ? "bg-blue-600 border-blue-500 text-white" : (isDark ? "bg-white/5 border-white/5 text-white/40" : "bg-black/5 border-black/5 text-black/40")}`}
+                  >
+                    <Sun size={16} />
+                  </button>
+                  <button 
+                    onClick={() => setIsDark(true)}
+                    className={`p-2 rounded-xl border transition-all ${isDark ? "bg-blue-600 border-blue-500 text-white" : (isDark ? "bg-white/5 border-white/5 text-white/40" : "bg-black/5 border-black/5 text-black/40")}`}
+                  >
+                    <Moon size={16} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Taskbar Position</span>
+                <div className="grid grid-cols-4 gap-2">
+                  {(['top', 'bottom', 'left', 'right'] as const).map(pos => (
+                    <button 
+                      key={pos}
+                      onClick={() => setTaskbarPos(pos)}
+                      className={`py-2 rounded-lg border text-[9px] font-black uppercase transition-all ${taskbarPos === pos ? "bg-blue-600 border-blue-500 text-white shadow-lg" : "bg-white/5 border-white/5 opacity-40 hover:opacity-100"}`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Alignment</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['corner', 'center'] as const).map(align => (
+                    <button 
+                      key={align}
+                      onClick={() => setTaskbarAlign(align)}
+                      className={`py-2 rounded-lg border text-[9px] font-black uppercase transition-all ${taskbarAlign === align ? "bg-blue-600 border-blue-500 text-white shadow-lg" : "bg-white/5 border-white/5 opacity-40 hover:opacity-100"}`}
+                    >
+                      {align}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={`h-px ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-20 text-center">Vplay OS Preview v1.0.1</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Exit Confirmation Modal */}
+      <AnimatePresence>
+        {showExitConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[11000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`w-full max-w-sm rounded-[32px] p-8 space-y-6 shadow-2xl border ${isDark ? "bg-[#1a1a1a] border-white/10" : "bg-white border-black/10"}`}
+            >
+              <div className="w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center text-red-500 mx-auto">
+                <LogOut size={32} />
+              </div>
+              <div className="text-center space-y-2">
+                <h2 className={`text-xl font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>Exit Session?</h2>
+                <p className={`text-sm font-medium ${isDark ? "text-white/40" : "text-black/40"}`}>You will be returned to the normal interface. All experimental features will be stopped.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <button 
-                  onClick={() => onOpenApp("search")}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
-                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
-                  }`}
+                  onClick={() => setShowExitConfirm(false)}
+                  className={`py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDark ? "bg-white/5 text-white/60 hover:bg-white/10" : "bg-black/5 text-black/60 hover:bg-black/10"}`}
                 >
-                  <Search size={14} />
-                  Pin to Desktop...
+                  Cancel
                 </button>
                 <button 
-                  onClick={() => onOpenApp("browser")}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
-                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
-                  }`}
+                  onClick={confirmExit}
+                  className="py-4 rounded-2xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-red-600 transition-colors"
                 >
-                  <Globe size={14} />
-                  Open V-Browser
-                </button>
-                <button 
-                  onClick={changeWallpaper}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all ${
-                    isDark ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-black/5"
-                  }`}
-                >
-                  <Palette size={14} />
-                  Change wallpaper
+                  Exit Now
                 </button>
               </div>
-            )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -3570,247 +4011,385 @@ function WindowsDesktop({
       <AnimatePresence>
         {showStartMenu && (
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            className={`fixed bottom-12 left-2 w-[500px] h-[600px] z-50 rounded-xl flex flex-col shadow-2xl border overflow-hidden ${
-              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
-            } backdrop-blur-3xl`}
+            initial={{ y: 200, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 200, opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={`fixed ${taskbarPos === 'bottom' ? 'bottom-16' : 'top-16'} ${taskbarAlign === 'center' ? 'left-1/2 -translateX-1/2' : 'left-4'} w-[400px] h-[550px] z-[5000] rounded-[32px] flex flex-col shadow-2xl border overflow-hidden backdrop-blur-3xl ${
+              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-black/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 flex-1 flex flex-col overflow-hidden">
-               <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold uppercase tracking-widest opacity-50">All Channels</h3>
+            <div className="p-8 flex-1 flex flex-col overflow-hidden space-y-6">
+               <div className="flex items-center justify-between">
+                  <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${isDark ? "text-white" : "text-black"}`}>All Applications</h3>
                   <div className="flex items-center gap-2">
-                     <button onClick={() => onOpenApp("settings")} className="p-2 hover:bg-white/10 rounded-lg"><Settings size={18} /></button>
-                     <button onClick={() => window.location.reload()} className="p-2 hover:bg-white/10 rounded-lg"><RotateCcw size={18} /></button>
+                     <button onClick={() => onOpenApp("settings")} className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}><Settings size={18} /></button>
+                     <button onClick={() => window.location.reload()} className={`p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/10 text-black"}`}><RotateCcw size={18} /></button>
                   </div>
                </div>
-               <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
-                  {channels.map(ch => (
-                    <div key={ch.name} className="flex items-center group">
+               
+               <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
+                  <div className="grid grid-cols-4 gap-4 pb-4">
+                    <button
+                      onClick={() => {
+                        onOpenApp("vplay_web");
+                        setShowStartMenu(false);
+                      }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
+                    >
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-colors bg-blue-600 border-blue-500 overflow-hidden shadow-lg">
+                        <img src={vplayLogo} alt="Vplay" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
+                    </button>
+
+                    {channels.map(ch => (
                       <button
+                        key={ch.name}
                         onClick={() => {
                           onOpenApp("tv", { channel: ch });
                           setShowStartMenu(false);
                         }}
-                        className="flex-1 flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-all text-left"
+                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all group ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
                       >
-                        <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center p-1 border border-white/5 group-hover:bg-white/10 transition-colors">
-                          <img src={ch.logo} alt={ch.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-bold">{ch.name}</p>
-                          <p className="text-[10px] opacity-40">{ch.category}</p>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-all shadow-md group-hover:scale-110 ${isDark ? "bg-white/5 border-white/5 group-hover:bg-white/10" : "bg-black/5 border-black/5 group-hover:bg-black/10"}`}>
+                          <img src={ch.logo} className="w-full h-full object-contain" alt={ch.name} referrerPolicy="no-referrer" />
                         </div>
                       </button>
-                      {!pinnedNames.includes(ch.name) && (
-                        <button 
-                          onClick={() => setPinnedNames(prev => [...prev, ch.name])}
-                          className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg transition-all"
-                          title="Pin to Desktop"
-                        >
-                          <Pin size={14} className="text-blue-500" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                </div>
-            </div>
-            <div className={`h-16 px-6 flex items-center justify-between border-t border-white/5 ${isDark ? "bg-black/20" : "bg-slate-50"}`}>
-               <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-black">U</div>
-                  <span className="text-xs font-bold">User Account</span>
+               {/* Fixed Exit Session Button at bottom of Start Menu */}
+               <div className="pt-4 border-t border-white/5">
+                 <button 
+                   onClick={() => {
+                     setShowExitConfirm(true);
+                     setShowStartMenu(false);
+                   }}
+                   className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left ${isDark ? "bg-red-500/10 hover:bg-red-500/20 text-red-500" : "bg-red-50 hover:bg-red-100 text-red-600"}`}
+                 >
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDark ? "bg-red-500/10 border-red-500/20" : "bg-red-100 border-red-200"}`}>
+                     <LogOut size={20} />
+                   </div>
+                   <div className="flex-1">
+                     <p className="text-xs font-black uppercase tracking-tight">Exit Session</p>
+                     <p className="text-[10px] font-bold opacity-60">Quay lại giao diện App</p>
+                   </div>
+                 </button>
                </div>
-               <button className="p-2 hover:bg-white/10 rounded-lg"><LogOut size={16} className="text-red-500" /></button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Desktop Search Overlay */}
+      {/* Desktop Search Overlay (Small UI) */}
       <AnimatePresence>
         {showDesktopSearch && (
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            className={`fixed bottom-12 left-1/2 -translateX-1/2 w-[600px] h-[500px] z-50 rounded-xl flex flex-col shadow-2xl border overflow-hidden ${
-              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-slate-200"
-            } backdrop-blur-3xl -translate-x-1/2`}
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            className={`fixed ${taskbarPos === 'bottom' ? 'bottom-16' : 'top-16'} left-1/2 -translateX-1/2 w-[450px] z-[5000] rounded-[32px] flex flex-col shadow-2xl border overflow-hidden backdrop-blur-3xl ${
+              isDark ? "bg-[#1f1f1f]/95 border-white/10" : "bg-white/95 border-black/10"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-white/5">
+            <div className="p-6 border-b border-white/5">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                <Search className={`absolute left-5 top-1/2 -translate-y-1/2 opacity-40 ${isDark ? "text-white" : "text-black"}`} size={20} />
                 <input 
                   autoFocus
-                  placeholder="Type to search channels, settings, or logs..."
-                  className="w-full bg-white/5 border border-white/10 rounded-lg py-3 pl-12 pr-4 outline-none focus:border-purple-500 transition-all font-medium text-sm"
+                  placeholder="Search apps..."
+                  className={`w-full bg-transparent border-none rounded-2xl py-4 pl-14 pr-6 outline-none transition-all font-black text-sm uppercase tracking-widest ${isDark ? "text-white" : "text-black"}`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-               {searchQuery.length > 0 ? (
-                 <div className="space-y-4">
-                   <div className="space-y-1">
-                      <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Search Results</p>
-                      {filteredChannels.length > 0 ? filteredChannels.map(ch => (
-                        <button
-                          key={ch.name}
-                          onClick={() => {
-                            onOpenApp("tv", { channel: ch });
-                            setShowDesktopSearch(false);
-                            setSearchQuery("");
-                          }}
-                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 group transition-all text-left"
-                        >
-                          <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center p-1 border border-white/5 group-hover:bg-white/10">
-                            <img src={ch.logo} alt={ch.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs font-bold">{ch.name}</p>
-                            <p className="text-[10px] opacity-40">{ch.category}</p>
-                          </div>
-                        </button>
-                      )) : (
-                        <p className="text-center py-10 opacity-30 italic text-sm">No results found</p>
-                      )}
-                   </div>
-                 </div>
-               ) : (
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Suggested</p>
-                       <button onClick={() => onOpenApp("settings")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
-                          <Settings className="text-blue-500" size={20} />
-                          <div className="text-left">
-                             <p className="text-xs font-bold">System Settings</p>
-                             <p className="text-[9px] opacity-40">Configure your Vplay</p>
-                          </div>
-                       </button>
-                       <button onClick={() => onOpenApp("logs")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
-                          <FileCode className="text-slate-500" size={20} />
-                          <div className="text-left">
-                             <p className="text-xs font-bold">Update Logs</p>
-                             <p className="text-[9px] opacity-40">What's new</p>
-                          </div>
-                       </button>
-                    </div>
-                    <div className="space-y-2">
-                       <p className="px-2 text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">Quick Actions</p>
-                       <button onClick={() => onOpenApp("debug")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5">
-                          <Terminal className="text-purple-500" size={20} />
-                          <div className="text-left">
-                             <p className="text-xs font-bold">Open Console</p>
-                             <p className="text-[9px] opacity-40">Developer tools</p>
-                          </div>
-                       </button>
-                    </div>
-                 </div>
-               )}
-            </div>
+            {searchQuery.length > 0 && (() => {
+              const filteredChannels = channels.filter(ch => 
+                ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                ch.category?.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+              return (
+                <div className="max-h-[300px] overflow-y-auto p-4 space-y-2 custom-scrollbar border-t border-black/5">
+                   {filteredChannels.length > 0 ? filteredChannels.slice(0, 6).map(ch => (
+                      <button
+                        key={ch.name}
+                        onClick={() => {
+                          onOpenApp("tv", { channel: ch });
+                          setShowDesktopSearch(false);
+                          setSearchQuery("");
+                        }}
+                        className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all text-left ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
+                      >
+                        <img src={ch.logo} alt={ch.name} className="w-10 h-10 object-contain rounded-lg p-1 bg-white/5" referrerPolicy="no-referrer" />
+                        <div className="flex-1">
+                          <p className={`text-xs font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>{ch.name}</p>
+                          <p className={`text-[10px] font-bold opacity-40 ${isDark ? "text-white" : "text-black"}`}>{ch.category}</p>
+                        </div>
+                      </button>
+                    )) : (
+                      <p className="text-center py-6 opacity-30 font-black text-[10px] uppercase tracking-[0.2em]">No matches found</p>
+                    )}
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Taskbar */}
-      <div className={`h-14 absolute bottom-0 left-0 w-full z-[9999] flex items-center px-4 gap-1 ${isDark ? "bg-[#1a1a1a]/80 border-white/5" : "bg-white/80 border-black/5"} backdrop-blur-3xl shadow-[0_-8px_32px_rgba(0,0,0,0.1)] border-t`}>
-        {/* Left section (Start & Search) */}
-        <div className="flex items-center gap-1 min-w-[280px]">
+      <div className={`h-14 absolute ${
+        taskbarPos === "bottom" ? "bottom-0 left-0 w-full border-t" : 
+        taskbarPos === "top" ? "top-0 left-0 w-full border-b" : 
+        taskbarPos === "left" ? "left-0 top-0 h-full w-16 border-r flex-col py-6" : 
+        "right-0 top-0 h-full w-16 border-l flex-col py-6"
+      } z-[9999] flex items-center px-4 gap-1 ${isDark ? "bg-[#1a1a1a]/80 border-white/5" : "bg-white/80 border-black/5 shadow-2xl"} backdrop-blur-3xl`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowWidgets(false);
+          setShowStartMenu(false);
+          setShowDesktopSearch(false);
+          setShowQuickAccess(false);
+        }}
+      >
+        
+        {/* Left section (pinned corner if alignment is corner) */}
+        <div className={`flex ${taskbarPos === "left" || taskbarPos === "right" ? "flex-col" : "items-center"} gap-1.5`}>
+          {/* Weather Widget */}
           <button 
-            onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
-            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : "hover:bg-white/5"}`}
+            onClick={(e) => { e.stopPropagation(); setShowWidgets(!showWidgets); }}
+            onMouseEnter={(e) => {
+              setHoveredTab("Tiện ích & Thời tiết");
+              setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+            }}
+            onMouseLeave={() => {
+              setHoveredTab(null);
+              setHoveredTabRect(null);
+            }}
+            className={`h-11 px-3 flex items-center gap-3 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
           >
-            <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group">
-               <img src="https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png" className="w-5 h-5 invert transition-transform group-hover:scale-110" alt="Start" />
-            </div>
+            <Cloud size={20} className="text-blue-400" />
+            {(taskbarPos !== "left" && taskbarPos !== "right") && (
+              <div className="flex flex-col items-start leading-none">
+                <span className={`text-[12px] font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>{weatherData.temp}°C</span>
+                <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 mt-0.5 ${isDark ? "text-white" : "text-black"}`}>{weatherData.condition}</span>
+              </div>
+            )}
           </button>
 
-          {/* New Search Bar style (Sidebar-like) */}
-          <div 
-            onClick={() => onOpenApp("search")}
-            className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-slate-400 hover:bg-black/10"}`}
-          >
-            <Search size={14} />
-            <span className="text-xs font-bold uppercase tracking-widest">Search...</span>
-          </div>
+          {taskbarAlign === "corner" && (
+            <>
+              <button 
+                onMouseEnter={(e) => {
+                  setHoveredTab("Start");
+                  setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                }}
+                onMouseLeave={() => {
+                  setHoveredTab(null);
+                  setHoveredTabRect(null);
+                }}
+                onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
+                className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : ""}`}
+              >
+                <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group overflow-hidden">
+                  <img 
+                    src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                    alt="Start" 
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              </button>
+
+              {taskbarPos !== "left" && taskbarPos !== "right" && (
+                <div 
+                  onMouseEnter={(e) => {
+                    setHoveredTab("Search");
+                    setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredTab(null);
+                    setHoveredTabRect(null);
+                  }}
+                  onClick={(e) => { e.stopPropagation(); setShowDesktopSearch(!showDesktopSearch); }}
+                  className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
+                >
+                  <Search size={14} className="opacity-40" />
+                  <span className="text-[10px] font-black uppercase tracking-widest leading-none">Search...</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        {/* Center section (Active Apps & Pinned) */}
-        <div className="flex-1 flex items-center justify-center gap-1.5 h-full">
-           <button onClick={() => {}} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Task View">
-              <LayoutDashboard size={20} className={isDark ? "text-white/60" : "text-slate-600"} />
-           </button>
-           <button onClick={() => onOpenApp("browser")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="V-Browser">
-              <Globe size={20} className="text-orange-500" />
-           </button>
-           <button onClick={() => onOpenApp("settings")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Settings">
-              <Settings size={20} className="text-blue-500" />
-           </button>
-           <button onClick={() => onOpenApp("debug")} className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`} title="Operator Console">
-              <Terminal size={20} className="text-purple-500" />
-           </button>
-           
-           <div className="h-5 w-px bg-white/10 mx-1" />
-
-           <AnimatePresence>
-             {windows.map(win => (
-               <motion.button
-                 layout
-                 key={win.id}
-                 onClick={() => {
-                   if (win.isMinimized) {
-                     setWindows(prev => prev.map(w => w.id === win.id ? { ...w, isMinimized: false } : w));
-                     setActiveWindowId(win.id);
-                   } else if (activeWindowId === win.id) {
-                     minimizeWindow(win.id);
-                   } else {
-                     focusWindow(win.id);
-                   }
+        {/* Center section (Start, Search & Apps) */}
+        <div className={`flex-1 flex ${taskbarPos === "left" || taskbarPos === "right" ? "flex-col" : "items-center"} ${taskbarAlign === "center" ? "justify-center" : "justify-start"} gap-2 h-full transition-all duration-500`}>
+           {taskbarAlign === "center" && (
+             <div className={`flex ${taskbarPos === "left" || taskbarPos === "right" ? "flex-col" : "items-center"} gap-2`}>
+               <button 
+                 onMouseEnter={(e) => {
+                   setHoveredTab("Start");
+                   setHoveredTabRect(e.currentTarget.getBoundingClientRect());
                  }}
-                 className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all border-b-2 ${
-                   activeWindowId === win.id 
-                    ? (isDark ? "bg-white/10 border-blue-500" : "bg-black/5 border-blue-600 shadow-sm")
-                    : (isDark ? "bg-black/20 border-transparent hover:bg-white/5" : "bg-white/40 border-transparent hover:bg-black/5")
-                 }`}
-                 title={win.title}
+                 onMouseLeave={() => {
+                   setHoveredTab(null);
+                   setHoveredTabRect(null);
+                 }}
+                 onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
+                 className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : (isDark ? "hover:bg-white/5" : "hover:bg-black/8")}`}
                >
-                 {win.type === "tv" ? <Tv size={20} className="text-purple-500" /> : win.type === "settings" ? <Settings size={20} className="text-blue-500" /> : win.type === "browser" ? <Globe size={20} className="text-orange-500" /> : win.type === "debug" ? <Terminal size={20} className="text-purple-500" /> : <FileCode size={20} className="text-slate-400" />}
-               </motion.button>
-             ))}
-           </AnimatePresence>
-        </div>
+                 <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group overflow-hidden">
+                   <img 
+                     src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
+                     className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                     alt="Start" 
+                     referrerPolicy="no-referrer"
+                   />
+                 </div>
+               </button>
+               <div 
+                 onMouseEnter={(e) => {
+                   setHoveredTab("Search");
+                   setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                 }}
+                 onMouseLeave={() => {
+                   setHoveredTab(null);
+                   setHoveredTabRect(null);
+                 }}
+                 onClick={(e) => { e.stopPropagation(); setShowDesktopSearch(!showDesktopSearch); }}
+                 className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
+               >
+                 <Search size={14} className="opacity-40" />
+                 <span className="text-[10px] font-black uppercase tracking-widest leading-none">Search...</span>
+               </div>
+             </div>
+           )}
 
-        {/* Right section (System Tray) */}
-        <div className="flex items-center justify-end gap-2 min-w-[280px] h-full">
-          <button 
-             onClick={() => {
-                // EXIT SESSION
-                setFeatureFlags({ ...featureFlags, windows_mode: false });
-             }}
-             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? "bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white" : "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white"}`}
-             title="Quay lại giao diện App"
+           <div className={`h-6 w-px bg-white/5 mx-1 ${taskbarPos === "left" || taskbarPos === "right" ? "hidden" : "block"}`} />
+
+           <button 
+            onMouseEnter={(e) => {
+              setHoveredTab("Task View");
+              setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+            }}
+            onMouseLeave={() => {
+              setHoveredTab(null);
+              setHoveredTabRect(null);
+            }}
+            onClick={() => {}} 
+            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white/40" : "hover:bg-black/5 text-black/40"}`}
           >
-             <LogOut size={12} />
-             Exit Session
+             <LayoutDashboard size={20} />
           </button>
+          <button 
+            onMouseEnter={(e) => {
+              setHoveredTab("V-Browser");
+              setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+            }}
+            onMouseLeave={() => {
+              setHoveredTab(null);
+              setHoveredTabRect(null);
+            }}
+            onClick={() => onOpenApp("browser")} 
+            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+          >
+             <Globe size={22} className="text-orange-500" />
+          </button>
+          <button 
+            onMouseEnter={(e) => {
+              setHoveredTab("Settings");
+              setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+            }}
+            onMouseLeave={() => {
+              setHoveredTab(null);
+              setHoveredTabRect(null);
+            }}
+            onClick={() => onOpenApp("settings")} 
+            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+          >
+             <Settings size={22} className="text-blue-500" />
+          </button>
+          
+          <AnimatePresence>
+            {windows.map(win => (
+              <motion.button
+                layout
+                key={win.id}
+                onMouseEnter={(e) => {
+                  setHoveredTab(win.title);
+                  setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                }}
+                onMouseLeave={() => {
+                  setHoveredTab(null);
+                  setHoveredTabRect(null);
+                }}
+                onClick={() => {
+                  if (win.isMinimized) {
+                    setWindows(prev => prev.map(w => w.id === win.id ? { ...w, isMinimized: false } : w));
+                    setActiveWindowId(win.id);
+                  } else if (activeWindowId === win.id) {
+                    minimizeWindow(win.id);
+                  } else {
+                    focusWindow(win.id);
+                  }
+                }}
+                className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all border-b-2 relative overflow-hidden ${
+                  activeWindowId === win.id 
+                   ? (isDark ? "bg-white/10 border-blue-500" : "bg-black/5 border-blue-600 shadow-sm")
+                   : (isDark ? "bg-black/20 border-transparent hover:bg-white/5" : "bg-white/40 border-transparent hover:bg-black/5 shadow-inner")
+                }`}
+              >
+                {win.type === "tv" ? <Tv size={20} className="text-purple-500" /> : win.type === "settings" ? <Settings size={20} className="text-blue-500" /> : win.type === "browser" ? <Globe size={20} className="text-orange-500" /> : win.type === "debug" ? <Terminal size={20} className="text-emerald-500" /> : <FileCode size={20} className="text-slate-400" />}
+                {activeWindowId === win.id && <motion.div layoutId="win-active" className="absolute bottom-0 left-1 right-1 h-[3px] bg-blue-500 rounded-full" />}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+       </div>
 
-          <div className="h-5 w-px bg-white/10 mx-1" />
+       {/* Right section (System Tray) */}
+       <div className={`flex items-center justify-end gap-3 h-full ${taskbarPos === "left" || taskbarPos === "right" ? "min-w-0" : "min-w-[150px]"}`}>
+         <div className="h-6 w-px bg-white/5 mx-1 hidden md:block" />
 
-          <div className="flex flex-col items-end leading-tight min-w-[70px]">
-            <span className={`text-[12px] font-bold ${isDark ? "text-white" : "text-slate-950"}`}>
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-            </span>
-            <span className={`text-[10px] font-bold ${isDark ? "text-white/40" : "text-slate-500"}`}>
-              {currentTime.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-            </span>
-          </div>
-          <div className={`w-1.5 h-10 flex items-center ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"} cursor-pointer ml-1`} title="Show Desktop" onClick={() => windows.forEach(w => !w.isMinimized && minimizeWindow(w.id))} />
-        </div>
-      </div>
+         <div 
+           onMouseEnter={(e) => {
+             setHoveredTab(currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+             setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+           }}
+           onMouseLeave={() => {
+             setHoveredTab(null);
+             setHoveredTabRect(null);
+           }}
+           onClick={(e) => { e.stopPropagation(); setShowQuickAccess(!showQuickAccess); }}
+           className={`flex flex-col items-end leading-none cursor-pointer py-1 px-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} ${taskbarPos === "left" || taskbarPos === "right" ? "text-center items-center" : ""}`}
+         >
+           <span className={`text-[12px] font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>
+             {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+           </span>
+           {taskbarPos !== "left" && taskbarPos !== "right" && (
+             <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 mt-1.5 ${isDark ? "text-white" : "text-black"}`}>
+               {currentTime.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+             </span>
+           )}
+         </div>
+         {taskbarPos !== "left" && taskbarPos !== "right" && (
+           <div 
+             onMouseEnter={(e) => {
+               setHoveredTab("Show Desktop");
+               setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+             }}
+             onMouseLeave={() => {
+               setHoveredTab(null);
+               setHoveredTabRect(null);
+             }}
+             className={`w-1 h-10 flex items-center ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"} cursor-pointer ml-1 border-l border-white/5`} 
+             onClick={() => windows.forEach(w => !w.isMinimized && minimizeWindow(w.id))} 
+           />
+         )}
+       </div>
+       <Tooltip text={hoveredTab || ""} show={!!hoveredTab} targetRect={hoveredTabRect} isDesktop={true} />
+    </div>
     </div>
   );
 }
@@ -3917,20 +4496,57 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
 interface AppWindow {
   id: string;
   title: string;
-  type: "settings" | "tv" | "logs" | "browser" | "debug" | "search";
+  type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web";
   contentProps?: any;
   isMinimized: boolean;
   isMaximized: boolean;
   zIndex: number;
+  width?: number;
+  height?: number;
+  x?: number;
+  y?: number;
 }
 
 function App() {
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   
-  const openWindow = useCallback((type: "settings" | "tv" | "logs" | "browser" | "debug" | "search", props?: any) => {
+  const handleToggleOS = (val: boolean) => {
+    if (val && !featureFlags.windows_mode) {
+      const city = prompt("Vui lòng nhập thành phố của bạn để theo dõi thời tiết:", weatherCity);
+      if (city) setWeatherCity(city);
+    }
+    setIsChangingSession(true);
+    setTimeout(() => {
+      setFeatureFlags({ ...featureFlags, windows_mode: val });
+      setTimeout(() => {
+        setIsChangingSession(false);
+      }, 500);
+    }, 10000);
+  };
+
+  const openWindow = useCallback((type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web", props?: any) => {
     const id = `${type}_${Date.now()}`;
-    const title = type === "settings" ? "Settings" : type === "debug" ? "Operator Console" : type === "search" ? "Search" : props?.channel?.name || "Window";
+    const titles: { [key: string]: string } = {
+      settings: "Cài đặt hệ thống",
+      debug: "Operator Console",
+      search: "Search & Discovery",
+      vplay_web: "Vplay Official Web",
+      browser: "V-Browser"
+    };
+    const title = titles[type] || props?.channel?.name || "Window";
+    
+    let defaultWidth = 800;
+    let defaultHeight = 550;
+    
+    if (type === "tv") {
+      defaultWidth = 900;
+      defaultHeight = 600;
+    } else if (type === "vplay_web") {
+      defaultWidth = 1000;
+      defaultHeight = 700;
+    }
+    
     const newWindow: AppWindow = {
       id,
       title,
@@ -3938,7 +4554,11 @@ function App() {
       contentProps: props,
       isMinimized: false,
       isMaximized: type === "tv" && window.innerWidth < 1024,
-      zIndex: windows.length + 100
+      zIndex: windows.length + 100,
+      width: defaultWidth,
+      height: defaultHeight,
+      x: 100 + (windows.length * 30),
+      y: 100 + (windows.length * 30)
     };
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(id);
@@ -3966,13 +4586,38 @@ function App() {
     setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w));
   };
 
+  const [isDark, setIsDark] = useState(true);
   const [searchBoxPosition, setSearchBoxPosition] = useState(() => {
     return localStorage.getItem("vplay_search_position") || "sidebar";
   });
 
   const [desktopWallpaper, setDesktopWallpaper] = useState(() => {
-    return localStorage.getItem("vplay_desktop_wallpaper") || "https://4kwallpapers.com/images/walls/thumbs_3t/16795.png";
+    const saved = localStorage.getItem("vplay_desktop_wallpaper");
+    return saved || ""; // Empty means use default based on theme
   });
+
+  const currentWallpaper = useMemo(() => {
+    if (desktopWallpaper) return desktopWallpaper;
+    return isDark 
+      ? "https://4kwallpapers.com/images/walls/thumbs_3t/5747.jpg" 
+      : "https://4kwallpapers.com/images/walls/thumbs_3t/5748.jpg";
+  }, [desktopWallpaper, isDark]);
+
+  const [taskbarPos, setTaskbarPos] = useState<"bottom" | "top" | "left" | "right">(() => {
+    return (localStorage.getItem("vplay_taskbar_pos") as any) || "bottom";
+  });
+
+  const [taskbarAlign, setTaskbarAlign] = useState<"corner" | "center">(() => {
+    return (localStorage.getItem("vplay_taskbar_align") as any) || "center";
+  });
+
+  const [isChangingSession, setIsChangingSession] = useState(false);
+  const [systemVolume, setSystemVolume] = useState(80);
+  const [musicProgress, setMusicProgress] = useState(0);
+  const [weatherCity, setWeatherCity] = useState(() => localStorage.getItem("vplay_location") || "Hồ Chí Minh");
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+
+
 
   const [pinnedChannelNames, setPinnedChannelNames] = useState<string[]>(() => {
     const saved = localStorage.getItem("vplay_pinned_channels");
@@ -3980,13 +4625,7 @@ function App() {
     return saved ? JSON.parse(saved) : ["VTV1", "VTV3", "HTV7", "VTC1"];
   });
 
-  useEffect(() => {
-    localStorage.setItem("vplay_desktop_wallpaper", desktopWallpaper);
-  }, [desktopWallpaper]);
 
-  useEffect(() => {
-    localStorage.setItem("vplay_pinned_channels", JSON.stringify(pinnedChannelNames));
-  }, [pinnedChannelNames]);
   const [showDevConfirm, setShowDevConfirm] = useState(false);
   const [backgroundMusicOption, setBackgroundMusicOption] = useState(() => {
     return localStorage.getItem("vplay_bg_music_option") || "queue";
@@ -4002,7 +4641,6 @@ function App() {
   const [userData, setUserData] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState("Trang chủ");
-  const [isDark, setIsDark] = useState(true); 
   const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>(() => {
     try {
       const saved = localStorage.getItem("vplay_feature_flags");
@@ -4107,6 +4745,44 @@ function App() {
   useEffect(() => {
     localStorage.setItem("vplay_search_position", searchBoxPosition);
   }, [searchBoxPosition]);
+
+  useEffect(() => {
+    // Basic music progress simulation if it's not "off"
+    let interval: NodeJS.Timeout;
+    if (featureFlags.windows_mode && backgroundMusicOption !== "off") {
+      interval = setInterval(() => {
+        setMusicProgress(prev => (prev + 1) % 360);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [featureFlags.windows_mode, backgroundMusicOption]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_taskbar_pos", taskbarPos);
+  }, [taskbarPos]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_taskbar_align", taskbarAlign);
+  }, [taskbarAlign]);
+
+  // Sync wallpaper with theme if it's the default ones
+  useEffect(() => {
+    const lightWp = "https://images.unsplash.com/photo-1620121478277-ad640a5a0f21?w=1600&q=80";
+    const darkWp = "https://images.unsplash.com/photo-1620121692029-d088224efc74?w=1600&q=80";
+    const currentWp = localStorage.getItem("vplay_desktop_wallpaper");
+    
+    if (!currentWp || currentWp === lightWp || currentWp === darkWp || currentWp.includes("4kwallpapers.com")) {
+      setDesktopWallpaper(isDark ? darkWp : lightWp);
+    }
+  }, [isDark]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_desktop_wallpaper", desktopWallpaper);
+  }, [desktopWallpaper]);
+
+  useEffect(() => {
+    localStorage.setItem("vplay_pinned_channels", JSON.stringify(pinnedChannelNames));
+  }, [pinnedChannelNames]);
 
   const paginate = (newDirection: number) => {
     setDirection(newDirection);
@@ -4456,31 +5132,46 @@ function App() {
         </form>
       </LiquidModal>
 
-      {featureFlags.windows_mode ? (
+      {isChangingSession && (
+        <SplashView text="Preparing new experience..." />
+      )}
+
+      {featureFlags.windows_mode && !isChangingSession ? (
         <Fragment>
           <div className="fixed inset-0 z-[40]">
             <WindowsDesktop 
               channels={channels} 
               onOpenApp={openWindow} 
               isDark={isDark}
+              setIsDark={setIsDark}
               windows={windows}
               activeWindowId={activeWindowId}
               setWindows={setWindows}
               setActiveWindowId={setActiveWindowId}
               focusWindow={focusWindow}
               minimizeWindow={minimizeWindow}
-              wallpaper={desktopWallpaper}
+              wallpaper={currentWallpaper}
               setWallpaper={setDesktopWallpaper}
               pinnedNames={pinnedChannelNames}
               setPinnedNames={setPinnedChannelNames}
               featureFlags={featureFlags}
               setFeatureFlags={setFeatureFlags}
+              taskbarPos={taskbarPos}
+              setTaskbarPos={setTaskbarPos}
+              taskbarAlign={taskbarAlign}
+              setTaskbarAlign={setTaskbarAlign}
+              onExitSession={() => handleToggleOS(false)}
+              systemVolume={systemVolume}
+              setSystemVolume={setSystemVolume}
+              musicProgress={musicProgress}
+              setMusicProgress={setMusicProgress}
+              weatherCity={weatherCity}
             />
             <AnimatePresence>
               {windows.filter(w => !w.isMinimized).map(win => (
                 <AppWindowContainer
                   key={win.id}
-                  window={win}
+                  win={win}
                   isActive={activeWindowId === win.id}
                   onClose={() => closeWindow(win.id)}
                   onFocus={() => focusWindow(win.id)}
@@ -4714,9 +5405,7 @@ function App() {
                           </p>
                         </div>
                         <button 
-                          onClick={() => {
-                            setFeatureFlags({ ...featureFlags, windows_mode: true });
-                          }}
+                          onClick={() => handleToggleOS(true)}
                           className="px-10 py-5 bg-white hover:bg-slate-100 text-blue-900 rounded-[32px] font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl whitespace-nowrap flex items-center gap-3"
                         >
                           Thử ngay bây giờ
@@ -5341,14 +6030,16 @@ function App() {
         </Fragment>
       )}
 
-      {/* Global Watermark */}
-      <div className={`fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 ${featureFlags.windows_mode ? "opacity-100" : "opacity-50 mix-blend-difference"}`}>
-        <div className={`text-[12px] font-black uppercase tracking-[0.2em] ${featureFlags.windows_mode ? "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" : "text-white"}`}>Vplay Canary SMR26 - Build 28000</div>
-        <div className={`text-[10px] leading-tight mt-1.5 font-medium ${featureFlags.windows_mode ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" : "text-white/90"}`}>
-          Working in progress - For testing purposes only so there will be lots of bugs<br />
-          Some features may or may not made their way to Dev and final releases
+      {/* Global Watermark (Only visible when NOT in Windows Mode) */}
+      {!featureFlags.windows_mode && (
+        <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
+          <div className="text-[12px] font-black uppercase tracking-[0.2em] text-white">Vplay Canary SMR26 - Build 28000.01</div>
+          <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
+            Working in progress - For testing purposes only so there will be lots of bugs<br />
+            Some features may or may not made their way to Dev and final releases
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Floating Operator Window */}
       <AnimatePresence>
