@@ -24,46 +24,63 @@ const vplayLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/rev
 const splashLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi";
 const startIcon = "https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi";
 
-const SplashView = ({ text }: { text: string }) => (
+const splashBg = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/271eaa23-7e5c-47f8-90dd-bb7ccaf7c682/d4wgzdk-66e11cd6-72c2-4c61-9a02-50f01bd0e7fc.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi8yNzFlYWEyMy03ZTVjLTQ3ZjgtOTBkZC1iYjdjY2FmN2M2ODIvZDR3Z3pkay02NmUxMWNkNi03MmMyLTRjNjEtOWEwMi01MGYwMWJkMGU3ZmMucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.j-0Mw5AwyBsypFP8qSCvRP_vuzErttnrS2k4mo0IWHA";
+
+const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[20000] bg-[#1a1a1a] flex flex-col items-center justify-center pt-8"
+    className="fixed inset-0 z-[20000] flex flex-col items-center justify-center pt-8 overflow-hidden"
   >
-    <div className="flex flex-col items-center space-y-10">
+    <div 
+      className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
+      style={{ backgroundImage: `url(${splashBg})` }}
+    />
+    <div className="absolute inset-0 bg-black/20" />
+
+    <div className="relative z-10 flex flex-col items-center space-y-12">
       <motion.img 
         initial={{ scale: 0.9 }}
         animate={{ scale: [0.9, 1.05, 0.9] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         src={vplayLogo}
         alt="Vplay Logo" 
-        className="h-56 w-56 object-contain drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+        className="h-56 w-56 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.3)]"
         referrerPolicy="no-referrer"
       />
-      <div className="flex items-center gap-4 pt-4">
+      <div className="flex flex-col items-center gap-6">
         <img 
           src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
           alt="Loading" 
-          className="w-8 h-8 filter brightness-0 invert" 
+          className="w-10 h-10 filter brightness-200" 
           referrerPolicy="no-referrer"
         />
-        <span className="text-white/60 text-xl font-medium tracking-tight">
-          {text}
-        </span>
+        <div className="text-center space-y-2">
+          <h2 className="text-white text-3xl font-light tracking-tight drop-shadow-lg">
+            {text}
+          </h2>
+          {subtext && (
+            <p className="text-white/60 text-lg font-medium tracking-wide">
+              {subtext}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   </motion.div>
 );
-const SplashScreen = ({ isDark, onEnter, isSessionChange = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean }) => {
-  const [isConfiguring, setIsConfiguring] = useState(false);
+
+const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean, isUpdating?: boolean }) => {
+  const [showBypass, setShowBypass] = useState(false);
 
   useEffect(() => {
     const configuring = sessionStorage.getItem("vplay_configuring_experiments") === "true";
-    setIsConfiguring(configuring);
     
-    // Default 10s, but if configuring experiments, stay for 30s
-    const duration = configuring || isSessionChange ? (isSessionChange ? 10000 : 30000) : 10000;
+    let duration = 5000; 
+    if (configuring) duration = 15000;
+    if (isSessionChange) duration = 10000;
+    if (isUpdating) duration = 60000; 
     
     const timer = setTimeout(() => {
       if (configuring) {
@@ -72,65 +89,96 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false }: { isDark: bo
       onEnter();
     }, duration);
     
-    return () => clearTimeout(timer);
-  }, [onEnter, isSessionChange]);
+    const bypassTimer = setTimeout(() => {
+      setShowBypass(true);
+    }, 10000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(bypassTimer);
+    };
+  }, [onEnter, isSessionChange, isUpdating]);
+
+  const titleText = isUpdating ? "Updates are underway" : (isSessionChange ? "Vplay Canary OS" : (sessionStorage.getItem("vplay_configuring_experiments") === "true" ? "Configuring Experiments..." : "Gói trọn Việt Nam trong tầm mắt bạn"));
+  const statusText = isUpdating ? "Just a moment" : (isSessionChange ? "Preparing new experience..." : "Chào mừng!");
 
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
-      className="fixed inset-0 z-[100001] flex flex-col items-center justify-center bg-[#1a1a1a]"
+      className="fixed inset-0 z-[100001] flex flex-col items-center justify-center overflow-hidden"
     >
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${splashBg})` }}
+      />
+      <div className="absolute inset-0 bg-black/20" />
+
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col items-center space-y-10"
+        className="relative z-10 flex flex-col items-center space-y-12"
       >
-        <div className="relative">
-          <motion.img 
-            initial={{ scale: 0.9 }}
-            animate={{ scale: [0.9, 1.05, 0.9] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            src="https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi" 
-            alt="Vplay Logo" 
-            className="h-56 w-56 md:h-72 md:w-72 object-contain drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]"
-            referrerPolicy="no-referrer"
-          />
-        </div>
+        <motion.img 
+          initial={{ scale: 0.9 }}
+          animate={{ scale: [0.9, 1.05, 0.9] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          src={vplayLogo} 
+          alt="Vplay Logo" 
+          className="h-64 w-64 md:h-80 md:w-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.3)]"
+          referrerPolicy="no-referrer"
+        />
 
-        <div className="flex flex-col items-center space-y-4 px-6 text-center">
-          <motion.p
+        <div className="flex flex-col items-center space-y-6 px-6 text-center">
+          <motion.h2
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 1 }}
-            className="text-white/40 text-sm md:text-base font-medium tracking-[0.2em] uppercase text-center max-w-xs md:max-w-none"
+            className="text-white text-3xl md:text-4xl font-light tracking-tight drop-shadow-lg"
           >
-            {isSessionChange ? "Vplay Canary OS" : (isConfiguring ? "Hệ thống đang áp dụng các thay đổi" : "Gói trọn Việt Nam trong tầm mắt bạn")}
-          </motion.p>
+            {titleText}
+          </motion.h2>
           
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1, duration: 0.5 }}
-            className="flex items-center gap-4 pt-4"
+            className="flex flex-col items-center gap-6"
           >
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-              alt="Loading" 
-              className="w-8 h-8 filter brightness-0 invert" 
-              referrerPolicy="no-referrer"
-            />
-            <span className="text-white/60 text-xl font-medium tracking-tight">
-              {isSessionChange ? "Preparing new experience..." : (isConfiguring ? "Configuring Experiments..." : "Chào mừng!")}
-            </span>
+            <div className="flex items-center gap-4">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                alt="Loading" 
+                className="w-8 h-8 filter brightness-200" 
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-white/70 text-xl font-medium tracking-wide">
+                {statusText}
+              </span>
+            </div>
+
+            <AnimatePresence>
+              {showBypass && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={onEnter}
+                  className="px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-bold text-sm tracking-widest uppercase transition-all shadow-2xl active:scale-95"
+                >
+                  Bypass Splash
+                </motion.button>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </motion.div>
     </motion.div>
   );
 };
+
 
 const Sparkles2 = ({ className }: { className?: string }) => (
   <svg 
@@ -3623,34 +3671,7 @@ function AppWindowContainer({
       
       {/* Content */}
       <div className="flex-1 min-h-0 bg-black overflow-hidden relative">
-        {win.type === "tv" && (
-          <TVContent 
-            active={win.contentProps?.channel} 
-            setActive={(ch) => win.contentProps?.onSwitchChannel?.(ch)} 
-            favorites={[]} 
-            toggleFavorite={() => {}} 
-            onLogin={() => {}} 
-            user={null} 
-            isDark={isDark}
-            liquidGlass="glassy"
-            sortOrder="default"
-            setSortOrder={() => {}}
-            featureFlags={featureFlags}
-            searchQuery=""
-          />
-        )}
-        {win.type === "settings" && (
-          <SettingsContent {...win.contentProps} />
-        )}
-        {win.type === "browser" && (
-          <BrowserContent />
-        )}
-        {win.type === "explorer" && (
-          <FileExplorerContent isDark={isDark} />
-        )}
-        {win.type === "vplay_web" && (
-          <iframe src="https://vplay-beta-fa8k.vercel.app" className="w-full h-full border-none" title="Vplay Web" />
-        )}
+        {children}
       </div>
     </motion.div>
   );
@@ -3973,7 +3994,7 @@ function WindowsDesktop({
             onClick={(e: any) => e.stopPropagation()}
             className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
           >
-            <div className={`w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform overflow-hidden`}>
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform overflow-hidden`}>
               <img 
                 src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
                 className="w-full h-full object-cover" 
@@ -4205,7 +4226,7 @@ function WindowsDesktop({
                       }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
                     >
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-colors bg-blue-600 border-blue-500 overflow-hidden shadow-lg">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-colors border-white/10 overflow-hidden shadow-lg">
                         <img src={vplayLogo} alt="Vplay" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
                     </button>
@@ -4399,7 +4420,7 @@ function WindowsDesktop({
                 onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
                 className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : ""}`}
               >
-                <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group overflow-hidden">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg shadow-lg group overflow-hidden">
                   <img 
                     src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
                     className="w-full h-full object-cover transition-transform group-hover:scale-110" 
@@ -4446,7 +4467,7 @@ function WindowsDesktop({
                  onClick={(e) => { e.stopPropagation(); setShowStartMenu(!showStartMenu); }}
                  className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all ${showStartMenu ? (isDark ? "bg-white/10" : "bg-black/10") : (isDark ? "hover:bg-white/5" : "hover:bg-black/8")}`}
                >
-                 <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg shadow-lg group overflow-hidden">
+                 <div className="w-8 h-8 flex items-center justify-center rounded-lg shadow-lg group overflow-hidden">
                    <img 
                      src="https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi" 
                      className="w-full h-full object-cover transition-transform group-hover:scale-110" 
@@ -4741,7 +4762,7 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div 
         className="absolute inset-0 bg-cover bg-center transition-all duration-[20s] scale-110"
         style={{ 
-          backgroundImage: `url(${wallpaper})`, 
+          backgroundImage: `url(${splashBg})`, 
           filter: showInputs ? "blur(30px) brightness(0.6) saturate(1.2)" : "brightness(0.9)" 
         }}
       />
@@ -4838,7 +4859,24 @@ function App() {
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [hasUpdatedOS, setHasUpdatedOS] = useState(() => localStorage.getItem("vplay_canary_updated") === "true");
+
   const handleToggleOS = (val: boolean) => {
+    if (val && !hasUpdatedOS) {
+      if (confirm("Giao diện VplayOS yêu cầu tải xuống các gói tài nguyên mới (Vplay Canary Update). Bạn có muốn cập nhật ngay bây giờ?")) {
+        setIsUpdating(true);
+        setTimeout(() => {
+          setHasUpdatedOS(true);
+          localStorage.setItem("vplay_canary_updated", "true");
+          setIsUpdating(false);
+          setFeatureFlags({ ...featureFlags, windows_mode: true });
+        }, 60000);
+        return;
+      }
+      return;
+    }
+
     setIsChangingSession(true);
     setTimeout(() => {
       setFeatureFlags({ ...featureFlags, windows_mode: val });
@@ -4925,10 +4963,8 @@ function App() {
 
   const currentWallpaper = useMemo(() => {
     if (desktopWallpaper) return desktopWallpaper;
-    return isDark 
-      ? "https://images.unsplash.com/photo-1620121692029-d088224efc74?w=1600&q=80" 
-      : "https://images.unsplash.com/photo-1620121478277-ad640a5a0f21?w=1600&q=80";
-  }, [desktopWallpaper, isDark]);
+    return splashBg;
+  }, [desktopWallpaper]);
 
   const [taskbarPos, setTaskbarPos] = useState<"bottom" | "top" | "left" | "right">(() => {
     return (localStorage.getItem("vplay_taskbar_pos") as any) || "bottom";
@@ -5374,6 +5410,12 @@ function App() {
             onEnter={() => setShowSplash(false)} 
             isSessionChange={false}
           />
+        ) : isUpdating ? (
+          <SplashScreen 
+            isDark={isDark}
+            onEnter={() => {}} // Controlled by setTimeout in handleToggleOS
+            isUpdating={true}
+          />
         ) : isChangingSession ? (
           <SplashView text="Preparing new experience..." />
         ) : (featureFlags.windows_mode && isLocked) ? (
@@ -5478,8 +5520,10 @@ function App() {
                   {win.type === "tv" && (
                     <div className="h-full bg-black flex flex-col">
                         <TVContent 
-                          active={win.contentProps.channel} 
-                          setActive={(ch) => openWindow("tv", { channel: ch })} 
+                          active={win.contentProps?.channel || channels[0]} 
+                          setActive={(ch) => {
+                            setWindows(prev => prev.map(w => w.id === win.id ? { ...w, contentProps: { ...w.contentProps, channel: ch }, title: ch.name } : w));
+                          }} 
                           isDark={true} 
                           favorites={favorites} 
                           toggleFavorite={toggleFavorite} 
