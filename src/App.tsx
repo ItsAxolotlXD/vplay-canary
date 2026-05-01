@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus } from "lucide-react";
+import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -29,10 +29,30 @@ const SplashView = ({ text }: { text: string }) => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[20000] bg-[#1a1a1a] flex flex-col items-center justify-center gap-6"
+    className="fixed inset-0 z-[20000] bg-[#1a1a1a] flex flex-col items-center justify-center pt-8"
   >
-    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" className="w-12 h-12 invert" alt="Loading" />
-    <p className="text-white/60 font-black uppercase tracking-[0.2em] text-xs">{text}</p>
+    <div className="flex flex-col items-center space-y-10">
+      <motion.img 
+        initial={{ scale: 0.9 }}
+        animate={{ scale: [0.9, 1.05, 0.9] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        src={vplayLogo}
+        alt="Vplay Logo" 
+        className="h-56 w-56 object-contain drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+        referrerPolicy="no-referrer"
+      />
+      <div className="flex items-center gap-4 pt-4">
+        <img 
+          src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+          alt="Loading" 
+          className="w-8 h-8 filter brightness-0 invert" 
+          referrerPolicy="no-referrer"
+        />
+        <span className="text-white/60 text-xl font-medium tracking-tight">
+          {text}
+        </span>
+      </div>
+    </div>
   </motion.div>
 );
 const SplashScreen = ({ isDark, onEnter, isSessionChange = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean }) => {
@@ -377,7 +397,6 @@ function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev
   );
 }
 
-
 function BrowserContent({ initialUrl = "https://www.google.com/search?igu=1" }: { initialUrl?: string }) {
   const [url, setUrl] = useState(initialUrl);
   const [inputUrl, setInputUrl] = useState(initialUrl);
@@ -423,7 +442,7 @@ function BrowserContent({ initialUrl = "https://www.google.com/search?igu=1" }: 
         <iframe 
           ref={iframeRef}
           src={url} 
-          className="w-full h-full border-none"
+          className="w-full h-full border-none" 
           title="V-Browser"
           referrerPolicy="no-referrer"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation allow-downloads"
@@ -433,6 +452,127 @@ function BrowserContent({ initialUrl = "https://www.google.com/search?igu=1" }: 
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
               <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">Vplay Proxy Shield Active</span>
            </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FileExplorerContent({ isDark }: { isDark: boolean }) {
+  const [currentPath, setCurrentPath] = useState("Vplay C:\\");
+  
+  const folders = [
+    { name: "Documents", icon: Folder, color: "text-blue-500" },
+    { name: "Downloads", icon: Folder, color: "text-green-500" },
+    { name: "Pictures", icon: Folder, color: "text-orange-500" },
+    { name: "Videos", icon: Folder, color: "text-purple-500" },
+    { name: "Music", icon: Folder, color: "text-rose-500" },
+    { name: "Desktop", icon: Monitor, color: "text-slate-500" },
+  ];
+
+  const devices = [
+    { name: "Vplay (C:)", icon: HardDrive, usage: "45.2 GB used of 128 GB" },
+    { name: "Cloud Drive", icon: Cloud, usage: "12.4 MB used of 15 GB" },
+  ];
+
+  return (
+    <div className="flex h-full bg-white dark:bg-[#1a1a1a] text-black dark:text-white">
+      {/* Sidebar */}
+      <div className="w-48 border-r border-black/5 dark:border-white/5 p-4 flex flex-col gap-6">
+        <div className="space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Quick Access</p>
+          <div className="space-y-1">
+            {folders.slice(0, 4).map(f => (
+              <button key={f.name} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left">
+                <f.icon size={16} className={f.color} />
+                <span className="text-xs font-bold">{f.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-30">This PC</p>
+          <div className="space-y-1">
+            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left bg-blue-500/10 text-blue-500">
+               <HardDrive size={16} />
+               <span className="text-xs font-bold">Vplay (C:)</span>
+            </button>
+            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left">
+               <Cloud size={16} className="text-blue-400" />
+               <span className="text-xs font-bold">Cloud Storage</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Navigation Bar */}
+        <div className="h-14 border-b border-black/5 dark:border-white/5 px-4 flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg opacity-40"><ChevronLeft size={16} /></button>
+            <button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg opacity-40"><ChevronRight size={16} /></button>
+            <button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg opacity-40"><ChevronLeft size={16} className="rotate-90" /></button>
+          </div>
+          <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-xl px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-3">
+            <HardDrive size={14} className="opacity-40" />
+            <span className="text-xs opacity-60 font-medium">{currentPath}</span>
+          </div>
+          <div className="w-48 bg-black/5 dark:bg-white/5 rounded-xl px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-2">
+            <Search size={14} className="opacity-40" />
+            <input placeholder="Search files..." className="bg-transparent border-none outline-none text-xs w-full" />
+          </div>
+        </div>
+
+        {/* View Area */}
+        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+          <div className="space-y-8">
+            <section className="space-y-4">
+               <p className="text-[10px] font-black uppercase tracking-widest opacity-20">Folders</p>
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                 {folders.map(f => (
+                   <button key={f.name} className="flex flex-col items-center gap-3 p-6 rounded-3xl border border-black/5 dark:border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group">
+                     <f.icon size={48} className={`${f.color} drop-shadow-lg group-hover:scale-110 transition-transform`} />
+                     <span className="text-xs font-black uppercase tracking-tight">{f.name}</span>
+                   </button>
+                 ))}
+               </div>
+            </section>
+
+            <section className="space-y-4">
+               <p className="text-[10px] font-black uppercase tracking-widest opacity-20">Devices and drives</p>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {devices.map(d => (
+                   <button key={d.name} className="flex items-center gap-4 p-5 rounded-3xl border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left">
+                     <d.icon size={32} className="text-blue-500" />
+                     <div className="flex-1 space-y-1.5">
+                       <p className="text-xs font-black uppercase tracking-tight">{d.name}</p>
+                       <div className="h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500 w-[35%]" />
+                       </div>
+                       <p className="text-[9px] font-bold opacity-30">{d.usage}</p>
+                     </div>
+                   </button>
+                 ))}
+               </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Status Bar */}
+        <div className="h-8 border-t border-black/5 dark:border-white/5 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest opacity-30">
+            <span>8 items</span>
+            <div className="w-0.5 h-3 bg-black/10 dark:bg-white/10" />
+            <span>1 item selected</span>
+            <div className="w-0.5 h-3 bg-black/10 dark:bg-white/10" />
+            <span>45.2 GB free</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded"><LayoutGrid size={12} /></button>
+            <button className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded opacity-40"><Menu size={12} /></button>
+          </div>
         </div>
       </div>
     </div>
@@ -3356,7 +3496,8 @@ function AppWindowContainer({
   onFocus, 
   isActive, 
   children, 
-  isDark 
+  isDark,
+  featureFlags
 }: { 
   win: AppWindow, 
   onClose: () => void, 
@@ -3365,7 +3506,9 @@ function AppWindowContainer({
   onFocus: () => void, 
   isActive: boolean,
   children: ReactNode,
-  isDark: boolean
+  isDark: boolean,
+  featureFlags: any,
+  key?: string | number
 }) {
   const isMaximized = win.isMaximized;
   const [size, setSize] = useState({ width: win.width || 800, height: win.height || 550 });
@@ -3405,9 +3548,9 @@ function AppWindowContainer({
       transition: { type: "spring", damping: 25, stiffness: 300 }
     },
     minimized: {
-      scale: 0,
+      scale: 0.8,
       opacity: 0,
-      y: 500,
+      y: 200,
       transition: { duration: 0.2 }
     }
   };
@@ -3416,10 +3559,10 @@ function AppWindowContainer({
 
   return (
     <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.8, opacity: 0 }}
       animate={win.isMinimized ? "minimized" : "normal"}
       variants={windowVariants}
-      exit={{ scale: 0.9, opacity: 0 }}
+      exit={{ scale: 0.8, opacity: 0 }}
       drag={!isMaximized && !isResizing}
       dragMomentum={false}
       onMouseDown={onFocus}
@@ -3490,7 +3633,7 @@ function AppWindowContainer({
             user={null} 
             isDark={isDark}
             liquidGlass="glassy"
-            sortOrder="grid"
+            sortOrder="default"
             setSortOrder={() => {}}
             featureFlags={featureFlags}
             searchQuery=""
@@ -3501,6 +3644,9 @@ function AppWindowContainer({
         )}
         {win.type === "browser" && (
           <BrowserContent />
+        )}
+        {win.type === "explorer" && (
+          <FileExplorerContent isDark={isDark} />
         )}
         {win.type === "vplay_web" && (
           <iframe src="https://vplay-beta-fa8k.vercel.app" className="w-full h-full border-none" title="Vplay Web" />
@@ -3536,7 +3682,9 @@ function WindowsDesktop({
   setSystemVolume,
   musicProgress,
   setMusicProgress,
-  weatherCity
+  weatherCity,
+  userName,
+  onLock
 }: any) {
   const [showWidgets, setShowWidgets] = useState(false);
   const [showStartMenu, setShowStartMenu] = useState(false);
@@ -3636,7 +3784,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-black uppercase tracking-[0.2em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary SMR26 - Build 28000.01</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.01</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -3696,8 +3844,7 @@ function WindowsDesktop({
                           <div className="flex items-center gap-4">
                              <Cloud size={widget.size === 'large' ? 80 : 64} className="text-blue-400 drop-shadow-xl" />
                              <div>
-                                <p className={`${widget.size === 'large' ? 'text-6xl' : 'text-5xl'} font-black tracking-tighter`}>{weatherData.temp}°C</p>
-                                <p className="text-sm font-bold opacity-40 uppercase tracking-widest">{weatherData.condition}</p>
+                                <p className={`${widget.size === 'large' ? 'text-6xl' : 'text-5xl'} font-medium tracking-tighter`}>{weatherData.temp}°C</p>
                              </div>
                           </div>
                           {widget.size !== 'small' && (
@@ -3860,6 +4007,17 @@ function WindowsDesktop({
             </div>
             <span className="text-[11px] font-bold text-white text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Update Logs</span>
           </motion.button>
+          <motion.button 
+            drag dragMomentum={false}
+            onDoubleClick={(e: any) => { e.stopPropagation(); onOpenApp("explorer"); }}
+            onClick={(e: any) => e.stopPropagation()}
+            className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-white/10 group transition-all w-24 cursor-grab active:cursor-grabbing"
+          >
+            <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
+              <Folder className="text-white" size={28} />
+            </div>
+            <span className="text-[11px] font-bold text-white text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">File Explorer</span>
+          </motion.button>
         </div>
       </div>
 
@@ -3925,6 +4083,15 @@ function WindowsDesktop({
                     className={`p-2 rounded-xl border transition-all ${isDark ? "bg-blue-600 border-blue-500 text-white" : (isDark ? "bg-white/5 border-white/5 text-white/40" : "bg-black/5 border-black/5 text-black/40")}`}
                   >
                     <Moon size={16} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onLock();
+                      setShowQuickAccess(false);
+                    }}
+                    className={`p-2 rounded-xl border transition-all ${isDark ? "bg-white/5 border-white/5 text-white/40 hover:bg-white/20 hover:text-white" : "bg-black/5 border-black/5 text-black/40 hover:bg-black/20 hover:text-black"}`}
+                  >
+                    <Lock size={16} />
                   </button>
                 </div>
               </div>
@@ -4043,6 +4210,30 @@ function WindowsDesktop({
                       </div>
                     </button>
 
+                    <button
+                      onClick={() => {
+                        onOpenApp("explorer");
+                        setShowStartMenu(false);
+                      }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-all shadow-md group-hover:scale-110 ${isDark ? "bg-white/5 border-white/5" : "bg-black/5 border-black/5"}`}>
+                        <Folder className="text-blue-500" size={24} />
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onOpenApp("settings");
+                        setShowStartMenu(false);
+                      }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center p-2 border transition-all shadow-md group-hover:scale-110 ${isDark ? "bg-white/5 border-white/5" : "bg-black/5 border-black/5"}`}>
+                        <Settings className="text-slate-500" size={24} />
+                      </div>
+                    </button>
+
                     {channels.map(ch => (
                       <button
                         key={ch.name}
@@ -4076,6 +4267,22 @@ function WindowsDesktop({
                      <p className="text-[10px] font-bold opacity-60">Quay lại giao diện App</p>
                    </div>
                  </button>
+
+                 <button 
+                   onClick={() => {
+                     onLock();
+                     setShowStartMenu(false);
+                   }}
+                   className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left mt-2 ${isDark ? "bg-white/5 hover:bg-white/10 text-white" : "bg-black/5 hover:bg-black/10 text-black"}`}
+                 >
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDark ? "bg-white/10 border-white/10" : "bg-black/10 border-black/10"}`}>
+                     <Lock size={20} />
+                   </div>
+                   <div className="flex-1">
+                     <p className="text-xs font-black uppercase tracking-tight">Sign Out</p>
+                     <p className="text-[10px] font-bold opacity-60">Đăng xuất khỏi hệ thống</p>
+                   </div>
+                 </button>
                </div>
             </div>
           </motion.div>
@@ -4099,8 +4306,8 @@ function WindowsDesktop({
                 <Search className={`absolute left-5 top-1/2 -translate-y-1/2 opacity-40 ${isDark ? "text-white" : "text-black"}`} size={20} />
                 <input 
                   autoFocus
-                  placeholder="Search apps..."
-                  className={`w-full bg-transparent border-none rounded-2xl py-4 pl-14 pr-6 outline-none transition-all font-black text-sm uppercase tracking-widest ${isDark ? "text-white" : "text-black"}`}
+                  placeholder="Search Vplay"
+                  className={`w-full bg-transparent border-none rounded-2xl py-4 pl-14 pr-6 outline-none transition-all font-medium text-sm ${isDark ? "text-white" : "text-black"}`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -4173,8 +4380,7 @@ function WindowsDesktop({
             <Cloud size={20} className="text-blue-400" />
             {(taskbarPos !== "left" && taskbarPos !== "right") && (
               <div className="flex flex-col items-start leading-none">
-                <span className={`text-[12px] font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>{weatherData.temp}°C</span>
-                <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 mt-0.5 ${isDark ? "text-white" : "text-black"}`}>{weatherData.condition}</span>
+                <span className={`text-[12px] font-medium uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>{weatherData.temp}°C</span>
               </div>
             )}
           </button>
@@ -4217,7 +4423,7 @@ function WindowsDesktop({
                   className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
                 >
                   <Search size={14} className="opacity-40" />
-                  <span className="text-[10px] font-black uppercase tracking-widest leading-none">Search...</span>
+                  <span className="text-[10px] font-medium leading-none">Search Vplay</span>
                 </div>
               )}
             </>
@@ -4262,7 +4468,7 @@ function WindowsDesktop({
                  className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
                >
                  <Search size={14} className="opacity-40" />
-                 <span className="text-[10px] font-black uppercase tracking-widest leading-none">Search...</span>
+                 <span className="text-[10px] font-medium leading-none">Search Vplay</span>
                </div>
              </div>
            )}
@@ -4496,7 +4702,7 @@ function ProtectedContent({ children, user, onLogin, isDark, isDev, liquidGlass 
 interface AppWindow {
   id: string;
   title: string;
-  type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web";
+  type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web" | "explorer";
   contentProps?: any;
   isMinimized: boolean;
   isMaximized: boolean;
@@ -4507,15 +4713,132 @@ interface AppWindow {
   y?: number;
 }
 
+const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setWeatherCity, wallpaper }: { isDark: boolean, userName: string, weatherCity: string, onSignIn: () => void, setUserName: (v: string) => void, setWeatherCity: (v: string) => void, wallpaper: string }) => {
+  const [time, setTime] = useState(new Date());
+  const [showInputs, setShowInputs] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleSignIn = (e: FormEvent) => {
+    e.preventDefault();
+    if (userName.trim()) {
+      onSignIn();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, y: -1000 }}
+      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      className="fixed inset-0 z-[30000] flex flex-col items-center justify-center overflow-hidden"
+    >
+      {/* Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center transition-all duration-[20s] scale-110"
+        style={{ 
+          backgroundImage: `url(${wallpaper})`, 
+          filter: showInputs ? "blur(30px) brightness(0.6) saturate(1.2)" : "brightness(0.9)" 
+        }}
+      />
+      
+      <AnimatePresence mode="wait">
+        {!showInputs ? (
+          <motion.div 
+            key="lock-clock"
+            initial={{ y: 0, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -200, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative z-10 flex flex-col items-center cursor-pointer select-none"
+            onClick={() => setShowInputs(true)}
+          >
+            <h1 className="text-[140px] font-thin text-white tracking-tighter leading-none drop-shadow-2xl">
+              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+            </h1>
+            <p className="text-3xl text-white/90 font-light mt-4 drop-shadow-lg">
+              {time.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+            <div className="mt-32 flex flex-col items-center gap-4 animate-bounce">
+              <span className="text-white/40 text-[10px] font-black uppercase tracking-[0.6em]">Trượt lên để đăng nhập</span>
+              <ChevronLeft size={24} className="rotate-90 text-white/20" />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="lock-auth"
+            initial={{ y: 200, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 200, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="relative z-10 w-full max-w-sm px-8 flex flex-col items-center"
+          >
+            <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-3xl border border-white/30 flex items-center justify-center shadow-2xl mb-8 ring-8 ring-white/5">
+              <User size={56} className="text-white" />
+            </div>
+            
+            <h2 className="text-3xl font-light text-white mb-8 tracking-tight">Chào mừng quay trở lại</h2>
+
+            <form onSubmit={handleSignIn} className="w-full flex flex-col gap-5">
+              <div className="space-y-2">
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Người dùng"
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 text-white placeholder:text-white/40 outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium text-center text-lg"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <input 
+                  type="text" 
+                  placeholder="Vị trí của bạn"
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 text-white placeholder:text-white/40 outline-none focus:bg-white/20 focus:border-white/40 transition-all font-medium text-center text-lg"
+                  value={weatherCity}
+                  onChange={(e) => setWeatherCity(e.target.value)}
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-white text-black hover:bg-opacity-90 rounded-2xl py-4 mt-6 font-black uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-95 text-sm"
+              >
+                Sign In
+              </button>
+              
+              <button 
+                type="button"
+                onClick={() => setShowInputs(false)}
+                className="text-white/50 text-[11px] font-bold uppercase tracking-widest hover:text-white transition-colors mt-4 self-center"
+              >
+                Quay lại màn hình khóa
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer Info */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
+        <span>Vplay OS Preview</span>
+        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+        <span>Build 28000.01</span>
+      </div>
+    </motion.div>
+  );
+};
+
 function App() {
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   
   const handleToggleOS = (val: boolean) => {
-    if (val && !featureFlags.windows_mode) {
-      const city = prompt("Vui lòng nhập thành phố của bạn để theo dõi thời tiết:", weatherCity);
-      if (city) setWeatherCity(city);
-    }
     setIsChangingSession(true);
     setTimeout(() => {
       setFeatureFlags({ ...featureFlags, windows_mode: val });
@@ -4525,14 +4848,15 @@ function App() {
     }, 10000);
   };
 
-  const openWindow = useCallback((type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web", props?: any) => {
+  const openWindow = useCallback((type: "settings" | "tv" | "logs" | "browser" | "debug" | "search" | "vplay_web" | "explorer", props?: any) => {
     const id = `${type}_${Date.now()}`;
     const titles: { [key: string]: string } = {
       settings: "Cài đặt hệ thống",
       debug: "Operator Console",
       search: "Search & Discovery",
       vplay_web: "Vplay Official Web",
-      browser: "V-Browser"
+      browser: "V-Browser",
+      explorer: "File Explorer"
     };
     const title = titles[type] || props?.channel?.name || "Window";
     
@@ -4545,6 +4869,9 @@ function App() {
     } else if (type === "vplay_web") {
       defaultWidth = 1000;
       defaultHeight = 700;
+    } else if (type === "explorer") {
+      defaultWidth = 950;
+      defaultHeight = 650;
     }
     
     const newWindow: AppWindow = {
@@ -4599,8 +4926,8 @@ function App() {
   const currentWallpaper = useMemo(() => {
     if (desktopWallpaper) return desktopWallpaper;
     return isDark 
-      ? "https://4kwallpapers.com/images/walls/thumbs_3t/5747.jpg" 
-      : "https://4kwallpapers.com/images/walls/thumbs_3t/5748.jpg";
+      ? "https://images.unsplash.com/photo-1620121692029-d088224efc74?w=1600&q=80" 
+      : "https://images.unsplash.com/photo-1620121478277-ad640a5a0f21?w=1600&q=80";
   }, [desktopWallpaper, isDark]);
 
   const [taskbarPos, setTaskbarPos] = useState<"bottom" | "top" | "left" | "right">(() => {
@@ -4614,7 +4941,9 @@ function App() {
   const [isChangingSession, setIsChangingSession] = useState(false);
   const [systemVolume, setSystemVolume] = useState(80);
   const [musicProgress, setMusicProgress] = useState(0);
+  const [userName, setUserName] = useState(() => localStorage.getItem("vplay_user_name") || "");
   const [weatherCity, setWeatherCity] = useState(() => localStorage.getItem("vplay_location") || "Hồ Chí Minh");
+  const [isLocked, setIsLocked] = useState(() => !localStorage.getItem("vplay_user_name"));
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 
@@ -5038,134 +5367,67 @@ function App() {
         <div className={`absolute inset-0 transition-colors duration-1000 ${isDark ? "bg-slate-950/60" : "bg-white/60"}`} />
       </div>
 
-      <AnimatePresence>
-        {showSplash && (
-          <div onClick={handleEnterApp} className="cursor-pointer z-[101]">
-            <SplashScreen isDark={isDark} onEnter={handleEnterApp} />
-          </div>
-        )}
+      <AnimatePresence mode="wait">
+        {showSplash ? (
+          <SplashScreen 
+            isDark={isDark} 
+            onEnter={() => setShowSplash(false)} 
+            isSessionChange={false}
+          />
+        ) : isChangingSession ? (
+          <SplashView text="Preparing new experience..." />
+        ) : (featureFlags.windows_mode && isLocked) ? (
+          <LockScreen 
+            isDark={isDark}
+            userName={userName}
+            weatherCity={weatherCity}
+            onSignIn={() => {
+              localStorage.setItem("vplay_user_name", userName);
+              localStorage.setItem("vplay_location", weatherCity);
+              setIsLocked(false);
+            }}
+            setUserName={setUserName}
+            setWeatherCity={setWeatherCity}
+            wallpaper={currentWallpaper}
+          />
+        ) : null}
       </AnimatePresence>
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} isDark={isDark} liquidGlass={liquidGlass} setIsDev={setIsDev} setUserData={setUserData} />
-      
-      {/* Developer Settings Choice */}
-      <LiquidModal
-        isOpen={showDevSettings}
-        onClose={() => setShowDevSettings(false)}
-        isDark={isDark}
-        title="Cài đặt nhà phát triển"
-        description={isDev ? "Bạn đang ở chế độ nhà phát triển. Bạn có muốn tắt nó không?" : "Bạn muốn kích hoạt chế độ nhà phát triển?"}
-        liquidGlass={liquidGlass}
-      >
-        <div className="flex flex-col gap-3">
-          {!isDev ? (
-            <button 
-              onClick={() => { setShowDevSettings(false); setShowDevPrompt(true); }}
-              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
-            >
-              Kích hoạt (Yêu cầu mật khẩu)
-            </button>
-          ) : (
-            <button 
-              onClick={() => { setIsDev(false); setShowDevSettings(false); }}
-              className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-red-600/20 active:scale-95"
-            >
-              Hủy kích hoạt
-            </button>
-          )}
-          <button 
-            onClick={() => setShowDevSettings(false)}
-            className={`w-full py-3 rounded-3xl font-bold transition-all ${
-              isDark ? "bg-white/5 text-slate-400 hover:text-white" : "bg-black/5 text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Đóng
-          </button>
-        </div>
-      </LiquidModal>
 
-      {/* Developer Mode Prompt */}
-      <LiquidModal
-        isOpen={showDevPrompt}
-        onClose={() => { setShowDevPrompt(false); setDevPass(""); setDevError(false); }}
-        isDark={isDark}
-        title="Chế độ nhà phát triển"
-        description="Kích hoạt tính năng nhà phát triển để truy cập vào các quyền đặc biệt. Bạn cần phải có mật khẩu dành cho nhà phát triển được chia sẻ bởi Chủ Thớt để kích hoạt"
-        liquidGlass={liquidGlass}
-      >
-        <form onSubmit={verifyDev} className="space-y-4 text-left">
-          <div className="space-y-1">
-            <label className={`text-[10px] font-bold uppercase tracking-wider opacity-50 ml-4 ${isDark ? "text-white" : "text-slate-900"}`}>Mật khẩu</label>
-            <input 
-              autoFocus
-              type="password" 
-              value={devPass} 
-              onChange={e => setDevPass(e.target.value)}
-              className={`w-full px-5 py-3 rounded-3xl border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
-                devError 
-                  ? "border-red-500 bg-red-500/5" 
-                  : isDark 
-                    ? "bg-white/5 border-white/10 text-white placeholder-white/30" 
-                    : "bg-black/5 border-black/5 text-slate-900 placeholder-slate-400"
-              }`}
-              placeholder="••••••••"
-            />
-            {devError && <p className="text-red-500 text-[10px] mt-2 font-bold text-center">Mật khẩu không chính xác!</p>}
-          </div>
-          
-          <div className="flex flex-col gap-3 pt-2">
-            <button 
-              type="submit"
-              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
-            >
-              Xác nhận
-            </button>
-            <button 
-              type="button"
-              onClick={() => { setShowDevPrompt(false); setDevPass(""); setDevError(false); }}
-              className={`w-full py-3 rounded-3xl font-bold transition-all ${
-                isDark ? "bg-white/5 text-slate-400 hover:text-white" : "bg-black/5 text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Hủy
-            </button>
-          </div>
-        </form>
-      </LiquidModal>
-
-      {isChangingSession && (
-        <SplashView text="Preparing new experience..." />
-      )}
-
-      {featureFlags.windows_mode && !isChangingSession ? (
-        <Fragment>
-          <div className="fixed inset-0 z-[40]">
-            <WindowsDesktop 
-              channels={channels} 
-              onOpenApp={openWindow} 
-              isDark={isDark}
-              setIsDark={setIsDark}
-              windows={windows}
-              activeWindowId={activeWindowId}
-              setWindows={setWindows}
-              setActiveWindowId={setActiveWindowId}
-              focusWindow={focusWindow}
-              minimizeWindow={minimizeWindow}
-              wallpaper={currentWallpaper}
-              setWallpaper={setDesktopWallpaper}
-              pinnedNames={pinnedChannelNames}
-              setPinnedNames={setPinnedChannelNames}
-              featureFlags={featureFlags}
-              setFeatureFlags={setFeatureFlags}
-              taskbarPos={taskbarPos}
-              setTaskbarPos={setTaskbarPos}
-              taskbarAlign={taskbarAlign}
-              setTaskbarAlign={setTaskbarAlign}
-              onExitSession={() => handleToggleOS(false)}
+      {featureFlags.windows_mode && !isChangingSession && !showSplash && !isLocked && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[40]"
+        >
+          <WindowsDesktop 
+            channels={channels} 
+            onOpenApp={openWindow} 
+            isDark={isDark}
+            setIsDark={setIsDark}
+            windows={windows}
+            activeWindowId={activeWindowId}
+            setWindows={setWindows}
+            setActiveWindowId={setActiveWindowId}
+            focusWindow={focusWindow}
+            minimizeWindow={minimizeWindow}
+            wallpaper={currentWallpaper}
+            setWallpaper={setDesktopWallpaper}
+            pinnedNames={pinnedChannelNames}
+            setPinnedNames={setPinnedChannelNames}
+            featureFlags={featureFlags}
+            setFeatureFlags={setFeatureFlags}
+            taskbarPos={taskbarPos}
+            setTaskbarPos={setTaskbarPos}
+            taskbarAlign={taskbarAlign}
+            setTaskbarAlign={setTaskbarAlign}
+            onExitSession={() => handleToggleOS(false)}
               systemVolume={systemVolume}
               setSystemVolume={setSystemVolume}
               musicProgress={musicProgress}
               setMusicProgress={setMusicProgress}
               weatherCity={weatherCity}
+              userName={userName}
+              onLock={() => setIsLocked(true)}
             />
             <AnimatePresence>
               {windows.filter(w => !w.isMinimized).map(win => (
@@ -5178,6 +5440,7 @@ function App() {
                   onMinimize={() => minimizeWindow(win.id)}
                   onMaximize={() => maximizeWindow(win.id)}
                   isDark={isDark}
+                  featureFlags={featureFlags}
                 >
                   {win.type === "settings" && (
                     <div className="h-full overflow-y-auto p-6">
@@ -5236,6 +5499,9 @@ function App() {
                   {win.type === "logs" && (
                     <UpdateLogsContent isDark={isDark} onBack={() => closeWindow(win.id)} />
                   )}
+                  {win.type === "explorer" && (
+                    <FileExplorerContent isDark={isDark} />
+                  )}
                   {win.type === "browser" && (
               <BrowserContent initialUrl={win.contentProps?.url} />
             )}
@@ -5261,9 +5527,10 @@ function App() {
                 </AppWindowContainer>
               ))}
             </AnimatePresence>
-          </div>
-        </Fragment>
-      ) : (
+          </motion.div>
+      )}
+
+      {!featureFlags.windows_mode && !isChangingSession && !showSplash && (
         <Fragment>
           <div 
             className={`flex-1 flex flex-col min-h-screen relative overflow-hidden transition-[padding] duration-300 ${
@@ -6033,7 +6300,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-black uppercase tracking-[0.2em] text-white">Vplay Canary SMR26 - Build 28000.01</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.01</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
@@ -6167,6 +6434,99 @@ function App() {
           />
         </div>
       )}
+
+      {/* Modals & Overlays */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+        isDark={isDark} 
+        liquidGlass={liquidGlass} 
+        setIsDev={setIsDev} 
+        setUserData={setUserData} 
+      />
+      
+      <LiquidModal
+        isOpen={showDevSettings}
+        onClose={() => setShowDevSettings(false)}
+        isDark={isDark}
+        title="Cài đặt nhà phát triển"
+        description={isDev ? "Bạn đang ở chế độ nhà phát triển. Bạn có muốn tắt nó không?" : "Bạn muốn kích hoạt chế độ nhà phát triển?"}
+        liquidGlass={liquidGlass}
+      >
+        <div className="flex flex-col gap-3">
+          {!isDev ? (
+            <button 
+              onClick={() => { setShowDevSettings(false); setShowDevPrompt(true); }}
+              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
+            >
+              Kích hoạt (Yêu cầu mật khẩu)
+            </button>
+          ) : (
+            <button 
+              onClick={() => { setIsDev(false); setShowDevSettings(false); }}
+              className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-red-600/20 active:scale-95"
+            >
+              Hủy kích hoạt
+            </button>
+          )}
+          <button 
+            onClick={() => setShowDevSettings(false)}
+            className={`w-full py-3 rounded-3xl font-bold transition-all ${
+              isDark ? "bg-white/5 text-slate-400 hover:text-white" : "bg-black/5 text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            Đóng
+          </button>
+        </div>
+      </LiquidModal>
+
+      <LiquidModal
+        isOpen={showDevPrompt}
+        onClose={() => { setShowDevPrompt(false); setDevPass(""); setDevError(false); }}
+        isDark={isDark}
+        title="Chế độ nhà phát triển"
+        description="Kích hoạt tính năng nhà phát triển để truy cập vào các quyền đặc biệt. Bạn cần phải có mật khẩu dành cho nhà phát triển được chia sẻ bởi Chủ Thớt để kích hoạt"
+        liquidGlass={liquidGlass}
+      >
+        <form onSubmit={verifyDev} className="space-y-4 text-left">
+          <div className="space-y-1">
+            <label className={`text-[10px] font-bold uppercase tracking-wider opacity-50 ml-4 ${isDark ? "text-white" : "text-slate-900"}`}>Mật khẩu</label>
+            <input 
+              autoFocus
+              type="password" 
+              value={devPass} 
+              onChange={e => setDevPass(e.target.value)}
+              className={`w-full px-5 py-3 rounded-3xl border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                devError 
+                  ? "border-red-500 bg-red-500/5" 
+                  : isDark 
+                    ? "bg-white/5 border-white/10 text-white placeholder-white/30" 
+                    : "bg-black/5 border-black/5 text-slate-900 placeholder-slate-400"
+              }`}
+              placeholder="••••••••"
+            />
+            {devError && <p className="text-red-500 text-[10px] mt-2 font-bold text-center">Mật khẩu không chính xác!</p>}
+          </div>
+          
+          <div className="flex flex-col gap-3 pt-2">
+            <button 
+              type="submit"
+              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-[32px] font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
+            >
+              Xác nhận
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setShowDevPrompt(false); setDevPass(""); setDevError(false); }}
+              className={`w-full py-3 rounded-3xl font-bold transition-all ${
+                isDark ? "bg-white/5 text-slate-400 hover:text-white" : "bg-black/5 text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Hủy
+            </button>
+          </div>
+        </form>
+      </LiquidModal>
     </div>
   </MotionConfig>
 );
