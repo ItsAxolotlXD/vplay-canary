@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive } from "lucide-react";
+import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -198,7 +198,13 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  onClick={() => setShowPassPrompt(true)}
+                  onClick={() => {
+                    if (isUpdating) {
+                      setShowPassPrompt(true);
+                    } else {
+                      onEnter();
+                    }
+                  }}
                   className="px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-bold text-sm tracking-widest uppercase transition-all shadow-2xl active:scale-95"
                 >
                   Bypass Splash
@@ -632,13 +638,14 @@ function FileExplorerContent({ isDark }: { isDark: boolean }) {
             <button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg opacity-40"><ChevronRight size={16} /></button>
             <button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg opacity-40"><ChevronLeft size={16} className="rotate-90" /></button>
           </div>
-          <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-xl px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-3">
+          <div className="flex-1 bg-black/5 dark:bg-white/5 rounded-full px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-3">
             <HardDrive size={14} className="opacity-40" />
             <span className="text-xs opacity-60 font-medium">{currentPath}</span>
           </div>
-          <div className="w-48 bg-black/5 dark:bg-white/5 rounded-xl px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-2">
+          <div className="w-48 bg-black/5 dark:bg-white/5 rounded-full px-4 py-2 border border-black/5 dark:border-white/5 flex items-center gap-2 relative group overflow-hidden">
             <Search size={14} className="opacity-40" />
             <input placeholder="Search files..." className="bg-transparent border-none outline-none text-xs w-full" />
+            <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/10"} group-focus-within:bg-blue-500`} />
           </div>
         </div>
 
@@ -743,7 +750,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
       setIsDev(true);
       newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.1 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.02 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
@@ -873,7 +880,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { initializeApp } from "firebase/app";
 
 /** 
- * Build 28000.1 
+ * Build 28000.02 
  * SMR26 Canary Branch
  */
 export default function App() {
@@ -1384,7 +1391,7 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
         liquidGlass={liquidGlass}
       >
         <div className="space-y-6">
-          <div className={`relative group flex items-center gap-3 px-4 py-4 rounded-2xl overflow-hidden transition-all ${isDark ? "bg-white/5" : "bg-slate-100"}`}>
+          <div className={`relative group flex items-center gap-3 px-4 py-4 rounded-full overflow-hidden transition-all ${isDark ? "bg-white/5" : "bg-slate-100"}`}>
             <Search size={18} className="text-slate-500 group-focus-within:text-purple-500 transition-colors" />
             <input 
               type="text"
@@ -1393,7 +1400,7 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
               onChange={(e) => setChannelSearch(e.target.value)}
               className={`bg-transparent border-none outline-none text-sm font-bold w-full placeholder-slate-500 ${isDark ? "text-white" : "text-slate-900"}`}
             />
-            <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
+            <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
           </div>
 
           <div className="max-h-[350px] overflow-y-auto px-1 space-y-2 custom-scrollbar pr-2">
@@ -2325,15 +2332,24 @@ function VidsContent({ isDark, user, liquidGlass, onLogin }: { isDark: boolean, 
         <form onSubmit={handleUploadVideo} className="space-y-4 text-left p-2">
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">Tiêu đề</label>
-            <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề video..." className={`w-full px-5 py-3 rounded-3xl border focus:outline-none transition-all ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+            <div className="relative group overflow-hidden rounded-full">
+              <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Tiêu đề video..." className={`w-full px-5 py-3 border focus:outline-none transition-all ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+              <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500`} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">URL Video (HLS/MP4)</label>
-            <input required value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://example.com/video.m3u8" className={`w-full px-5 py-3 rounded-3xl border focus:outline-none transition-all ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+            <div className="relative group overflow-hidden rounded-full">
+              <input required value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://example.com/video.m3u8" className={`w-full px-5 py-3 border focus:outline-none transition-all ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+              <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500`} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">Mô tả</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả..." className={`w-full px-5 py-3 rounded-3xl border focus:outline-none h-24 resize-none ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+            <div className="relative group overflow-hidden rounded-[24px]">
+              <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả..." className={`w-full px-5 py-3 border focus:outline-none h-24 resize-none ${isDark ? "bg-white/5 border-white/10 text-white" : "bg-black/5 border-black/5"}`} />
+              <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500`} />
+            </div>
           </div>
           <button type="submit" disabled={uploading} className="w-full py-4 bg-purple-600 text-white font-bold rounded-3xl shadow-lg active:scale-95 disabled:opacity-50">
             {uploading ? "UPLOADING..." : "UPLOAD VIDEO"}
@@ -2575,6 +2591,58 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
 
   const logs = [
     {
+      id: 'canary-28000-02',
+      version: 'Vplay Canary - Build 28000.02',
+      tag: '🔥',
+      type: 'Bản cập nhật Trải nghiệm người dùng',
+      sections: [
+        {
+          title: '✨ SPLASH SCREEN REDESIGN',
+          items: [
+            'Splash screen sử dụng nền tím nghệ thuật mới',
+            'Thêm thanh phần trăm tiến độ tải hệ thống',
+            'Bypass Splash: Nút bỏ qua splash screen tích hợp bảo mật (Pass: sus)',
+            'Giao diện Update khẩn cấp 1 phút với nút Bypass sau 10s'
+          ],
+          color: 'text-purple-400'
+        },
+        {
+          title: '💻 VPLAY OS OPTIMIZATION',
+          items: [
+            'Fix lỗi màn hình trắng tinh khi mở các ứng dụng cửa sổ',
+            'Đồng bộ hóa hình nền Desktop với chủ đề Splash Screen',
+            'Loại bỏ nền xanh cũ của Start Icon, tối ưu độ trong suốt',
+            'Tối ưu hóa các tiến trình chuyển đổi giao diện Windows Mode'
+          ],
+          color: 'text-blue-400'
+        }
+      ]
+    },
+    {
+      id: 'canary-28000-01',
+      version: 'Vplay Canary - Build 28000.01',
+      tag: '🚀',
+      type: 'Phiên bản VplayOS đầu tiên',
+      sections: [
+        {
+          title: '🆕 GIAO DIỆN VPLAYOS',
+          items: [
+            'Ra mắt tính năng VplayOS (Windows Mode) cho Canary build',
+            'Hệ thống cập nhật Canary Resource (Vplay Canary Update)',
+            'Tích hợp Taskbar, Start Menu và hệ thống quản lý Window'
+          ],
+          color: 'text-green-500'
+        }
+      ]
+    },
+    {
+      id: 'canary-28000',
+      version: 'Vplay Canary - Build 28000',
+      tag: '🐦',
+      type: 'Phiên bản thử nghiệm sớm',
+      content: 'Bản build chỉ mới được để cập thông qua Github'
+    },
+    {
       id: 'dev-26470',
       version: 'Vplay Canary - Build SMR26',
       tag: '🐦',
@@ -2597,21 +2665,14 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
           color: 'text-amber-500'
         }
       ]
-    },
-    {
-      id: 'canary-28000',
-      version: 'Vplay Canary - Build 28000',
-      tag: '🐦',
-      type: 'Phiên bản thử nghiệm sớm',
-      content: 'Bản build chỉ mới được để cập thông qua Github'
     }
   ];
 
   const filteredLogs = logs.filter(log => 
     log.version.toLowerCase().includes(logSearchQuery.toLowerCase()) ||
     log.type.toLowerCase().includes(logSearchQuery.toLowerCase()) ||
-    log.sections?.some(s => s.items.some(i => i.toLowerCase().includes(logSearchQuery.toLowerCase()))) ||
-    (log.content && log.content.toLowerCase().includes(logSearchQuery.toLowerCase()))
+    (log as any).sections?.some((s: any) => s.items.some((i: any) => i.toLowerCase().includes(logSearchQuery.toLowerCase()))) ||
+    ((log as any).content && (log as any).content.toLowerCase().includes(logSearchQuery.toLowerCase()))
   );
 
   return (
@@ -2627,7 +2688,7 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
           <h2 className={`text-3xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Update Logs</h2>
         </div>
 
-          <div className={`relative group min-w-[240px] rounded-xl overflow-hidden ${isDark ? "bg-white/5" : "bg-slate-50"}`}>
+          <div className={`relative group min-w-[240px] rounded-full overflow-hidden ${isDark ? "bg-white/5" : "bg-slate-50"}`}>
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-white/20" : "text-slate-400"} group-focus-within:text-purple-500 transition-colors`} size={14} />
             <input 
               value={logSearchQuery}
@@ -2637,7 +2698,7 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
                 isDark ? "text-white placeholder-white/20" : "text-slate-900 placeholder-slate-400"
               }`}
             />
-            <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_8px_rgba(168,85,247,0.4)]`} />
+            <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_8px_rgba(168,85,247,0.4)]`} />
           </div>
       </div>
 
@@ -2654,9 +2715,9 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
                </div>
             </div>
             
-            {log.sections ? (
+            {(log as any).sections ? (
               <div className={`p-6 md:p-8 rounded-[32px] border ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"} space-y-8`}>
-                {log.sections.map((section, idx) => (
+                {(log as any).sections.map((section: any, idx: number) => (
                   <div key={idx} className="space-y-4">
                     <h4 className={`text-xs font-black ${section.color} uppercase tracking-[0.2em]`}>{section.title}</h4>
                     <ul className={`text-sm space-y-3 ${isDark ? "text-slate-300" : "text-slate-600"} font-medium`}>
@@ -2673,7 +2734,7 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
             ) : (
               <div className={`p-6 md:p-8 rounded-[32px] border ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
                 <p className={`text-sm ${isDark ? "text-slate-300" : "text-slate-600"} font-medium`}>
-                  {log.content}
+                  {(log as any).content}
                 </p>
               </div>
             )}
@@ -3286,7 +3347,7 @@ function SettingsContent({
               <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"} font-medium`}>Kích hoạt và trải nghiệm sớm các tính năng sắp ra mắt của Vplay</p>
             </div>
           </div>
-          <div className={`relative group min-w-[240px] rounded-xl overflow-hidden ${isDark ? "bg-white/5" : "bg-slate-50"}`}>
+          <div className={`relative group min-w-[240px] rounded-full overflow-hidden ${isDark ? "bg-white/5" : "bg-slate-50"}`}>
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-white/20" : "text-slate-400"} group-focus-within:text-purple-500 transition-colors`} size={14} />
             <input 
               value={flagSearch}
@@ -3296,7 +3357,7 @@ function SettingsContent({
                 isDark ? "text-white placeholder-white/20" : "text-slate-900 placeholder-slate-400"
               }`}
             />
-            <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_8px_rgba(168,85,247,0.4)]`} />
+            <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_8px_rgba(168,85,247,0.4)]`} />
           </div>
         </div>
 
@@ -3774,13 +3835,15 @@ function WindowsDesktop({
   setMusicProgress,
   weatherCity,
   userName,
-  onLock
+  onLock,
+  searchBoxPosition
 }: any) {
   const [showWidgets, setShowWidgets] = useState(false);
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [showDesktopSearch, setShowDesktopSearch] = useState(false);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, ch: Channel | null } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -3855,6 +3918,7 @@ function WindowsDesktop({
         setShowDesktopSearch(false);
         setShowQuickAccess(false);
         setShowWidgets(false);
+        setShowCalendar(false);
         setContextMenu(null);
       }}
       onContextMenu={(e) => {
@@ -3874,7 +3938,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.01</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.02</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -4142,21 +4206,40 @@ function WindowsDesktop({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Music size={12} className="text-purple-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Background Music</span>
+              {/* Advanced Media Control Area */}
+              <div className={`p-4 rounded-2xl border ${isDark ? "bg-white/5 border-white/5" : "bg-black/5 border-black/5"} space-y-4`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Music className="text-white" size={24} />
                   </div>
-                  <span className="text-[10px] font-bold opacity-40">{Math.floor(musicProgress / 60)}:{String(musicProgress % 60).padStart(2, '0')}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black uppercase tracking-tight truncate">Đang phát</p>
+                    <p className={`text-sm font-bold truncate ${isDark ? "text-white" : "text-black"}`}>Vplay OS Symphony - Canary Edition</p>
+                    <p className="text-[10px] font-medium opacity-40 uppercase tracking-widest">Hệ thống Vplay</p>
+                  </div>
                 </div>
-                <input 
-                  type="range" 
-                  min="0" max="360" 
-                  value={musicProgress} 
-                  onChange={(e) => setMusicProgress(parseInt(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                />
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold opacity-40">{Math.floor(musicProgress / 60)}:{String(musicProgress % 60).padStart(2, '0')}</span>
+                    <span className="text-[9px] font-bold opacity-40">6:00</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" max="360" 
+                    value={musicProgress} 
+                    onChange={(e) => setMusicProgress(parseInt(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-6">
+                  <button className="p-2 opacity-40 hover:opacity-100 transition-opacity"><SkipBack size={18} /></button>
+                  <button className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all">
+                    <Play size={20} className="ml-1" />
+                  </button>
+                  <button className="p-2 opacity-40 hover:opacity-100 transition-opacity"><SkipForward size={18} /></button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -4391,17 +4474,18 @@ function WindowsDesktop({
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-white/5">
+            <div className={`p-6 relative group`}>
               <div className="relative">
                 <Search className={`absolute left-5 top-1/2 -translate-y-1/2 opacity-40 ${isDark ? "text-white" : "text-black"}`} size={20} />
                 <input 
                   autoFocus
                   placeholder="Search Vplay"
-                  className={`w-full bg-transparent border-none rounded-2xl py-4 pl-14 pr-6 outline-none transition-all font-medium text-sm ${isDark ? "text-white" : "text-black"}`}
+                  className={`w-full bg-transparent border-none rounded-full py-4 pl-14 pr-6 outline-none transition-all font-medium text-sm ${isDark ? "text-white" : "text-black"}`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/5"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
             </div>
             {searchQuery.length > 0 && (() => {
               const filteredChannels = channels.filter(ch => 
@@ -4432,6 +4516,89 @@ function WindowsDesktop({
                 </div>
               );
             })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Context Menu */}
+      <AnimatePresence>
+        {contextMenu && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className={`fixed z-[5005] w-56 p-1.5 rounded-2xl border backdrop-blur-3xl shadow-2xl ${isDark ? "bg-[#1a1a1a]/90 border-white/10" : "bg-white/90 border-black/10"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => { window.location.reload(); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}
+            >
+              <RefreshCw size={14} className="text-blue-500" />
+              <span>Làm mới hệ thống</span>
+            </button>
+            <div className={`h-px my-1 ${isDark ? "bg-white/5" : "bg-black/5"}`} />
+            <button 
+              onClick={() => { onOpenApp("settings"); setContextMenu(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}
+            >
+              <Plus size={14} className="text-purple-500" />
+              <span>Thêm ứng dụng</span>
+            </button>
+            <button 
+              onClick={() => { setIsDark(!isDark); setContextMenu(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}
+            >
+              {isDark ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} className="text-blue-500" />}
+              <span>Chuyển chế độ {isDark ? "Sáng" : "Tối"}</span>
+            </button>
+            <div className={`h-px my-1 ${isDark ? "bg-white/5" : "bg-black/5"}`} />
+            <button 
+              onClick={() => { changeWallpaper(); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}
+            >
+              <ImageIcon size={14} className="text-emerald-500" />
+              <span>Thay đổi hình nền</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Calendar Flyout */}
+      <AnimatePresence>
+        {showCalendar && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className={`fixed ${taskbarPos === 'bottom' ? 'bottom-16' : 'top-16'} right-4 z-[1000] w-80 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-[32px] p-6 shadow-2xl overflow-hidden`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-white text-lg font-bold capitalize">
+                {new Date().toLocaleString('vi-VN', { month: 'long', year: 'numeric' })}
+              </span>
+              <div className="flex gap-2">
+                <button className="p-2 hover:bg-white/10 rounded-xl transition-colors"><ChevronUp size={16} className="text-white/40" /></button>
+                <button className="p-2 hover:bg-white/10 rounded-xl transition-colors"><ChevronDown size={16} className="text-white/40" /></button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 text-center mb-4 text-[10px] font-black uppercase tracking-widest text-white/20">
+              {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => <div key={d}>{d}</div>)}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 31 }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${i + 1 === new Date().getDate() ? "bg-blue-600 text-white shadow-lg" : "text-white/60 hover:bg-white/5 active:scale-90"}`}
+                >
+                  {i + 1}
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -4499,7 +4666,7 @@ function WindowsDesktop({
                 </div>
               </button>
 
-              {taskbarPos !== "left" && taskbarPos !== "right" && (
+              {taskbarPos !== "left" && taskbarPos !== "right" && searchBoxPosition !== "top" && (
                 <div 
                   onMouseEnter={(e) => {
                     setHoveredTab("Search");
@@ -4510,10 +4677,11 @@ function WindowsDesktop({
                     setHoveredTabRect(null);
                   }}
                   onClick={(e) => { e.stopPropagation(); setShowDesktopSearch(!showDesktopSearch); }}
-                  className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
+                  className={`flex items-center gap-3 px-4 h-10 w-44 rounded-full border transition-all cursor-pointer relative group overflow-hidden ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
                 >
                   <Search size={14} className="opacity-40" />
                   <span className="text-[10px] font-medium leading-none">Search Vplay</span>
+                  <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/10"} group-hover:bg-purple-500`} />
                 </div>
               )}
             </>
@@ -4545,21 +4713,24 @@ function WindowsDesktop({
                    />
                  </div>
                </button>
-               <div 
-                 onMouseEnter={(e) => {
-                   setHoveredTab("Search");
-                   setHoveredTabRect(e.currentTarget.getBoundingClientRect());
-                 }}
-                 onMouseLeave={() => {
-                   setHoveredTab(null);
-                   setHoveredTabRect(null);
-                 }}
-                 onClick={(e) => { e.stopPropagation(); setShowDesktopSearch(!showDesktopSearch); }}
-                 className={`flex items-center gap-3 px-4 h-10 w-44 rounded-xl border transition-all cursor-pointer ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
-               >
-                 <Search size={14} className="opacity-40" />
-                 <span className="text-[10px] font-medium leading-none">Search Vplay</span>
-               </div>
+               {searchBoxPosition !== "top" && (
+                 <div 
+                   onMouseEnter={(e) => {
+                     setHoveredTab("Search");
+                     setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                   }}
+                   onMouseLeave={() => {
+                     setHoveredTab(null);
+                     setHoveredTabRect(null);
+                   }}
+                   onClick={(e) => { e.stopPropagation(); setShowDesktopSearch(!showDesktopSearch); }}
+                   className={`flex items-center gap-3 px-4 h-10 w-44 rounded-full border transition-all cursor-pointer relative group overflow-hidden ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
+                 >
+                   <Search size={14} className="opacity-40" />
+                   <span className="text-[10px] font-medium leading-none">Search Vplay</span>
+                   <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/10"} group-hover:bg-purple-500`} />
+                 </div>
+               )}
              </div>
            )}
 
@@ -4645,8 +4816,19 @@ function WindowsDesktop({
        </div>
 
        {/* Right section (System Tray) */}
-       <div className={`flex items-center justify-end gap-3 h-full ${taskbarPos === "left" || taskbarPos === "right" ? "min-w-0" : "min-w-[150px]"}`}>
+       <div className={`flex items-center justify-end gap-1 h-full ${taskbarPos === "left" || taskbarPos === "right" ? "min-w-0" : "min-w-[150px]"}`}>
          <div className="h-6 w-px bg-white/5 mx-1 hidden md:block" />
+
+         <div 
+           onClick={(e) => { e.stopPropagation(); setShowQuickAccess(!showQuickAccess); }}
+           className={`flex items-center gap-2.5 px-3 h-10 rounded-xl transition-all cursor-pointer ${showQuickAccess ? "bg-white/10" : "hover:bg-white/5"} ${taskbarPos === "left" || taskbarPos === "right" ? "flex-col py-2" : ""}`}
+         >
+           <div className="flex items-center gap-1.5 opacity-60 grayscale hover:grayscale-0 transition-all">
+             <Wifi size={14} className="text-white" />
+             <Volume2 size={14} className="text-white" />
+             <Battery size={14} className="text-white" />
+           </div>
+         </div>
 
          <div 
            onMouseEnter={(e) => {
@@ -4657,14 +4839,14 @@ function WindowsDesktop({
              setHoveredTab(null);
              setHoveredTabRect(null);
            }}
-           onClick={(e) => { e.stopPropagation(); setShowQuickAccess(!showQuickAccess); }}
-           className={`flex flex-col items-end leading-none cursor-pointer py-1 px-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} ${taskbarPos === "left" || taskbarPos === "right" ? "text-center items-center" : ""}`}
+           onClick={(e) => { e.stopPropagation(); setShowCalendar(!showCalendar); }}
+           className={`flex flex-col items-end justify-center px-3 h-10 rounded-xl transition-all cursor-pointer ${showCalendar ? "bg-white/10" : "hover:bg-white/5"} ${taskbarPos === "left" || taskbarPos === "right" ? "text-center items-center py-2" : ""}`}
          >
-           <span className={`text-[12px] font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>
+           <span className={`text-[12px] font-bold tracking-tight ${isDark ? "text-white" : "text-black"}`}>
              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
            </span>
            {taskbarPos !== "left" && taskbarPos !== "right" && (
-             <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 mt-1.5 ${isDark ? "text-white" : "text-black"}`}>
+             <span className={`text-[9px] font-bold opacity-40 uppercase tracking-tighter ${isDark ? "text-white" : "text-black"}`}>
                {currentTime.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
              </span>
            )}
@@ -4728,19 +4910,19 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop }: { i
   const textColor = isGlassy ? "text-white" : "text-black";
 
   return (
-    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 ${isTop ? "h-10 md:h-12" : "h-14 md:h-16"} w-full ${isTop ? "max-w-xl" : "max-w-4xl"} relative group ${isTop ? "rounded-full" : "rounded-2xl"} overflow-hidden transition-all ${isGlassy ? (isTop ? "bg-transparent" : "bg-white/5") : (isTop ? "bg-transparent" : "bg-black/5")}`}>
+    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 ${isTop ? "h-10 md:h-12" : "h-14 md:h-16"} w-full ${isTop ? "max-w-xl" : "max-w-4xl"} relative group rounded-full overflow-hidden transition-all ${isGlassy ? (isTop ? "bg-transparent" : "bg-white/5") : (isTop ? "bg-transparent" : "bg-black/5")}`}>
       <div className="flex items-center gap-1 md:gap-2 flex-1">
         <Search className={`h-4 w-4 md:h-5 md:w-5 ${iconColor} flex-shrink-0 transition-colors group-focus-within:text-purple-500`} />
         <input
           ref={inputRef}
           type="text"
-          placeholder={isTop ? "Find a setting" : "Tìm kiếm"}
+          placeholder="Search Vplay"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={`flex-1 bg-transparent border-none outline-none ${isTop ? "text-sm" : "text-lg"} font-medium ${textColor} ${placeholderColor}`}
+          className={`flex-1 bg-transparent border-none outline-none ${isTop ? "text-sm" : "text-base"} font-medium ${textColor} ${placeholderColor}`}
         />
       </div>
-      {!isTop && <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isGlassy ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />}
+      <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isGlassy ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
       <div className="flex items-center gap-4">
         <button 
           onClick={startVoiceSearch}
@@ -4918,7 +5100,7 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
         <span>Vplay OS Preview</span>
         <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-        <span>Build 28000.01</span>
+        <span>Build 28000.02</span>
       </div>
     </motion.div>
   );
@@ -5034,6 +5216,8 @@ function App() {
     if (desktopWallpaper) return desktopWallpaper;
     return splashBg;
   }, [desktopWallpaper]);
+
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const [taskbarPos, setTaskbarPos] = useState<"bottom" | "top" | "left" | "right">(() => {
     return (localStorage.getItem("vplay_taskbar_pos") as any) || "bottom";
@@ -5539,6 +5723,7 @@ function App() {
               weatherCity={weatherCity}
               userName={userName}
               onLock={() => setIsLocked(true)}
+              searchBoxPosition={searchBoxPosition}
             />
             <AnimatePresence>
               {windows.filter(w => !w.isMinimized).map(win => (
@@ -5733,21 +5918,20 @@ function App() {
           {searchBoxPosition === "top" && (
             <div className="flex justify-center p-6 sticky top-0 z-[100]">
               <div className="relative group w-full max-w-xl transition-all duration-500">
-                <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-[32px] blur opacity-20 group-focus-within:opacity-40 transition duration-500`} />
                 <div className={`relative flex items-center transition-all duration-500 overflow-hidden shadow-2xl ${
                   liquidGlass === "glassy" 
-                    ? "bg-white/10 backdrop-blur-[120px] border border-white/20 rounded-[32px] h-14" 
+                    ? "bg-white/5 backdrop-blur-[120px] border border-white/20 rounded-full h-14" 
                     : liquidGlass === "tinted"
-                      ? "bg-white/80 backdrop-blur-[100px] border border-white/80 rounded-[32px] h-14"
-                      : "bg-[#1a1c23] border border-white/10 rounded-2xl h-14"
+                      ? "bg-white/80 backdrop-blur-[100px] border border-white/80 rounded-full h-14"
+                      : isDark ? "bg-white/5 border border-white/10 rounded-full h-14" : "bg-slate-50 border border-black/10 rounded-full h-14"
                 }`}>
                   <SearchBar 
                     isDark={isDark} 
                     query={searchQuery} 
                     setQuery={setSearchQuery} 
-                    onClose={() => {}} 
+                    onClose={() => setSearchQuery("")} 
                     liquidGlass={liquidGlass}
-                    isTop={true}
+                    isTop={true} 
                   />
                 </div>
               </div>
@@ -6041,7 +6225,7 @@ function App() {
                     exit={{ opacity: 0, y: -10 }}
                     className="px-6 py-2 mb-4 relative"
                   >
-                    <div className={`relative group flex items-center gap-3 px-4 py-3 rounded-xl overflow-hidden transition-all ${
+                    <div className={`relative group flex items-center gap-3 px-4 py-3 rounded-full overflow-hidden transition-all ${
                       isDark ? "bg-white/5 hover:bg-white/10" : "bg-slate-50 hover:bg-slate-100"
                     }`}>
                       <Search size={18} className={`${isDark ? "text-slate-500" : "text-slate-400"} group-focus-within:text-purple-500 transition-colors`} />
@@ -6052,7 +6236,7 @@ function App() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={`bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-600" : "text-slate-900 placeholder-slate-400"}`}
                       />
-                      <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
+                      <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
                     </div>
 
                     {/* Search Results Dropdown */}
@@ -6341,7 +6525,7 @@ function App() {
           </AnimatePresence>
 
           <AnimatePresence mode="popLayout">
-            {isSearchOpen ? (
+            {isSearchOpen && searchBoxPosition === "sidebar" ? (
               <div className="relative flex flex-col items-center">
                 <SearchPopup 
                   isDark={isDark} 
@@ -6363,8 +6547,8 @@ function App() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 200, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className={`p-1.5 flex items-center border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden ${
-                    liquidGlass === "glassy" ? "rounded-[30px] backdrop-blur-[100px] bg-white/10 border-white/20" : liquidGlass === "tinted" ? "rounded-[30px] backdrop-blur-[100px] bg-white/90 border-white/80" : "rounded-xl backdrop-blur-none bg-white/60 border-white/40"
+                  className={`p-1.5 flex items-center border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden rounded-full ${
+                    liquidGlass === "glassy" ? "backdrop-blur-[100px] bg-white/10 border-white/20" : liquidGlass === "tinted" ? "backdrop-blur-[100px] bg-white/90 border-white/80" : "backdrop-blur-none bg-white/60 border-white/40"
                   }`}
                 >
                   <SearchBar 
@@ -6413,7 +6597,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.01</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.02</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
