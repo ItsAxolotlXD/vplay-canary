@@ -73,6 +73,10 @@ const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
 
 const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean, isUpdating?: boolean }) => {
   const [showBypass, setShowBypass] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [showPassPrompt, setShowPassPrompt] = useState(false);
+  const [passInput, setPassInput] = useState("");
+  const [passError, setPassError] = useState(false);
 
   useEffect(() => {
     const configuring = sessionStorage.getItem("vplay_configuring_experiments") === "true";
@@ -82,6 +86,16 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
     if (isSessionChange) duration = 10000;
     if (isUpdating) duration = 60000; 
     
+    const interval = 100;
+    const step = (100 / (duration / interval));
+    
+    const progressTimer = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + step;
+        return next >= 100 ? 100 : next;
+      });
+    }, interval);
+
     const timer = setTimeout(() => {
       if (configuring) {
         sessionStorage.removeItem("vplay_configuring_experiments");
@@ -94,10 +108,21 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
     }, 10000);
     
     return () => {
+      clearInterval(progressTimer);
       clearTimeout(timer);
       clearTimeout(bypassTimer);
     };
   }, [onEnter, isSessionChange, isUpdating]);
+
+  const handleBypass = (e: FormEvent) => {
+    e.preventDefault();
+    if (passInput === "sus") {
+      onEnter();
+    } else {
+      setPassError(true);
+      setTimeout(() => setPassError(false), 2000);
+    }
+  };
 
   const titleText = isUpdating ? "Updates are underway" : (isSessionChange ? "Vplay Canary OS" : (sessionStorage.getItem("vplay_configuring_experiments") === "true" ? "Configuring Experiments..." : "Gói trọn Việt Nam trong tầm mắt bạn"));
   const statusText = isUpdating ? "Just a moment" : (isSessionChange ? "Preparing new experience..." : "Chào mừng!");
@@ -147,29 +172,69 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
             transition={{ delay: 1, duration: 0.5 }}
             className="flex flex-col items-center gap-6"
           >
-            <div className="flex items-center gap-4">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-                alt="Loading" 
-                className="w-8 h-8 filter brightness-200" 
-                referrerPolicy="no-referrer"
-              />
-              <span className="text-white/70 text-xl font-medium tracking-wide">
-                {statusText}
-              </span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-4">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                  alt="Loading" 
+                  className="w-8 h-8 filter brightness-200" 
+                  referrerPolicy="no-referrer"
+                />
+                <span className="text-white/70 text-xl font-medium tracking-wide">
+                  {statusText}
+                </span>
+              </div>
+              <span className="text-white/40 text-sm font-mono mt-2">{Math.floor(progress)}%</span>
             </div>
 
             <AnimatePresence>
-              {showBypass && (
+              {showBypass && !showPassPrompt && (
                 <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  key="bypass-btn"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  onClick={onEnter}
+                  onClick={() => setShowPassPrompt(true)}
                   className="px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-bold text-sm tracking-widest uppercase transition-all shadow-2xl active:scale-95"
                 >
                   Bypass Splash
                 </motion.button>
+              )}
+
+              {showPassPrompt && (
+                <motion.form
+                  key="pass-prompt"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onSubmit={handleBypass}
+                  className="flex flex-col items-center gap-4 bg-black/40 backdrop-blur-2xl p-6 rounded-[32px] border border-white/10 shadow-2xl"
+                >
+                  <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mb-1">Xác thực quyền bypass</p>
+                  <div className="flex gap-2">
+                    <input 
+                      autoFocus
+                      type="password"
+                      placeholder="Mật khẩu"
+                      value={passInput}
+                      onChange={(e) => setPassInput(e.target.value)}
+                      className={`bg-white/10 border ${passError ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-2 text-white outline-none focus:border-white/40 transition-all text-center w-40 font-mono`}
+                    />
+                    <button 
+                      type="submit"
+                      className="bg-white text-black px-4 py-2 rounded-xl font-bold text-xs uppercase"
+                    >
+                      OK
+                    </button>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassPrompt(false)}
+                    className="text-white/30 text-[9px] font-bold uppercase tracking-widest hover:text-white transition-colors"
+                  >
+                    Hủy bỏ
+                  </button>
+                </motion.form>
               )}
             </AnimatePresence>
           </motion.div>
