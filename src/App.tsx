@@ -72,7 +72,8 @@ const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
 );
 
 const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean, isUpdating?: boolean }) => {
-  const [showBypass, setShowBypass] = useState(false);
+  const isWelcome = !isUpdating && !isSessionChange;
+  const [showBypass, setShowBypass] = useState(isWelcome);
   const [progress, setProgress] = useState(0);
   const [showPassPrompt, setShowPassPrompt] = useState(false);
   const [passInput, setPassInput] = useState("");
@@ -103,16 +104,19 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
       onEnter();
     }, duration);
     
-    const bypassTimer = setTimeout(() => {
-      setShowBypass(true);
-    }, 10000);
+    let bypassTimer: NodeJS.Timeout | null = null;
+    if (!isWelcome) {
+      bypassTimer = setTimeout(() => {
+        setShowBypass(true);
+      }, 10000);
+    }
     
     return () => {
       clearInterval(progressTimer);
       clearTimeout(timer);
-      clearTimeout(bypassTimer);
+      if (bypassTimer) clearTimeout(bypassTimer);
     };
-  }, [onEnter, isSessionChange, isUpdating]);
+  }, [onEnter, isSessionChange, isUpdating, isWelcome]);
 
   const handleBypass = (e: FormEvent) => {
     e.preventDefault();
