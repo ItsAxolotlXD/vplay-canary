@@ -1,9 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-minecraft: "Silkscreen", "Press Start 2P", cursive;
   --color-primary: var(--primary-color, #9333ea);
+}
+
+@layer base {
+  .minecraft-mode {
+    font-family: var(--font-minecraft);
+    image-rendering: pixelated;
+  }
+
+  .minecraft-mode button,
+  .minecraft-mode .minecraft-btn {
+    image-rendering: pixelated;
+    border: 2px solid #000;
+    box-shadow: inset -2px -2px #555, inset 2px 2px #fff;
+    background: #c6c6c6;
+    color: #404040;
+    text-shadow: 1px 1px #eee;
+    border-radius: 0 !important;
+    padding: 4px 12px;
+    font-family: var(--font-minecraft);
+    text-transform: none;
+    transition: none;
+  }
+
+  .minecraft-mode button:hover,
+  .minecraft-mode .minecraft-btn:hover {
+    background: #55ff55;
+    color: #000;
+    box-shadow: inset -2px -2px #003e00, inset 2px 2px #fff;
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+    transform: none !important;
+  }
+
+  .minecraft-mode button:active,
+  .minecraft-mode .minecraft-btn:active {
+    background: #3eb03e;
+    box-shadow: inset 2px 2px #003e00, inset -2px -2px #fff;
+    outline: none;
+  }
+
+  /* Minecraft Toggle */
+  .minecraft-mode .minecraft-toggle {
+    width: 48px;
+    height: 24px;
+    background: #333;
+    border: 2px solid #000;
+    position: relative;
+    border-radius: 0 !important;
+  }
+
+  .minecraft-mode .minecraft-toggle-thumb {
+    width: 20px;
+    height: 20px;
+    background: #c6c6c6;
+    border: 2px solid #000;
+    box-shadow: inset -1px -1px #555, inset 1px 1px #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: transform 0.1s steps(2);
+  }
+
+  .minecraft-mode .minecraft-toggle.active {
+    background: #55ff55;
+  }
+
+  .minecraft-mode .minecraft-toggle.active .minecraft-toggle-thumb {
+    transform: translateX(24px);
+  }
 }
 
 @layer base {

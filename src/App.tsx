@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
-import { Search, User, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon } from "lucide-react";
+import { Search, User, Copy, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -728,7 +728,10 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
     { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả' },
     { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc' },
     { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' },
-    { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' }
+    { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' },
+    { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style' },
+    { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page' },
+    { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience' }
   ];
 
   useEffect(() => {
@@ -828,9 +831,9 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
           status: featureFlags[f.id] 
         });
       });
-    } else if (cmd === "/experiments" && args[1]?.toLowerCase() === "gui") {
-      setCurrentView("flags");
-      newHistory.push({ type: 'text', text: "Opening Experimental Control Panel..." });
+    } else if (cmd === "/allow" && args[1]?.toLowerCase() === "direct" && args[2]?.toLowerCase() === "enables") {
+      sessionStorage.setItem("allow_direct_enables", "true");
+      newHistory.push({ type: 'text', text: "Direct toggling allowed. You can now toggle experiments directly in Settings." });
     } else if (cmd === "/code") {
       setCurrentView("code");
       newHistory.push({ type: 'text', text: "Switching to Source Explorer..." });
@@ -910,9 +913,13 @@ export default function App() {
               </div>
               <button 
                 onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /experimental /enable /id:${flag.id}`)}
-                className={`w-12 h-6 rounded-full relative transition-colors ${featureFlags[flag.id] ? "bg-purple-500" : "bg-slate-600"}`}
+                className={`relative flex-shrink-0 transition-all duration-300 ${
+                  featureFlags.minecraft_mode 
+                    ? `minecraft-toggle ${featureFlags[flag.id] ? 'active' : ''}` 
+                    : `w-12 h-6 rounded-full ${featureFlags[flag.id] ? "bg-purple-500" : "bg-slate-600"}`
+                }`}
               >
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${featureFlags[flag.id] ? "left-7" : "left-1"}`} />
+                <div className={featureFlags.minecraft_mode ? "minecraft-toggle-thumb scale-90" : `absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${featureFlags[flag.id] ? "left-7" : "left-1"}`} />
               </button>
             </div>
           ))}
@@ -1724,11 +1731,15 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
                                       <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-white/40" : "text-slate-500"}`}>Enable Multiview</span>
                                       <button 
                                         onClick={toggleMultiview}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${isMultiview ? "bg-purple-600" : "bg-slate-700"}`}
+                                        className={`relative flex-shrink-0 transition-all duration-300 ${
+                                          featureFlags.minecraft_mode 
+                                            ? `minecraft-toggle ${isMultiview ? 'active' : ''}` 
+                                            : `w-12 h-6 rounded-full ${isMultiview ? "bg-purple-600" : "bg-slate-700"}`
+                                        }`}
                                       >
                                         <motion.div 
-                                          animate={{ x: isMultiview ? 26 : 4 }}
-                                          className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                                          animate={{ x: featureFlags.minecraft_mode ? (isMultiview ? 24 : 0) : (isMultiview ? 26 : 4) }}
+                                          className={featureFlags.minecraft_mode ? "minecraft-toggle-thumb scale-90" : "absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"}
                                         />
                                       </button>
                                     </div>
@@ -2805,7 +2816,9 @@ function SettingsContent({
   customMusicId,
   setCustomMusicId,
   searchBoxPosition,
-  setSearchBoxPosition
+  setSearchBoxPosition,
+  sidebarStyle,
+  setSidebarStyle
 }: { 
   isDark: boolean, 
   setIsDark: (val: boolean) => void, 
@@ -2833,7 +2846,9 @@ function SettingsContent({
   customMusicId: string,
   setCustomMusicId: (val: string) => void,
   searchBoxPosition: string,
-  setSearchBoxPosition: (val: string) => void
+  setSearchBoxPosition: (val: string) => void,
+  sidebarStyle: "float" | "attach",
+  setSidebarStyle: (val: "float" | "attach") => void
 }) {
   const [name, setName] = useState(userData?.displayName || user?.displayName || "");
   const [avatar, setAvatar] = useState(userData?.photoURL || user?.photoURL || "");
@@ -3284,6 +3299,29 @@ function SettingsContent({
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 px-1">
+                    <Palette size={14} className="text-pink-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Sidebar style</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => setSidebarStyle("float")}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${sidebarStyle === "float" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                    >
+                      <Copy size={20} className={sidebarStyle === "float" ? "text-white" : "text-slate-400"} />
+                      <span className="text-xs font-bold text-left">Float</span>
+                    </button>
+                    <button 
+                      onClick={() => setSidebarStyle("attach")}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 ${sidebarStyle === "attach" ? "bg-purple-600 border-purple-500 text-white shadow-lg" : isDark ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-600"}`}
+                    >
+                      <Maximize size={20} className={sidebarStyle === "attach" ? "text-white" : "text-slate-400"} />
+                      <span className="text-xs font-bold text-left">Attach</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
                     <Search size={14} className="text-orange-500" />
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Search box position</span>
                   </div>
@@ -3321,10 +3359,10 @@ function SettingsContent({
                       <Pin size={20} className={isPinningEnabled ? "text-white" : "text-slate-400"} />
                       <span className="text-xs font-bold">Hiện lối tắt kênh yêu thích trên sidebar</span>
                     </div>
-                    <div className={`w-10 h-5 rounded-full relative transition-colors ${isPinningEnabled ? "bg-white/20" : "bg-slate-700"}`}>
+                    <div className={featureFlags.minecraft_mode ? `minecraft-toggle ${isPinningEnabled ? 'active' : ''}` : `w-10 h-5 rounded-full relative transition-colors ${isPinningEnabled ? "bg-white/20" : "bg-slate-700"}`}>
                        <motion.div 
-                        animate={{ x: isPinningEnabled ? 22 : 4 }}
-                        className={`absolute top-1 w-3 h-3 rounded-full ${isPinningEnabled ? "bg-white" : "bg-slate-400"}`}
+                        animate={{ x: featureFlags.minecraft_mode ? (isPinningEnabled ? 20 : 0) : (isPinningEnabled ? 22 : 4) }}
+                        className={featureFlags.minecraft_mode ? "minecraft-toggle-thumb scale-75" : `absolute top-1 w-3 h-3 rounded-full ${isPinningEnabled ? "bg-white" : "bg-slate-400"}`}
                        />
                     </div>
                   </button>
@@ -3367,7 +3405,9 @@ function SettingsContent({
             { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả', active: featureFlags.sidebar_resizable },
             { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc', active: featureFlags.multiview_experimental },
             { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
-            { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical }
+            { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
+            { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style', active: featureFlags.minecraft_mode },
+            { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -3380,12 +3420,24 @@ function SettingsContent({
                 <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"} font-medium leading-relaxed`}>{flag.desc}</p>
               </div>
               <button 
-                onClick={() => onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /experimental /enable /id:${flag.id}`)}
-                className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-all duration-300 ${flag.active ? "bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.4)]" : "bg-slate-700 hover:bg-slate-600"}`}
+                onClick={() => {
+                  if (sessionStorage.getItem("allow_direct_enables") === "true") {
+                    const newFlags = { ...featureFlags, [flag.id]: !flag.active };
+                    setFeatureFlags(newFlags);
+                    localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+                  } else {
+                    onAlert("Operator Required", `Tính năng [${flag.id}] yêu cầu kích hoạt thông qua operator command.\nVí dụ: /experimental /enable /id:${flag.id}`);
+                  }
+                }}
+                className={`relative flex-shrink-0 transition-all duration-300 ${
+                  featureFlags.minecraft_mode 
+                    ? `minecraft-toggle ${flag.active ? 'active' : ''}` 
+                    : `w-14 h-7 rounded-full ${flag.active ? "bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.4)]" : "bg-slate-700 hover:bg-slate-600"}`
+                }`}
               >
                 <motion.div 
-                  animate={{ x: flag.active ? 30 : 4 }}
-                  className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-md"
+                  animate={{ x: featureFlags.minecraft_mode ? (flag.active ? 20 : 0) : (flag.active ? 30 : 4) }}
+                  className={featureFlags.minecraft_mode ? "minecraft-toggle-thumb" : "absolute top-1 w-5 h-5 rounded-full bg-white shadow-md"}
                 />
               </button>
             </div>
@@ -4873,7 +4925,7 @@ function WindowsDesktop({
 }
 
 
-function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted", isTop?: boolean }) {
+function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featureFlags }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted", isTop?: boolean, featureFlags?: any }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -4905,12 +4957,14 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop }: { i
   };
 
   const isGlassy = liquidGlass === "glassy";
-  const iconColor = isGlassy ? "text-white" : "text-black";
-  const placeholderColor = isGlassy ? "placeholder-white/60" : "placeholder-black/60";
-  const textColor = isGlassy ? "text-white" : "text-black";
+  const isImprovedSearch = featureFlags?.xaml_search;
+  
+  const iconColor = isImprovedSearch ? "text-white" : (isGlassy ? "text-white" : "text-black");
+  const placeholderColor = isImprovedSearch ? "placeholder-white/40" : (isGlassy ? "placeholder-white/60" : "placeholder-black/60");
+  const textColor = isImprovedSearch ? "text-white" : (isGlassy ? "text-white" : "text-black");
 
   return (
-    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 ${isTop ? "h-10 md:h-12" : "h-14 md:h-16"} w-full ${isTop ? "max-w-xl" : "max-w-4xl"} relative group rounded-full overflow-hidden transition-all ${isGlassy ? (isTop ? "bg-transparent" : "bg-white/5") : (isTop ? "bg-transparent" : "bg-black/5")}`}>
+    <div className={`flex items-center gap-1 md:gap-4 px-0 md:px-6 py-2 ${isTop ? "h-10 md:h-12" : "h-14 md:h-16"} w-full ${isTop ? "max-w-xl" : "max-w-4xl"} relative group transition-all ${isImprovedSearch ? "bg-transparent" : (isGlassy ? (isTop ? "bg-transparent" : "bg-white/5") : (isTop ? "bg-transparent" : "bg-black/5"))}`}>
       <div className="flex items-center gap-1 md:gap-2 flex-1">
         <Search className={`h-4 w-4 md:h-5 md:w-5 ${iconColor} flex-shrink-0 transition-colors group-focus-within:text-purple-500`} />
         <input
@@ -4922,7 +4976,7 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop }: { i
           className={`flex-1 bg-transparent border-none outline-none ${isTop ? "text-sm" : "text-base"} font-medium ${textColor} ${placeholderColor}`}
         />
       </div>
-      <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isGlassy ? "bg-white/20" : "bg-black/10"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
+      <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isImprovedSearch ? "bg-white/10" : (isGlassy ? "bg-white/20" : "bg-black/10")} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
       <div className="flex items-center gap-4">
         <button 
           onClick={startVoiceSearch}
@@ -5259,6 +5313,9 @@ function App() {
   const [userData, setUserData] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState("Trang chủ");
+  const [xamlHomeLoading, setXamlHomeLoading] = useState(false);
+  const loadingHomeRef = useRef(false);
+
   const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>(() => {
     try {
       const saved = localStorage.getItem("vplay_feature_flags");
@@ -5269,7 +5326,10 @@ function App() {
         windows_mode: false,
         xaml_view_test: true,
         settings_vertical: true,
-        music_background: true
+        music_background: true,
+        minecraft_mode: false,
+        xaml_home: false,
+        xaml_search: false
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -5282,10 +5342,27 @@ function App() {
         windows_mode: false,
         xaml_view_test: true,
         settings_vertical: true,
-        music_background: true
+        music_background: true,
+        minecraft_mode: false,
+        xaml_home: false,
+        xaml_search: false
       };
     }
   });
+
+  useEffect(() => {
+    if (activeTab === "Trang chủ" && featureFlags.xaml_home && !loadingHomeRef.current) {
+      setXamlHomeLoading(true);
+      loadingHomeRef.current = true;
+      const timer = setTimeout(() => {
+        setXamlHomeLoading(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    } else if (activeTab !== "Trang chủ") {
+      loadingHomeRef.current = false;
+      setXamlHomeLoading(false);
+    }
+  }, [activeTab, featureFlags.xaml_home]);
   const [isConsoleFloating, setIsConsoleFloating] = useState(false);
   const [isConsoleMinimized, setIsConsoleMinimized] = useState(false);
   const [isConsoleMaximized, setIsConsoleMaximized] = useState(false);
@@ -5296,6 +5373,9 @@ function App() {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [hoveredTabRect, setHoveredTabRect] = useState<DOMRect | null>(null);
   const [liquidGlass, setLiquidGlass] = useState<"glassy" | "tinted">("glassy");
+  const [sidebarStyle, setSidebarStyle] = useState<"float" | "attach">(() => {
+    return (localStorage.getItem("vplay_sidebar_style") as any) || "float";
+  });
   const [useSidebar, setUseSidebar] = useState(() => {
     const saved = localStorage.getItem("vplay_sidebar");
     return saved === null ? true : saved === "true";
@@ -5629,11 +5709,11 @@ function App() {
     >
       <div className={`${
         featureFlags?.xaml_view_test
-          ? "bg-[#1a1c23] text-white"
+          ? (isDark ? "bg-[#202020] text-white" : "bg-[#f5f6f7] text-slate-900")
           : (isDark 
-              ? "bg-gradient-to-br from-rose-950 via-purple-950 to-red-950 text-white" 
+              ? "bg-[#202020] text-white" 
               : "bg-gradient-to-br from-rose-200 via-purple-200 to-red-100 text-slate-950")
-      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""}`}>
+      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""} ${featureFlags?.minecraft_mode ? "minecraft-mode" : ""}`}>
       {/* Global Immersive Background Blur */}
       <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
         <AnimatePresence mode="wait">
@@ -5692,7 +5772,15 @@ function App() {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[40]"
+          className={`fixed inset-0 z-[40] transition-all duration-500 ${
+            useSidebar && !isMobile 
+              ? (sidebarStyle === "attach" ? "px-0" : (isSidebarRight ? "pl-8" : "pr-8")) 
+              : "px-0"
+          }`}
+          style={useSidebar && !isMobile ? {
+            paddingRight: isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
+            paddingLeft: !isSidebarRight ? (isSidebarExpanded ? sidebarWidth : 80) : undefined,
+          } : {}}
         >
           <WindowsDesktop 
             channels={channels} 
@@ -5768,6 +5856,8 @@ function App() {
                           setCustomMusicId={setCustomMusicId}
                           searchBoxPosition={searchBoxPosition}
                           setSearchBoxPosition={setSearchBoxPosition}
+                          sidebarStyle={sidebarStyle}
+                          setSidebarStyle={setSidebarStyle}
                         />
                     </div>
                   )}
@@ -5831,11 +5921,11 @@ function App() {
       {!featureFlags.windows_mode && !isChangingSession && !showSplash && (
         <Fragment>
           <div 
-            className={`flex-1 flex flex-col min-h-screen relative overflow-hidden transition-[padding] duration-300 ${
+            className={`flex-1 flex flex-col min-h-screen relative overflow-hidden transition-[padding] duration-500 ${
               useSidebar && !isMobile 
-                ? (isSidebarRight 
-                    ? "pl-8" 
-                    : "pr-8"
+                ? (sidebarStyle === "attach" 
+                    ? "px-0" 
+                    : (isSidebarRight ? "pl-8" : "pr-8")
                   ) 
                 : "px-0"
             }`}
@@ -5845,12 +5935,16 @@ function App() {
             } : {}}
           >
         {/* Background Watermarks */}
-        <div className="fixed top-1/4 -left-20 text-[10vw] font-black opacity-[0.03] select-none pointer-events-none rotate-12 z-0 leading-tight">
-          Work in progress<br/>Testing purposes only
-        </div>
-        <div className="fixed bottom-10 -right-10 text-[8vw] font-black opacity-[0.02] select-none pointer-events-none -rotate-12 z-0">
-          VPLAY CANARY
-        </div>
+        {!featureFlags.xaml_home && (
+          <Fragment>
+            <div className="fixed top-1/4 -left-20 text-[10vw] font-black opacity-[0.03] select-none pointer-events-none rotate-12 z-0 leading-tight">
+              Work in progress<br/>Testing purposes only
+            </div>
+            <div className="fixed bottom-10 -right-10 text-[8vw] font-black opacity-[0.02] select-none pointer-events-none -rotate-12 z-0">
+              VPLAY CANARY
+            </div>
+          </Fragment>
+        )}
 
         <AnimatePresence>
           {useSidebar && !isMobile && (
@@ -5919,11 +6013,14 @@ function App() {
             <div className="flex justify-center p-6 sticky top-0 z-[100]">
               <div className="relative group w-full max-w-xl transition-all duration-500">
                 <div className={`relative flex items-center transition-all duration-500 overflow-hidden shadow-2xl ${
-                  liquidGlass === "glassy" 
-                    ? "bg-white/5 backdrop-blur-[120px] border border-white/20 rounded-full h-14" 
-                    : liquidGlass === "tinted"
-                      ? "bg-white/80 backdrop-blur-[100px] border border-white/80 rounded-full h-14"
-                      : isDark ? "bg-white/5 border border-white/10 rounded-full h-14" : "bg-slate-50 border border-black/10 rounded-full h-14"
+                  featureFlags.xaml_search
+                    ? "bg-black border-b border-white/10 rounded-none h-14"
+                    : (liquidGlass === "glassy" 
+                        ? "bg-white/5 backdrop-blur-[120px] border border-white/20 rounded-full h-14" 
+                        : liquidGlass === "tinted"
+                          ? "bg-white/80 backdrop-blur-[100px] border border-white/80 rounded-full h-14"
+                          : isDark ? "bg-white/5 border border-white/10 rounded-full h-14" : "bg-slate-50 border border-black/10 rounded-full h-14"
+                      )
                 }`}>
                   <SearchBar 
                     isDark={isDark} 
@@ -5932,6 +6029,7 @@ function App() {
                     onClose={() => setSearchQuery("")} 
                     liquidGlass={liquidGlass}
                     isTop={true} 
+                    featureFlags={featureFlags}
                   />
                 </div>
               </div>
@@ -5947,39 +6045,138 @@ function App() {
               className="h-full flex flex-col"
             >
               {(displayTab === "Trang chủ") && (
-                <div className="flex-1 flex flex-col p-8">
-                  {/* ADVERTISEMENT BANNER */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-10 relative overflow-hidden rounded-[40px] bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 p-8 md:p-12 shadow-2xl border border-white/10 group"
-                  >
-                      <div className="absolute inset-0 bg-[url('https://4kwallpapers.com/images/walls/thumbs_3t/16795.png')] opacity-20 bg-cover bg-center mix-blend-overlay" />
-                      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="space-y-4 text-center md:text-left">
-                          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em]">
-                            <Zap size={12} className="fill-amber-500" />
-                            Early Access
-                          </div>
-                          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none">
-                            Trải nghiệm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Vplay OS</span> ngay!
-                          </h2>
-                          <p className="text-white/70 font-bold text-lg max-w-2xl leading-relaxed">
-                             Vẫn là Vplay mà bạn biết nhưng với giao diện hệ điều hành thông minh và tiện lợi hơn!
-                          </p>
+                <div className={`flex-1 flex flex-col transition-colors duration-500 ${featureFlags.xaml_home ? "bg-black" : "p-8"}`}>
+                  {featureFlags.xaml_home ? (
+                    xamlHomeLoading ? (
+                      <div className="flex-1 flex flex-col items-center justify-start pt-20 space-y-8">
+                        <div className="text-center space-y-4">
+                           <h2 className="text-2xl font-normal tracking-tight text-white">Working on it...</h2>
+                           <div className="flex items-center justify-center gap-3">
+                              <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                                alt="Loading" 
+                                className="w-6 h-6 filter brightness-200" 
+                                referrerPolicy="no-referrer"
+                              />
+                              <p className="text-slate-500 text-sm animate-pulse">Initializing XAML components</p>
+                           </div>
                         </div>
-                        <button 
-                          onClick={() => handleToggleOS(true)}
-                          className="px-10 py-5 bg-white hover:bg-slate-100 text-blue-900 rounded-[32px] font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl whitespace-nowrap flex items-center gap-3"
-                        >
-                          Thử ngay bây giờ
-                          <ArrowRight size={18} />
-                        </button>
                       </div>
-                      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
-                      <div className="absolute -top-20 -left-20 w-80 h-80 bg-purple-500/20 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
-                    </motion.div>
-                  <HomeContent isDark={isDark} onSwitchToDev={() => setShowDevConfirm(true)} />
+                    ) : (
+                      <motion.div 
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+                        className="h-full w-full flex flex-col p-8 md:p-12 overflow-y-auto"
+                      >
+                         <motion.header 
+                           initial={{ opacity: 0, x: -20 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           className="mb-12"
+                         >
+                           <h1 className="text-5xl font-bold tracking-tighter mb-2">Home</h1>
+                           <p className="text-slate-500 font-medium">Welcome back to Vplay Media Player</p>
+                         </motion.header>
+
+                         <motion.section 
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ delay: 0.2 }}
+                           className="mb-16"
+                         >
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                              <Clock className="text-purple-500" size={20} />
+                              Recent media
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                              {[...channels].slice(0, 5).map((ch, idx) => (
+                                <motion.div 
+                                  key={ch.name} 
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: 0.3 + (idx * 0.05) }}
+                                  className="group cursor-pointer"
+                                  onClick={() => handleChannelSelect(ch)}
+                                >
+                                  <div className="aspect-square bg-[#1a1a1a] rounded-xl border border-white/5 flex items-center justify-center p-6 group-hover:bg-[#222] transition-colors mb-2 overflow-hidden relative">
+                                     <img src={ch.logo} className="w-full h-full object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                                     <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                  <p className="text-xs font-bold text-slate-400 truncate">{ch.name}</p>
+                                </motion.div>
+                              ))}
+                            </div>
+                         </motion.section>
+
+                         <motion.section 
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ delay: 0.4 }}
+                         >
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                              <Sparkles className="text-purple-500" size={20} />
+                              Trải nghiệm Vplay OS
+                            </h2>
+                            <div 
+                              onClick={() => handleToggleOS(true)}
+                              className="group relative overflow-hidden rounded-none bg-slate-800 p-8 cursor-pointer border border-white/5"
+                            >
+                               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                                  <div className="space-y-2">
+                                     <h3 className="text-2xl font-black text-white italic">VPLAY CANARY OS</h3>
+                                     <p className="text-white/60 text-sm font-medium">Giao diện truyền hình tương lai, thông minh và tiện lợi.</p>
+                                  </div>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleOS(true);
+                                    }}
+                                    className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-none border border-white/10 group-hover:bg-white group-hover:text-black transition-all font-black text-xs uppercase tracking-widest text-white"
+                                  >
+                                     Switch Now
+                                  </button>
+                               </div>
+                               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 blur-3xl rounded-full" />
+                            </div>
+                         </motion.section>
+                      </motion.div>
+                    )
+                  ) : (
+                    <>
+                      {/* ADVERTISEMENT BANNER */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                         animate={{ opacity: 1, y: 0 }}
+                        className="mb-10 relative overflow-hidden rounded-[40px] bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 p-8 md:p-12 shadow-2xl border border-white/10 group"
+                      >
+                          <div className="absolute inset-0 bg-[url('https://4kwallpapers.com/images/walls/thumbs_3t/16795.png')] opacity-20 bg-cover bg-center mix-blend-overlay" />
+                          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div className="space-y-4 text-center md:text-left">
+                              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <Zap size={12} className="fill-amber-500" />
+                                Early Access
+                              </div>
+                              <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none">
+                                Trải nghiệm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Vplay OS</span> ngay!
+                              </h2>
+                              <p className="text-white/70 font-bold text-lg max-w-2xl leading-relaxed">
+                                 Vẫn là Vplay mà bạn biết nhưng với giao diện hệ điều hành thông minh và tiện lợi hơn!
+                              </p>
+                            </div>
+                            <button 
+                              onClick={() => handleToggleOS(true)}
+                              className="px-10 py-5 bg-white hover:bg-slate-100 text-blue-900 rounded-[32px] font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl whitespace-nowrap flex items-center gap-3"
+                            >
+                              Thử ngay bây giờ
+                              <ArrowRight size={18} />
+                            </button>
+                          </div>
+                          <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                          <div className="absolute -top-20 -left-20 w-80 h-80 bg-purple-500/20 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                        </motion.div>
+                      <HomeContent isDark={isDark} onSwitchToDev={() => setShowDevConfirm(true)} />
+                    </>
+                  )}
                 </div>
               )}
               {displayTab === "Lưu trữ" && (
@@ -6107,13 +6304,14 @@ function App() {
                     setCustomMusicId={setCustomMusicId}
                     searchBoxPosition={searchBoxPosition}
                     setSearchBoxPosition={setSearchBoxPosition}
+                    sidebarStyle={sidebarStyle}
+                    setSidebarStyle={setSidebarStyle}
                   />
                 </div>
               )}
               {displayTab === "Update Logs" && (
                 <UpdateLogsContent isDark={isDark} onBack={() => setActiveTab("Cài đặt")} />
               )}
-
             </motion.div>
           </AnimatePresence>
         </div>
@@ -6161,14 +6359,16 @@ function App() {
               }}
               exit={{ x: isSidebarRight ? sidebarWidth : -sidebarWidth }}
               transition={{ type: "spring", damping: 30, stiffness: 300, width: { duration: 0.3 } }}
-              className={`fixed z-50 h-[calc(100%-48px)] flex flex-col transition-colors duration-500 overflow-hidden ${
+              className={`fixed z-50 h-[calc(100%-48px)] flex flex-col transition-all duration-500 overflow-hidden ${
                 isSidebarRight ? "right-6" : "left-6"
               } ${
                 isMobile 
                   ? "top-0 h-full !rounded-none !m-0 !left-0 !right-0 transition-none" 
-                  : "top-6 !rounded-[32px] border shadow-2xl backdrop-blur-md"
+                  : sidebarStyle === "attach"
+                    ? `top-0 h-full !rounded-none !m-0 ${isSidebarRight ? "!right-0" : "!left-0"} border-r border-white/5`
+                    : "top-6 !rounded-[32px] border shadow-2xl"
               } ${
-                isDark ? "bg-[#11141d]/80 border-white/5 shadow-black/50" : "bg-white/80 border-slate-200 shadow-slate-200"
+                isDark ? "bg-[#1c1c1c] border-white/5 shadow-black/50" : "bg-white/80 border-slate-200 shadow-slate-200 backdrop-blur-md"
               }`}
             >
               {/* Resize Handle */}
@@ -6202,14 +6402,10 @@ function App() {
                         exit={{ opacity: 0, x: -10 }}
                         className="flex items-center gap-3"
                       >
-                        <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl ${!isDark ? "bg-white shadow-sm ring-1 ring-slate-200/50" : ""}`}>
-                          <img 
-                            src="https://static.wikia.nocookie.net/ftv/images/a/ab/Imagexvxvz.png/revision/latest/scale-to-width-down/1000?cb=20260429082350&path-prefix=vi" 
-                            alt="Vplay" 
-                            className="h-10 w-10 object-contain"
-                            referrerPolicy="no-referrer"
-                          />
+                        <div className={`relative w-12 h-12 flex items-center justify-center rounded-full ${isDark ? "bg-purple-600/20 text-purple-400" : "bg-white shadow-sm ring-1 ring-slate-200/50"}`}>
+                          <Play size={24} fill="currentColor" />
                         </div>
+                        <span className="font-bold text-sm tracking-tight text-white/80">Media Player</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -6225,18 +6421,17 @@ function App() {
                     exit={{ opacity: 0, y: -10 }}
                     className="px-6 py-2 mb-4 relative"
                   >
-                    <div className={`relative group flex items-center gap-3 px-4 py-3 rounded-full overflow-hidden transition-all ${
-                      isDark ? "bg-white/5 hover:bg-white/10" : "bg-slate-50 hover:bg-slate-100"
-                    }`}>
-                      <Search size={18} className={`${isDark ? "text-slate-500" : "text-slate-400"} group-focus-within:text-purple-500 transition-colors`} />
+                    <div className={`relative group flex items-center gap-3 px-4 py-2 rounded-xl overflow-hidden transition-all ${
+                      isDark ? "bg-[#333333] hover:bg-[#3d3d3d]" : "bg-slate-50 hover:bg-slate-100"
+                    } border border-white/5`}>
                       <input 
                         type="text" 
-                        placeholder="Search Vplay"
+                        placeholder="Search"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className={`bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-600" : "text-slate-900 placeholder-slate-400"}`}
+                        className={`flex-1 bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-400" : "text-slate-900 placeholder-slate-400"}`}
                       />
-                      <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-slate-200"} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
+                      <Search size={16} className={`${isDark ? "text-slate-400" : "text-slate-400"}`} />
                     </div>
 
                     {/* Search Results Dropdown */}
@@ -6258,7 +6453,9 @@ function App() {
                                   alt="Loading" 
                                   className={`w-10 h-10 ${isDark ? "filter brightness-0 invert" : ""}`}
                                 />
-                                <span className={`text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-white/40" : "text-slate-400"}`}>Đang tìm kiếm...</span>
+                                {!featureFlags.xaml_search && (
+                                  <span className={`text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-white/40" : "text-slate-400"}`}>Đang tìm kiếm...</span>
+                                )}
                               </div>
                             ) : searchResults.length > 0 ? (
                               <div className="p-2 space-y-1">
@@ -6310,14 +6507,14 @@ function App() {
                       }}
                       className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all relative group h-[50px] overflow-hidden ${
                         isActive 
-                          ? (isDark ? "bg-[#1d2230] text-white" : "bg-slate-100 text-slate-900") 
-                          : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-slate-50")
+                          ? (isDark ? "bg-[#2d2d2d] text-white" : "bg-slate-100 text-slate-900") 
+                          : (isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-600 hover:bg-slate-50")
                       } ${!isSidebarExpanded ? "justify-center" : ""}`}
                     >
                       {isActive && (
                         <motion.div 
                           layoutId="sidebarActivePill"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-purple-500 rounded-r-full" 
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-600 rounded-r-full" 
                         />
                       )}
                       <Icon size={24} className={`flex-shrink-0 transition-all ${isActive ? "text-purple-500" : "group-hover:scale-110"}`} />
@@ -6390,14 +6587,14 @@ function App() {
                   }}
                   className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all w-full h-[50px] relative overflow-hidden ${
                     activeTab === "Cài đặt"
-                      ? (isDark ? "bg-[#1d2230] text-white" : "bg-slate-100 text-slate-900")
-                      : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-slate-50")
+                      ? (isDark ? "bg-[#2d2d2d] text-white" : "bg-slate-100 text-slate-900")
+                      : (isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-600 hover:bg-slate-50")
                   } ${!isSidebarExpanded ? "justify-center" : ""}`}
                 >
                   {activeTab === "Cài đặt" && (
                     <motion.div 
                       layoutId="sidebarActivePill"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-purple-500 rounded-r-full" 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-600 rounded-r-full" 
                     />
                   )}
                   <SettingsIcon className={`w-6 h-6 ${activeTab === "Cài đặt" ? "text-purple-500" : ""}`} />
