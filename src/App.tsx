@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
-import { Search, User, Copy, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon } from "lucide-react";
+import { Search, User, Copy, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon, ShieldAlert, Trash2 } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { auth, db, handleFirestoreError, OperationType } from "./firebase";
@@ -2987,106 +2987,139 @@ function MusicSettingsContent({
 }
 
 const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => void }) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
+      className="fixed inset-0 z-[100000] bg-[#212121] text-white flex flex-col font-sans overflow-hidden"
     >
-       {/* Top spacing */}
-       <div className="h-10 w-full flex justify-end px-12 pt-8">
-          <button className="text-sm font-light opacity-60 hover:opacity-100 transition-opacity">Services</button>
-       </div>
-       <div className="h-[1px] w-48 bg-white/20 self-end mr-12 mt-4" />
+       <AnimatePresence mode="wait">
+         {isLoading ? (
+           <motion.div 
+             key="loading"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="flex-1 flex flex-col items-center justify-center space-y-8"
+           >
+              <div className="relative">
+                 <img 
+                   src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                   alt="Loading" 
+                   className="w-16 h-16 filter brightness-200 opacity-60"
+                   referrerPolicy="no-referrer"
+                 />
+              </div>
+              <p className="text-xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+           </motion.div>
+         ) : (
+           <motion.div 
+             key="content"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             className="flex-1 flex flex-col overflow-hidden"
+           >
+              {/* Top Bar */}
+              <div className="h-16 w-full flex items-center justify-between px-12 bg-[#004275] border-b border-white/10 shrink-0">
+                 <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                       <Sparkles size={18} />
+                    </div>
+                    <span className="text-xs font-normal">Vplay Canary Setup Wizard</span>
+                 </div>
+                 <div className="flex items-center gap-6">
+                    <button className="text-[10px] font-bold opacity-60 hover:opacity-100 transition-opacity uppercase tracking-widest">Privacy</button>
+                    <button className="text-[10px] font-bold opacity-60 hover:opacity-100 transition-opacity uppercase tracking-widest">Help</button>
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                       <Settings size={14} />
+                    </div>
+                 </div>
+              </div>
 
-       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-6xl mx-auto w-full space-y-16">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-6"
-          >
-            <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">Vplay Canary is ready for you</h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto font-light leading-relaxed">
-               Vplay Canary là một phiên bản trải nghiệm sớm, thử nghiệm các tính năng lặt vặt và test giao diện là chính. 
-               Trong quá trình sử dụng, bạn sẽ gặp phải rất nhiều lỗi và các tính năng đều chưa hoàn thiện. 
-               Các bản build Canary sẽ cao hơn và không được cập nhật hoặc vá lỗi thường xuyên.
-            </p>
-          </motion.div>
+              {/* Sub Header (Static) */}
+              <div className="bg-gradient-to-b from-white/5 to-transparent pt-12 pb-6 px-8 text-center shrink-0">
+                 <motion.div
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.2 }}
+                   className="space-y-4"
+                 >
+                   <h1 className="text-4xl md:text-5xl font-light tracking-tight leading-tight">Vplay Canary is ready for you</h1>
+                 </motion.div>
+              </div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex flex-col md:flex-row items-center justify-center gap-12 pt-8 relative w-full"
-          >
-             <div className="flex flex-col items-center gap-8 group">
-                <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-white/10 transition-transform group-hover:scale-[1.02] duration-500">
-                   <img src="https://4kwallpapers.com/images/walls/thumbs_3t/16795.png" alt="Release Version" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                </div>
-                <div className="flex items-center gap-3">
-                   <div className="w-5 h-5 bg-white shadow-xl flex items-center justify-center">
-                      <div className="w-2 h-2 bg-slate-900" />
-                   </div>
-                   <span className="font-bold uppercase tracking-[0.3em] text-[10px] text-white/60">Vplay Release</span>
-                </div>
-             </div>
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto px-8 pb-12 custom-scrollbar">
+                 <div className="max-w-6xl mx-auto w-full space-y-16">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-center"
+                    >
+                      <p className="text-lg text-white/70 max-w-4xl mx-auto font-light leading-relaxed">
+                         Vplay Canary là một phiên bản trải nghiệm sớm, thử nghiệm các tính năng lặt vặt và test giao diện là chính. 
+                         Trong quá trình sử dụng, bạn sẽ gặp phải rất nhiều lỗi và các tính năng đều chưa hoàn thiện. 
+                         Các bản build Canary sẽ cao hơn và không được cập nhật hoặc vá lỗi thường xuyên.
+                      </p>
+                    </motion.div>
 
-             <div className="shrink-0 flex flex-col items-center gap-2">
-                <ArrowRight size={48} className="text-white/20 animate-pulse" />
-                <div className="h-0.5 w-12 bg-white/10 rounded-full" />
-             </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+                       {[
+                         { title: "Fluid UI", icon: Layers, desc: "Giao diện mượt mà với XAML Components" },
+                         { title: "Operator Console", icon: Terminal, desc: "Điều khiển hệ thống bằng dòng lệnh" },
+                         { title: "Background Music", icon: Music, desc: "Âm nhạc nền chill từ Joakim Karud" }
+                       ].map((item, idx) => (
+                         <motion.div 
+                           key={item.title}
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ delay: 0.6 + (idx * 0.1) }}
+                           className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left space-y-4"
+                         >
+                            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                               <item.icon size={20} />
+                            </div>
+                            <div>
+                               <h3 className="font-bold text-sm">{item.title}</h3>
+                               <p className="text-xs text-white/50 mt-1">{item.desc}</p>
+                            </div>
+                         </motion.div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
 
-             <div className="flex flex-col items-center gap-8 group">
-                <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/20 ring-8 ring-white/5 transition-transform group-hover:scale-[1.02] duration-500">
-                   <img src="https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=2670" alt="Canary Version" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/0 transition-colors" />
-                </div>
-                <div className="flex items-center gap-3">
-                   <div className="w-5 h-5 bg-[#0078d4] shadow-xl flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white" />
-                   </div>
-                   <span className="font-bold uppercase tracking-[0.3em] text-[10px] text-white">Vplay Canary v2.0</span>
-                </div>
-             </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-col items-center gap-10 w-full pt-8"
-          >
-             <div className="flex flex-wrap justify-center gap-12 text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
-                <button className="hover:text-white transition-colors">What's new</button>
-                <button onClick={onContinue} className="hover:text-white transition-colors">Remind later</button>
-                <button className="hover:text-white transition-colors">Privacy</button>
-             </div>
-             
-             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-2xl px-8">
-                <button 
-                   onClick={onContinue}
-                   className="flex-1 px-10 py-5 bg-[#0078d4] hover:bg-[#1a85d9] transition-all font-bold rounded-lg text-xs uppercase tracking-widest shadow-2xl active:scale-95"
-                >
-                   Tiếp tục với Vplay Canary
-                </button>
-                <a 
-                   href="https://vplaybyota.vercel.app"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="flex-1 px-10 py-5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-bold rounded-lg text-xs uppercase tracking-widest text-center active:scale-95"
-                >
-                   Về bản Release chính thức
-                </a>
-             </div>
-          </motion.div>
-       </div>
-
-       <div className="h-24 w-full flex items-center px-12 opacity-30">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Vplay Canary OS © 2026</p>
-       </div>
+              {/* Bottom Bar */}
+              <div className="h-24 w-full flex items-center justify-end px-12 bg-[#004275] border-t border-white/10 shrink-0">
+                 <div className="flex items-center gap-4">
+                    <button 
+                       onClick={onContinue}
+                       className="px-10 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-normal rounded-lg text-xs active:scale-95 text-white/60"
+                    >
+                       Remind later
+                    </button>
+                    <button 
+                       onClick={onContinue}
+                       className="px-10 py-4 bg-[#0078d4] hover:bg-[#1a85d9] transition-all font-normal rounded-lg text-xs shadow-2xl active:scale-95"
+                    >
+                       Tiếp tục với Vplay Canary
+                    </button>
+                 </div>
+              </div>
+           </motion.div>
+         )}
+       </AnimatePresence>
     </motion.div>
   );
 };
@@ -3688,8 +3721,7 @@ function SettingsContent({
             { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
             { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style', active: featureFlags.minecraft_mode },
             { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home },
-            { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search },
-            { id: 'xaml_oobe_force', name: 'Force OOBE', desc: 'Force launch the Out-of-Box Experience on next startup', active: featureFlags.xaml_oobe_force }
+            { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -3726,6 +3758,56 @@ function SettingsContent({
           )))}
         </div>
       </div>
+
+      {/* Developer Options Section */}
+      {isDev && (
+        <div className={`p-8 rounded-[40px] border flex flex-col transition-all w-full mt-8 ${isDark ? "border-white/5 bg-white/5" : "border-black/5 bg-white shadow-xl shadow-slate-200/50"} ${liquidGlass ? "backdrop-blur-xl" : ""}`}>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 rounded-2xl bg-red-500/10 text-red-500">
+              <ShieldAlert size={24} />
+            </div>
+            <div>
+              <h3 className={`font-semibold text-xl tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Developer Options</h3>
+              <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"} font-medium`}>Special tools for Vplay Canary Operators</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button 
+              onClick={() => {
+                const newFlags = { ...featureFlags, xaml_oobe_force: !featureFlags.xaml_oobe_force };
+                setFeatureFlags(newFlags);
+                localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+                onAlert("Developer Action", `OOBE Force Launch is now ${newFlags.xaml_oobe_force ? 'ENABLED' : 'DISABLED'}. Reload to see changes.`);
+              }}
+              className={`p-6 rounded-[32px] border flex items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5 hover:bg-white/10" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}
+            >
+               <div className="text-left space-y-1">
+                  <span className="font-bold text-sm tracking-tight">Force Launch OOBE</span>
+                  <p className="text-[10px] opacity-40 font-medium">Bật OOBE mỗi khi khởi động (Test purpose)</p>
+               </div>
+               <div className={`w-12 h-6 rounded-full relative transition-all ${featureFlags.xaml_oobe_force ? "bg-red-500" : "bg-slate-700"}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${featureFlags.xaml_oobe_force ? "left-7" : "left-1"}`} />
+               </div>
+            </button>
+
+            <button 
+              onClick={() => {
+                onAlert("Resetting", "All settings and local data will be wiped.");
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className={`p-6 rounded-[32px] border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 text-red-500 flex items-center justify-between gap-4 transition-all`}
+            >
+               <div className="text-left space-y-1">
+                  <span className="font-bold text-sm tracking-tight text-red-500">Factory Reset</span>
+                  <p className="text-[10px] opacity-60 font-medium">Xóa toàn bộ dữ liệu ứng dụng</p>
+               </div>
+               <Trash2 size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
