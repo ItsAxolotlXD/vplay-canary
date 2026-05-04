@@ -270,10 +270,37 @@ const Sparkles2 = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const backgroundTracks = [
+  // Vplay Themes (Original first)
+  { id: "2nhuDkZqwCI", title: "Vplay Theme Original", artist: "Vplay", category: "vplay" },
+  { id: "IoO3zIt3JGE", title: "Vplay Theme 01", artist: "Vplay", category: "vplay" },
+  { id: "N0-N9Ao3KUw", title: "Vplay Theme 02", artist: "Vplay", category: "vplay" },
+  { id: "QNnlBSinvbc", title: "Vplay Theme 03", artist: "Vplay", category: "vplay" },
+  { id: "Zep7Z8s5FaU", title: "Vplay Theme 04", artist: "Vplay", category: "vplay" },
+  // Joakim Karud's songs
+  { id: "h9DEMJE7PUA", title: "Great Days", artist: "Joakim Karud", category: "joakim" },
+  { id: "Zk32VJHqbHI", title: "Good Ol' Days", artist: "Joakim Karud", category: "joakim" },
+  { id: "adinH9Z7xAg", title: "Luvly", artist: "Joakim Karud", category: "joakim" },
+  { id: "Z5ONOp8XIpg", title: "No Worries", artist: "Joakim Karud", category: "joakim" },
+  { id: "51ZudS1bKSM", title: "Waves", artist: "Joakim Karud", category: "joakim" },
+  { id: "YsEnhy3Nvdg", title: "Fireplace", artist: "Joakim Karud", category: "joakim" },
+  { id: "vJfIk2BngCQ", title: "Almost Original", artist: "Joakim Karud", category: "joakim" },
+  { id: "d2LMU5OpPpc", title: "Rainy Days", artist: "Joakim Karud", category: "joakim" },
+  { id: "Ew7k_8GmcRw", title: "Play", artist: "Joakim Karud", category: "joakim" },
+  // Other artists
+  { id: "Dk9bee0okz4", title: "Leech Decay", artist: "Paulo Bottoms", category: "others" },
+  { id: "epC4g9Qo1jQ", title: "Lottery", artist: "Anno Domini Beats", category: "others" },
+  { id: "vdRy4sSofys", title: "Echos in the Wind", artist: "Aaron Cherof", category: "others" },
+  { id: "kJfPLmW23_I", title: "Landscaping", artist: "Windows 96", category: "others" },
+  { id: "qLYmtdi-GzA", title: "Kaibu", artist: "Killercats", category: "others" },
+  { id: "BTthtlT80Rc", title: "Pigstep", artist: "Lena Raine", category: "others" },
+];
+
 const baseTabs = [
   { name: "Trang chủ", icon: Home, id: "Trang chủ" },
   { name: "Phát sóng", icon: Tv, id: "Phát sóng" },
   { name: "Bảo tàng lưu trữ", icon: Calendar, id: "Lưu trữ" },
+  { name: "Phát nhạc", icon: Music, id: "Phát nhạc" },
   { name: "Quản trị", icon: Shield, id: "Quản trị" },
   { name: "Cài đặt", icon: Settings, id: "Cài đặt" },
   { name: "Debug", icon: Wrench, id: "Debug" },
@@ -2789,6 +2816,281 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
   );
 }
 
+function MusicSettingsContent({
+  isDark,
+  backgroundMusicOption,
+  setBackgroundMusicOption,
+  customMusicId,
+  setCustomMusicId,
+  onAlert
+}: {
+  isDark: boolean;
+  backgroundMusicOption: string;
+  setBackgroundMusicOption: (val: string) => void;
+  customMusicId: string;
+  setCustomMusicId: (val: string) => void;
+  onAlert: (t: string, m: string) => void;
+}) {
+   const [customInput, setCustomInput] = useState("");
+
+   const handleAddCustom = () => {
+     if (!customInput) return;
+     let id = customInput;
+     if (id.includes("v=")) {
+       const parts = id.split("v=");
+       if (parts[1]) id = parts[1].split("&")[0];
+     } else if (id.includes("youtu.be/")) {
+       const parts = id.split("youtu.be/");
+       if (parts[1]) id = parts[1].split("?")[0];
+     }
+     setCustomMusicId(id);
+     setBackgroundMusicOption("custom");
+     onAlert("Thành công", "Đã thêm bài hát tùy chỉnh!");
+   };
+
+   return (
+     <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-10 max-w-5xl mx-auto w-full pb-32">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+        >
+           <div className="flex items-center gap-6">
+              <div className="p-4 rounded-3xl bg-purple-500/10 text-purple-500 shadow-xl shadow-purple-500/10">
+                <Music size={32} />
+              </div>
+              <div>
+                <h2 className={`text-4xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>Phát nhạc</h2>
+                <p className={`text-sm mt-1 font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>Customize your background audio experience</p>
+              </div>
+           </div>
+           <button 
+             onClick={() => setBackgroundMusicOption(backgroundMusicOption === 'off' ? 'progressive' : 'off')}
+             className={`px-8 py-3 rounded-2xl font-black transition-all text-[10px] uppercase tracking-[0.2em] shadow-xl ${backgroundMusicOption === 'off' ? 'bg-green-600 text-white shadow-green-600/20 hover:bg-green-500' : 'bg-red-600/10 text-red-500 border border-red-500/20 hover:bg-red-600 hover:text-white'}`}
+           >
+             {backgroundMusicOption === 'off' ? 'Bật âm nhạc' : 'Tắt âm nhạc'}
+           </button>
+        </motion.div>
+
+        {/* Playback Modes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+           {[
+             { id: 'progressive', label: 'Phát lần lượt (Default)', icon: SkipForward, desc: 'Tất cả bài hát' },
+             { id: 'shuffle', label: 'Phát ngẫu nhiên', icon: RefreshCw, desc: 'Trộn bài hát' },
+             { id: 'vplay_only', label: 'Chỉ Vplay Themes', icon: Sparkles, desc: 'Original & Vplay Style' },
+             { id: 'joakim_only', label: 'Chỉ Joakim Karud', icon: Music, desc: 'Lo-fi & Chill' },
+             { id: 'others_only', label: 'Chỉ nghệ sĩ khác', icon: Users, desc: 'Landscaping, Aaron, ...' },
+             { id: 'custom', label: 'Bài hát tùy chỉnh', icon: Plus, desc: 'Thêm URL Youtube của bạn' },
+           ].map((mode, idx) => (
+             <motion.button
+               key={mode.id}
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: idx * 0.05 }}
+               onClick={() => setBackgroundMusicOption(mode.id)}
+               className={`p-6 rounded-[32px] border transition-all flex flex-col items-start gap-4 text-left ${backgroundMusicOption === mode.id ? 'bg-purple-600 border-purple-500 text-white shadow-2xl shadow-purple-600/30' : isDark ? 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10' : 'bg-white border-slate-200 text-slate-600 shadow-xl shadow-slate-200/40 hover:border-purple-300'}`}
+             >
+                <div className="w-full flex items-center justify-between">
+                   <div className={`p-3 rounded-2xl ${backgroundMusicOption === mode.id ? 'bg-white/20' : isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                      <mode.icon size={20} />
+                   </div>
+                   {backgroundMusicOption === mode.id && <CheckCircle2 size={20} className="text-white" />}
+                </div>
+                <div>
+                   <span className="text-sm font-black uppercase tracking-tight">{mode.label}</span>
+                   <p className={`text-[10px] mt-0.5 opacity-60 font-medium`}>{mode.desc}</p>
+                </div>
+             </motion.button>
+           ))}
+        </div>
+
+        {/* Custom Input */}
+        <AnimatePresence>
+          {backgroundMusicOption === 'custom' && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`p-8 rounded-[40px] border ${isDark ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200 shadow-inner'} space-y-6 relative overflow-hidden`}
+            >
+               <div className="absolute top-0 right-0 p-8 opacity-5">
+                  <Play size={120} />
+               </div>
+               <div className="relative z-10 space-y-4">
+                  <p className="text-[10px] font-black text-purple-500 uppercase tracking-[0.3em] text-center">Custom YouTube Audio</p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                     <input 
+                       value={customInput}
+                       onChange={e => setCustomInput(e.target.value)}
+                       placeholder="Dán link Video Youtube hoặc ID bài hát..."
+                       className={`flex-1 px-6 py-4 rounded-3xl border text-sm font-bold focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition-all ${isDark ? 'bg-black/40 border-white/10 text-white placeholder:text-white/20' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
+                     />
+                     <button 
+                       onClick={handleAddCustom}
+                       className="px-10 py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-3xl text-sm uppercase tracking-widest shadow-xl shadow-purple-600/30 transition-all active:scale-95"
+                     >
+                       Kết nối
+                     </button>
+                  </div>
+                  {customMusicId && (
+                     <div className="flex items-center justify-center gap-3">
+                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                        <p className="text-[10px] opacity-40 font-mono tracking-widest">ACTIVE ID: {customMusicId}</p>
+                     </div>
+                  )}
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Track List */}
+        <div className="space-y-6">
+           <div className="flex items-center justify-between px-2">
+              <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Danh sách bài hát ({backgroundTracks.length})</h3>
+           </div>
+           <div className={`rounded-[48px] border overflow-hidden ${isDark ? 'bg-white/5 border-white/5' : 'bg-white border-slate-200 shadow-2xl shadow-slate-200/50'}`}>
+              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+                 {backgroundTracks.map((track, i) => (
+                    <div 
+                      key={track.id} 
+                      className={`group flex items-center justify-between p-6 border-b last:border-0 transition-all ${isDark ? 'border-white/5 hover:bg-white/10' : 'border-slate-50 hover:bg-slate-50/80'}`}
+                    >
+                       <div className="flex items-center gap-6">
+                          <span className="text-[12px] font-mono font-black opacity-20 w-6 group-hover:opacity-40 transition-opacity">{String(i + 1).padStart(2, '0')}</span>
+                          <div className="space-y-1">
+                             <p className={`text-base font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{track.title}</p>
+                             <div className="flex items-center gap-2">
+                                <p className="text-[11px] opacity-40 font-bold uppercase tracking-wider">{track.artist}</p>
+                                <div className="w-1 h-1 rounded-full bg-current opacity-20" />
+                                <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-[0.2em] ${
+                                  track.category === 'vplay' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/10' :
+                                  track.category === 'joakim' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/10' :
+                                  'bg-slate-500/10 text-slate-500 border border-slate-500/10'
+                                }`}>
+                                  {track.category}
+                                </span>
+                             </div>
+                          </div>
+                       </div>
+                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/5 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                             <Play size={16} fill="currentColor" />
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+    </div>
+   );
+}
+
+const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
+    >
+       {/* Top spacing */}
+       <div className="h-10 w-full flex justify-end px-12 pt-8">
+          <button className="text-sm font-light opacity-60 hover:opacity-100 transition-opacity">Services</button>
+       </div>
+       <div className="h-[1px] w-48 bg-white/20 self-end mr-12 mt-4" />
+
+       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-6xl mx-auto w-full space-y-16">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-6"
+          >
+            <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">Vplay Canary is ready for you</h1>
+            <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto font-light leading-relaxed">
+               Vplay Canary là một phiên bản trải nghiệm sớm, thử nghiệm các tính năng lặt vặt và test giao diện là chính. 
+               Trong quá trình sử dụng, bạn sẽ gặp phải rất nhiều lỗi và các tính năng đều chưa hoàn thiện. 
+               Các bản build Canary sẽ cao hơn và không được cập nhật hoặc vá lỗi thường xuyên.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col md:flex-row items-center justify-center gap-12 pt-8 relative w-full"
+          >
+             <div className="flex flex-col items-center gap-8 group">
+                <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-white/10 transition-transform group-hover:scale-[1.02] duration-500">
+                   <img src="https://4kwallpapers.com/images/walls/thumbs_3t/16795.png" alt="Release Version" className="w-full h-full object-cover" />
+                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                </div>
+                <div className="flex items-center gap-3">
+                   <div className="w-5 h-5 bg-white shadow-xl flex items-center justify-center">
+                      <div className="w-2 h-2 bg-slate-900" />
+                   </div>
+                   <span className="font-bold uppercase tracking-[0.3em] text-[10px] text-white/60">Vplay Release</span>
+                </div>
+             </div>
+
+             <div className="shrink-0 flex flex-col items-center gap-2">
+                <ArrowRight size={48} className="text-white/20 animate-pulse" />
+                <div className="h-0.5 w-12 bg-white/10 rounded-full" />
+             </div>
+
+             <div className="flex flex-col items-center gap-8 group">
+                <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/20 ring-8 ring-white/5 transition-transform group-hover:scale-[1.02] duration-500">
+                   <img src="https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=2670" alt="Canary Version" className="w-full h-full object-cover" />
+                   <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/0 transition-colors" />
+                </div>
+                <div className="flex items-center gap-3">
+                   <div className="w-5 h-5 bg-[#0078d4] shadow-xl flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white" />
+                   </div>
+                   <span className="font-bold uppercase tracking-[0.3em] text-[10px] text-white">Vplay Canary v2.0</span>
+                </div>
+             </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex flex-col items-center gap-10 w-full pt-8"
+          >
+             <div className="flex flex-wrap justify-center gap-12 text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
+                <button className="hover:text-white transition-colors">What's new</button>
+                <button onClick={onContinue} className="hover:text-white transition-colors">Remind later</button>
+                <button className="hover:text-white transition-colors">Privacy</button>
+             </div>
+             
+             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-2xl px-8">
+                <button 
+                   onClick={onContinue}
+                   className="flex-1 px-10 py-5 bg-[#0078d4] hover:bg-[#1a85d9] transition-all font-bold rounded-lg text-xs uppercase tracking-widest shadow-2xl active:scale-95"
+                >
+                   Tiếp tục với Vplay Canary
+                </button>
+                <a 
+                   href="https://vplaybyota.vercel.app"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex-1 px-10 py-5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-bold rounded-lg text-xs uppercase tracking-widest text-center active:scale-95"
+                >
+                   Về bản Release chính thức
+                </a>
+             </div>
+          </motion.div>
+       </div>
+
+       <div className="h-24 w-full flex items-center px-12 opacity-30">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Vplay Canary OS © 2026</p>
+       </div>
+    </motion.div>
+  );
+};
+
 function SettingsContent({ 
   isDark, 
   setIsDark, 
@@ -2818,7 +3120,8 @@ function SettingsContent({
   searchBoxPosition,
   setSearchBoxPosition,
   sidebarStyle,
-  setSidebarStyle
+  setSidebarStyle,
+  setActiveTab
 }: { 
   isDark: boolean, 
   setIsDark: (val: boolean) => void, 
@@ -2848,7 +3151,8 @@ function SettingsContent({
   searchBoxPosition: string,
   setSearchBoxPosition: (val: string) => void,
   sidebarStyle: "float" | "attach",
-  setSidebarStyle: (val: "float" | "attach") => void
+  setSidebarStyle: (val: "float" | "attach") => void,
+  setActiveTab: (val: string) => void
 }) {
   const [name, setName] = useState(userData?.displayName || user?.displayName || "");
   const [avatar, setAvatar] = useState(userData?.photoURL || user?.photoURL || "");
@@ -3232,44 +3536,20 @@ function SettingsContent({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className={`space-y-4 ${useSidebar ? "opacity-30 grayscale cursor-not-allowed" : ""}`}>
               <div className="flex items-center gap-2 px-1">
                 <Music size={14} className="text-purple-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Background Music</span>
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Background Music Console</span>
               </div>
-              <div className="flex flex-col gap-4">
-                <div className={`p-4 rounded-2xl border ${isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200 shadow-sm"}`}>
-                  <select 
-                    value={backgroundMusicOption}
-                    onChange={(e) => setBackgroundMusicOption(e.target.value)}
-                    className={`w-full bg-transparent outline-none text-xs font-bold ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    <option value="xp" className={isDark ? "bg-slate-900" : ""}>Track 1: Windows XP Tour Music</option>
-                    <option value="minecraft" className={isDark ? "bg-slate-900" : ""}>Track 2: Minecraft Music Disc</option>
-                    <option value="queue" className={isDark ? "bg-slate-900" : ""}>Queue: Windows XP & Minecraft</option>
-                    <option value="custom" className={isDark ? "bg-slate-900" : ""}>Custom: Youtube Song</option>
-                    <option value="off" className={isDark ? "bg-slate-900" : ""}>Turn off</option>
-                  </select>
-                </div>
-
-                {backgroundMusicOption === "custom" && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-2"
-                  >
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-30 ml-2 italic">Dán Youtube ID hoặc Link vào đây</label>
-                    <input 
-                      value={customMusicId}
-                      onChange={(e) => setCustomMusicId(e.target.value)}
-                      placeholder="e.g. 47x_9SErB-Q"
-                      className={`w-full px-5 py-3 rounded-2xl border text-xs font-bold transition-all focus:ring-2 focus:ring-purple-500/20 outline-none ${
-                        isDark ? "bg-white/5 border-white/10 text-white placeholder:text-white/10" : "bg-slate-50 border-slate-200 text-slate-900"
-                      }`}
-                    />
-                  </motion.div>
-                )}
-              </div>
+              <button 
+                onClick={() => !useSidebar && setActiveTab("Phát nhạc")}
+                className={`w-full p-6 h-32 rounded-[32px] border transition-all flex flex-col items-center justify-center gap-4 ${isDark ? "bg-white/5 border-white/5 hover:bg-white/10" : "bg-slate-50 border-slate-200 shadow-sm hover:bg-slate-100/50"}`}
+              >
+                  <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500">
+                    <Music size={24} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest">Mở bảng điều khiển âm nhạc</span>
+              </button>
             </div>
 
             {useSidebar && (
@@ -3407,7 +3687,9 @@ function SettingsContent({
             { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
             { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
             { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style', active: featureFlags.minecraft_mode },
-            { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home }
+            { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home },
+            { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search },
+            { id: 'xaml_oobe_force', name: 'Force OOBE', desc: 'Force launch the Out-of-Box Experience on next startup', active: featureFlags.xaml_oobe_force }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -5330,7 +5612,8 @@ function App() {
         music_background: true,
         minecraft_mode: false,
         xaml_home: false,
-        xaml_search: false
+        xaml_search: false,
+        xaml_oobe_force: false
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -5698,8 +5981,8 @@ function App() {
 
   const handleEnterApp = useCallback(() => {
     setShowSplash(false);
-    // Show OOBE after splash if not seen in this session
-    if (!sessionStorage.getItem("vplay_oobe_seen")) {
+    // Show OOBE after splash if not seen in this session or forced
+    if (!sessionStorage.getItem("vplay_oobe_seen") || featureFlags.xaml_oobe_force) {
       setShowOOBE(true);
     }
     // This empty play/pause logic unblocks audio globally for the session
@@ -5754,48 +6037,7 @@ function App() {
             isSessionChange={false}
           />
         ) : showOOBE ? (
-          <div className="fixed inset-0 z-[2000] bg-[#0078d4] text-white flex flex-col items-center justify-center p-8 font-sans">
-             <div className="max-w-4xl w-full space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="space-y-4">
-                   <h1 className="text-4xl md:text-5xl font-light tracking-tight">Bạn đang trải nghiệm Vplay Canary</h1>
-                   <p className="text-lg md:text-xl text-white/80 leading-relaxed font-light">
-                      Vplay Canary là một phiên bản trải nghiệm sớm, thử nghiệm các tính năng lặt vặt và test giao diện là chính. 
-                      Trong quá trình sử dụng, bạn sẽ gặp phải rất nhiều lỗi và các tính năng đều chưa hoàn thiện. 
-                      Các bản build Canary sẽ cao hơn và không được cập nhật hoặc vá lỗi thường xuyên. 
-                      Để có một trải nghiệm tốt nhất, vui lòng chuyển qua phiên bản Dev hoặc phiên bản Release chính thức của Vplay. 
-                      Trân trọng cảm ơn!
-                   </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-8">
-                   <button 
-                     onClick={handleCloseOOBE}
-                     className="px-6 py-4 bg-white text-[#0078d4] hover:bg-white/90 transition-colors font-semibold text-sm uppercase tracking-wider"
-                   >
-                     Tiếp tục với Vplay Canary
-                   </button>
-                   <a 
-                     href="https://vplay-dev.vercel.app" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="px-6 py-4 bg-transparent border-2 border-white/40 hover:bg-white/10 transition-colors font-semibold text-sm text-center uppercase tracking-wider"
-                   >
-                     Vplay Dev
-                   </a>
-                   <a 
-                     href="https://vplaybyota.vercel.app" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="px-6 py-4 bg-transparent border-2 border-white/40 hover:bg-white/10 transition-colors font-semibold text-sm text-center uppercase tracking-wider"
-                   >
-                     Vplay Release
-                   </a>
-                </div>
-             </div>
-             <div className="absolute bottom-10 left-10 text-white/40 text-xs font-light">
-                Vplay Media Player © 2026. Một trải nghiệm hệ sinh thái Vplay.
-             </div>
-          </div>
+          <OOBEView isDark={isDark} onContinue={handleCloseOOBE} />
         ) : isUpdating ? (
           <SplashScreen 
             isDark={isDark}
@@ -5911,6 +6153,7 @@ function App() {
                           setSearchBoxPosition={setSearchBoxPosition}
                           sidebarStyle={sidebarStyle}
                           setSidebarStyle={setSidebarStyle}
+                          setActiveTab={setActiveTab}
                         />
                     </div>
                   )}
@@ -6101,25 +6344,28 @@ function App() {
                 <div className={`flex-1 flex flex-col transition-colors duration-500 ${featureFlags.xaml_home ? "bg-black" : "p-8"}`}>
                   {featureFlags.xaml_home ? (
                     xamlHomeLoading ? (
-                      <div className="flex-1 flex flex-col items-center justify-start pt-20 space-y-8">
+                      <motion.div 
+                        initial={{ y: 0 }}
+                        exit={{ y: "-100%" }}
+                        transition={{ duration: 1, ease: [0.76, 0, 0.24, 1] }}
+                        className="flex-1 flex flex-col items-center justify-start pt-20 space-y-8 bg-black z-50 fixed inset-0"
+                      >
                         <div className="text-center space-y-4">
-                           <h2 className="text-2xl font-normal tracking-tight text-white">Working on it...</h2>
+                           <h2 className="text-2xl font-normal tracking-tight text-white/60">Working on it...</h2>
                            <div className="flex items-center justify-center gap-3">
                               <img 
                                 src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
                                 alt="Loading" 
-                                className="w-6 h-6 filter brightness-200" 
+                                className="w-8 h-8 filter brightness-200 opacity-20" 
                                 referrerPolicy="no-referrer"
                               />
-                              <p className="text-slate-500 text-sm animate-pulse">Initializing XAML components</p>
                            </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ) : (
                       <motion.div 
-                        initial={{ y: "100%" }}
-                        animate={{ y: 0 }}
-                        transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         className="h-full w-full flex flex-col p-8 md:p-12 overflow-y-auto"
                       >
                          <motion.header 
@@ -6172,24 +6418,23 @@ function App() {
                             </h2>
                             <div 
                               onClick={() => handleToggleOS(true)}
-                              className="group relative overflow-hidden rounded-none bg-slate-800 p-8 cursor-pointer border border-white/5"
+                              className="group relative overflow-hidden rounded-none bg-slate-400 p-8 cursor-pointer border border-white/5"
                             >
                                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                                   <div className="space-y-2">
-                                     <h3 className="text-2xl font-black text-white italic">VPLAY CANARY OS</h3>
-                                     <p className="text-white/60 text-sm font-medium">Giao diện truyền hình tương lai, thông minh và tiện lợi.</p>
+                                     <h3 className="text-2xl font-black text-slate-800 italic uppercase">VPLAY CANARY OS EXPERIMENT</h3>
+                                     <p className="text-slate-700 text-sm font-bold uppercase tracking-widest opacity-40">Ready for testing</p>
                                   </div>
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleToggleOS(true);
                                     }}
-                                    className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-none border border-white/10 group-hover:bg-white group-hover:text-black transition-all font-black text-xs uppercase tracking-widest text-white"
+                                    className="px-10 py-5 bg-slate-900 rounded-none border border-white/10 group-hover:bg-slate-700 transition-all font-black text-sm uppercase tracking-[0.3em] text-white"
                                   >
                                      Switch Now
                                   </button>
                                </div>
-                               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 blur-3xl rounded-full" />
                             </div>
                          </motion.section>
                       </motion.div>
@@ -6234,6 +6479,16 @@ function App() {
               )}
               {displayTab === "Lưu trữ" && (
                 <EventsContent isDark={isDark} liquidGlass={liquidGlass} />
+              )}
+              {displayTab === "Phát nhạc" && (
+                <MusicSettingsContent 
+                  isDark={isDark} 
+                  backgroundMusicOption={backgroundMusicOption}
+                  setBackgroundMusicOption={setBackgroundMusicOption}
+                  customMusicId={customMusicId}
+                  setCustomMusicId={setCustomMusicId}
+                  onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
+                />
               )}
               {displayTab === "Quản trị" && (isAdmin || isDev) && (
                 <AdminContent isDark={isDark} liquidGlass={liquidGlass} />
@@ -6359,6 +6614,7 @@ function App() {
                     setSearchBoxPosition={setSearchBoxPosition}
                     sidebarStyle={sidebarStyle}
                     setSidebarStyle={setSidebarStyle}
+                    setActiveTab={setActiveTab}
                   />
                 </div>
               )}
@@ -6475,11 +6731,13 @@ function App() {
                     className="px-6 py-2 mb-4 relative"
                   >
                     <div className={`relative group flex items-center gap-3 px-4 py-2 rounded-xl overflow-hidden transition-all ${
-                      isDark ? "bg-[#333333] hover:bg-[#3d3d3d]" : "bg-slate-50 hover:bg-slate-100"
+                      featureFlags.xaml_search 
+                        ? "bg-black !rounded-none !border-x-0 !border-t-0 !border-b-2 border-b-white/20 focus-within:border-b-purple-500" 
+                        : (isDark ? "bg-[#333333] hover:bg-[#3d3d3d]" : "bg-slate-50 hover:bg-slate-100")
                     } border border-white/5`}>
                       <input 
                         type="text" 
-                        placeholder="Search"
+                        placeholder={featureFlags.xaml_search ? "" : "Search"}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={`flex-1 bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-400" : "text-slate-900 placeholder-slate-400"}`}
@@ -6957,23 +7215,27 @@ function App() {
             width="0" 
             height="0" 
             src={(() => {
-              switch (backgroundMusicOption) {
-                case "xp":
-                  return "https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q&controls=0&showinfo=0&autohide=1";
-                case "minecraft":
-                  return "https://www.youtube.com/embed/fl_Xkd-ZS6s?autoplay=1&loop=1&playlist=fl_Xkd-ZS6s&controls=0&showinfo=0&autohide=1";
-                case "queue":
-                  // XP Track (47x_9SErB-Q) followed by Minecraft (fl_Xkd-ZS6s)
-                  return "https://www.youtube.com/embed/47x_9SErB-Q?autoplay=1&loop=1&playlist=47x_9SErB-Q,fl_Xkd-ZS6s&mute=0&controls=0&showinfo=0&autohide=1&enablejsapi=1&origin=" + window.location.origin;
-                case "custom":
-                  if (!customMusicId) return "";
-                  let id = customMusicId;
-                  if (id.includes("v=")) id = id.split("v=")[1].split("&")[0];
-                  else if (id.includes("youtu.be/")) id = id.split("youtu.be/")[1].split("?")[0];
-                  return `https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&controls=0&showinfo=0&autohide=1`;
-                default:
-                  return "";
+              const base = "https://www.youtube.com/embed/";
+              const params = "?autoplay=1&loop=1&controls=0&showinfo=0&autohide=1&enablejsapi=1";
+              
+              if (backgroundMusicOption === "custom" && customMusicId) {
+                 return `${base}${customMusicId}${params}&playlist=${customMusicId}`;
               }
+              
+              let filteredTracks = [...backgroundTracks];
+              if (backgroundMusicOption === "vplay_only") filteredTracks = backgroundTracks.filter(t => t.category === "vplay");
+              else if (backgroundMusicOption === "joakim_only") filteredTracks = backgroundTracks.filter(t => t.category === "joakim");
+              else if (backgroundMusicOption === "others_only") filteredTracks = backgroundTracks.filter(t => t.category === "others");
+              else if (backgroundMusicOption === "shuffle") {
+                 // Sort random
+                 filteredTracks = [...backgroundTracks].sort(() => Math.random() - 0.5);
+              }
+
+              if (filteredTracks.length === 0) return "";
+              
+              const playlistIds = filteredTracks.map(t => t.id).join(",");
+              const firstId = filteredTracks[0]?.id || "";
+              return `${base}${firstId}${params}&playlist=${playlistIds}`;
             })()} 
             title="Background Music"
             allow="autoplay"
