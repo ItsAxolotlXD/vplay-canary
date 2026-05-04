@@ -438,7 +438,7 @@ function ChannelLogo({ src, alt, className, isDark, liquidGlass }: { src: string
   );
 }
 
-function ChannelCard({ ch, onClick, isDark, isActive, favorites, toggleFavorite, liquidGlass, className }: {
+function ChannelCard({ ch, onClick, isDark, isActive, favorites, toggleFavorite, liquidGlass, className, isMetro }: {
   ch: Channel,
   onClick: () => void,
   isDark: boolean,
@@ -447,18 +447,20 @@ function ChannelCard({ ch, onClick, isDark, isActive, favorites, toggleFavorite,
   toggleFavorite: (ch: Channel) => void,
   liquidGlass: "glassy" | "tinted",
   className?: string,
-  key?: string | number
+  key?: string | number,
+  isMetro?: boolean
 }) {
   const isMaintenance = ch.status === "maintenance";
 
   return (
     <div className={`relative group ${className || ""}`}>
       <motion.button
-        whileHover={{ scale: 1.05, boxShadow: isActive ? "0 10px 40px rgba(168,85,247,0.2)" : "0 10px 30px rgba(0,0,0,0.05)" }}
+        whileHover={{ scale: 1.05, boxShadow: isActive ? (isMetro ? "0 0 0 4px rgba(255,255,255,0.4)" : "0 10px 40px rgba(168,85,247,0.2)") : "0 10px 30px rgba(0,0,0,0.05)" }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
         onClick={onClick}
-        className={`w-full aspect-video p-5 md:p-6 flex items-center justify-center transition-all duration-500 border relative overflow-hidden ${
+        className={`w-full ${isMetro ? 'aspect-square p-2' : 'aspect-video p-5 md:p-6'} flex items-center justify-center transition-all duration-500 border relative overflow-hidden ${
+          isMetro ? 'bg-[#0078d4] text-white border-white/20' : 
           liquidGlass 
             ? `rounded-[28px] ${
                 liquidGlass === "tinted" 
@@ -468,10 +470,10 @@ function ChannelCard({ ch, onClick, isDark, isActive, favorites, toggleFavorite,
             : "rounded-2xl backdrop-blur-none border-slate-200"
         } ${
           isActive
-            ? `ring-2 ring-purple-500 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.15)]`
+            ? (isMetro ? 'ring-4 ring-white border-white' : `ring-2 ring-purple-500 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.15)]`)
             : ""
         } ${
-          !liquidGlass && (isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100")
+          !liquidGlass && !isMetro && (isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100")
         }`}
       >
         {isMaintenance && (
@@ -780,7 +782,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
       setIsDev(true);
       newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.02 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.03 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
@@ -1996,6 +1998,7 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
                           favorites={favorites} 
                           toggleFavorite={toggleFavorite} 
                           liquidGlass={liquidGlass}
+                          isMetro={featureFlags.win8_metro}
                         />
                       ))
                     )}
@@ -2629,8 +2632,8 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
 
   const logs = [
     {
-      id: 'canary-28000-02',
-      version: 'Vplay Canary - Build 28000.02',
+      id: 'canary-28000-03',
+      version: 'Vplay Canary - Build 28000.03',
       tag: '🔥',
       type: 'Bản cập nhật Trải nghiệm người dùng',
       sections: [
@@ -2986,8 +2989,73 @@ function MusicSettingsContent({
    );
 }
 
-const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => void }) => {
-  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "final_loading_1" | "final_loading_2">("initial_loading");
+const BroadcastExperimentalView = ({ onContinue, onSwitchToRelease }: { onContinue: () => void, onSwitchToRelease: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[120000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
+    >
+      <div className="h-16 w-full flex items-center justify-between px-8 bg-black/10 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center">
+            <Sparkles size={14} />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest">Vplay Canary Status</span>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="max-w-4xl space-y-12"
+        >
+          <div className="space-y-6">
+            <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">Vplay Canary chỉ để phục vụ thử nghiệm!</h1>
+            <p className="text-xl md:text-2xl text-white/70 font-light max-w-3xl mx-auto leading-relaxed">
+              Vplay Canary chỉ để phục vụ thử nghiệm giao diện. Để xem được các kênh truyền hình, vui lòng chuyển đổi sang các phiên bản ổn định hơn của Vplay như Dev hoặc khuyến nghị hơn là phiên bản Release chính thức
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+            <button 
+              onClick={onSwitchToRelease}
+              className="px-10 py-5 bg-white/10 hover:bg-white/20 border border-white/20 transition-all font-normal rounded-xl text-sm"
+            >
+              Chuyển sang Vplay Release
+            </button>
+            <button 
+              onClick={onContinue}
+              className="px-12 py-5 bg-white text-[#004275] hover:bg-white/90 transition-all font-bold rounded-xl text-sm shadow-2xl active:scale-95"
+            >
+              Tôi đã hiểu, tiếp tục thử nghiệm
+            </button>
+          </div>
+          
+          <div className="pt-8">
+            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">Cảm ơn bạn đã đồng hành cùng Vplay Canary</p>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDark: boolean, onContinue: () => void, featureFlags: any, setFeatureFlags: (f: any) => void }) => {
+  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "final_loading_1" | "final_loading_2">("initial_loading");
+  const [currentExpIndex, setCurrentExpIndex] = useState(0);
+
+  const experiments = [
+    { id: 'xaml_home', name: 'XAML Home Page', desc: 'Sử dụng giao diện Home mới dựa trên XAML Components mượt mà hơn.' },
+    { id: 'xaml_search', name: 'Improved Search', desc: 'Trải nghiệm tìm kiếm được cải tiến với khả năng lọc thông minh.' },
+    { id: 'settings_vertical', name: 'Vertical Settings', desc: 'Bố cục cài đặt dạng danh sách đứng giúp tối ưu không gian.' },
+    { id: 'minecraft_mode', name: 'Minecraft Mode', desc: 'Biến toàn bộ giao diện thành phong cách khối vuông Minecraft pixelated.' },
+    { id: 'win8_metro', name: 'Metro Mode', desc: 'Trải nghiệm phong cách Windows 8 Metro UI với các ô vuông đặc trưng.' },
+    { id: 'music_background', name: 'Background Music', desc: 'Kích hoạt âm nhạc nền thư giãn trong suốt quá trình sử dụng.' }
+  ];
 
   useEffect(() => {
     if (phase === "initial_loading") {
@@ -3008,13 +3076,25 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
     }
   }, [phase, onContinue]);
 
-  const handleContinue = () => {
+  const handleStartExperiments = () => {
     // Mobile audio context unlock on user interaction
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioContext.resume().then(() => {
       console.log("AudioContext resumed via OOBE interaction");
     });
-    setPhase("final_loading_1");
+    setPhase("experiments");
+  };
+
+  const handleToggleExperiment = (id: string, active: boolean) => {
+    const newFlags = { ...featureFlags, [id]: active };
+    setFeatureFlags(newFlags);
+    localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+    
+    if (currentExpIndex < experiments.length - 1) {
+      setCurrentExpIndex(prev => prev + 1);
+    } else {
+      setPhase("final_loading_1");
+    }
   };
 
   return (
@@ -3042,6 +3122,60 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
                  />
               </div>
               <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+           </motion.div>
+         ) : phase === "experiments" ? (
+           <motion.div 
+             key="experiments"
+             initial={{ opacity: 0, x: 100 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -100 }}
+             className="flex-1 flex flex-col overflow-hidden"
+           >
+              <div className="h-24 w-full flex items-center justify-between px-12 bg-[#212121] border-b border-white/10 shrink-0">
+                 <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-500 flex items-center justify-center">
+                       <Flask size={18} />
+                    </div>
+                    <span className="text-xs font-normal">Vplay Experiments</span>
+                 </div>
+                 <div className="flex items-center gap-4 opacity-40">
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{currentExpIndex + 1} / {experiments.length}</span>
+                 </div>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-12">
+                 <motion.div
+                   key={experiments[currentExpIndex].id}
+                   initial={{ opacity: 0, scale: 0.9 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   className="space-y-6 max-w-2xl"
+                 >
+                    <span className="px-4 py-1.5 rounded-full bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-widest border border-red-500/20">Experimental Feature</span>
+                    <h2 className="text-5xl md:text-6xl font-light tracking-tight">{experiments[currentExpIndex].name}</h2>
+                    <p className="text-xl text-white/60 font-light leading-relaxed">
+                       {experiments[currentExpIndex].desc}
+                    </p>
+                 </motion.div>
+
+                 <div className="flex flex-col sm:flex-row gap-6 w-full justify-center max-w-lg">
+                    <button 
+                       onClick={() => handleToggleExperiment(experiments[currentExpIndex].id, false)}
+                       className="flex-1 px-10 py-5 bg-white/5 hover:bg-white/10 border border-white/10 transition-all font-normal rounded-xl text-sm active:scale-95"
+                    >
+                       Bỏ qua
+                    </button>
+                    <button 
+                       onClick={() => handleToggleExperiment(experiments[currentExpIndex].id, true)}
+                       className="flex-1 px-10 py-5 bg-red-600 hover:bg-red-500 transition-all font-normal rounded-xl text-sm shadow-2xl shadow-red-600/20 active:scale-95"
+                    >
+                       Kích hoạt
+                    </button>
+                 </div>
+              </div>
+
+              <div className="h-24 w-full flex items-center px-12 bg-[#212121] border-t border-white/10 shrink-0 opacity-40">
+                 <p className="text-[10px] font-light">Tất cả các tính năng thử nghiệm có thể lỗi và không ổn định.</p>
+              </div>
            </motion.div>
          ) : phase === "final_loading_1" ? (
            <motion.div 
@@ -3177,7 +3311,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
                        Chuyển sang Vplay Release
                     </a>
                     <button 
-                       onClick={handleContinue}
+                       onClick={handleStartExperiments}
                        className="px-10 py-4 bg-[#0078d4] hover:bg-[#1a85d9] transition-all font-normal rounded-lg text-xs shadow-2xl active:scale-95"
                     >
                        Tiếp tục với Vplay Canary
@@ -3788,6 +3922,7 @@ function SettingsContent({
             { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)', active: featureFlags.settings_vertical },
             { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style', active: featureFlags.minecraft_mode },
             { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home },
+            { id: 'win8_metro', name: 'Metro Mode', desc: 'Turns the interface into Windows 8\'s Metro UI style', active: featureFlags.win8_metro },
             { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
@@ -4397,7 +4532,7 @@ function WindowsDesktop({
 
   return (
     <div 
-      className="fixed inset-0 z-0 flex flex-col overflow-hidden select-none font-sans" 
+      className={`fixed inset-0 z-0 flex flex-col overflow-hidden select-none font-sans ${featureFlags?.win8_metro ? "metro-mode" : ""}`} 
       onClick={() => {
         setShowStartMenu(false);
         setShowDesktopSearch(false);
@@ -4423,7 +4558,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.02</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.03</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -5587,7 +5722,7 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
         <span>Vplay OS Preview</span>
         <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-        <span>Build 28000.02</span>
+        <span>Build 28000.03</span>
       </div>
     </motion.div>
   );
@@ -5747,6 +5882,14 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [showOOBE, setShowOOBE] = useState(false);
   const [activeTab, setActiveTab] = useState("Trang chủ");
+  const [showCanaryWarning, setShowCanaryWarning] = useState(false);
+  const [hasSeenCanaryWarning, setHasSeenCanaryWarning] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === "Phát sóng" && !hasSeenCanaryWarning) {
+      setShowCanaryWarning(true);
+    }
+  }, [activeTab, hasSeenCanaryWarning]);
   const [xamlHomeLoading, setXamlHomeLoading] = useState(false);
   const loadingHomeRef = useRef(false);
 
@@ -5764,7 +5907,8 @@ function App() {
         minecraft_mode: false,
         xaml_home: false,
         xaml_search: false,
-        xaml_oobe_force: false
+        xaml_oobe_force: false,
+        win8_metro: false
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -5780,7 +5924,9 @@ function App() {
         music_background: true,
         minecraft_mode: false,
         xaml_home: false,
-        xaml_search: false
+        xaml_search: false,
+        xaml_oobe_force: false,
+        win8_metro: false
       };
     }
   });
@@ -6157,7 +6303,7 @@ function App() {
           : (isDark 
               ? "bg-[#202020] text-white" 
               : "bg-gradient-to-br from-rose-200 via-purple-200 to-red-100 text-slate-950")
-      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""} ${featureFlags?.minecraft_mode ? "minecraft-mode" : ""}`}>
+      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""} ${featureFlags?.minecraft_mode ? "minecraft-mode" : ""} ${featureFlags?.win8_metro ? "metro-mode" : ""}`}>
       {/* Global Immersive Background Blur */}
       <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
         <AnimatePresence mode="wait">
@@ -6188,7 +6334,17 @@ function App() {
             isSessionChange={false}
           />
         ) : showOOBE ? (
-          <OOBEView isDark={isDark} onContinue={handleCloseOOBE} />
+          <OOBEView isDark={isDark} onContinue={handleCloseOOBE} featureFlags={featureFlags} setFeatureFlags={setFeatureFlags} />
+        ) : showCanaryWarning ? (
+          <BroadcastExperimentalView 
+            onContinue={() => {
+              setShowCanaryWarning(false);
+              setHasSeenCanaryWarning(true);
+            }} 
+            onSwitchToRelease={() => {
+              window.open("https://vplay.vn", "_blank");
+            }}
+          />
         ) : isUpdating ? (
           <SplashScreen 
             isDark={isDark}
@@ -6220,7 +6376,7 @@ function App() {
           animate={{ opacity: 1 }}
           className={`fixed inset-0 z-[40] transition-all duration-500 ${
             useSidebar && !isMobile 
-              ? (sidebarStyle === "attach" ? "px-0" : (isSidebarRight ? "pl-8" : "pr-8")) 
+              ? ((sidebarStyle === "attach" || featureFlags.win8_metro) ? "px-0" : (isSidebarRight ? "pl-8" : "pr-8")) 
               : "px-0"
           }`}
           style={useSidebar && !isMobile ? {
@@ -6824,7 +6980,7 @@ function App() {
               } ${
                 isMobile 
                   ? "top-0 h-full !rounded-none !m-0 !left-0 !right-0 transition-none" 
-                  : sidebarStyle === "attach"
+                  : (sidebarStyle === "attach" || featureFlags.win8_metro)
                     ? `top-0 h-full !rounded-none !m-0 ${isSidebarRight ? "!right-0" : "!left-0"} border-r border-white/5`
                     : "top-6 !rounded-[32px] border shadow-2xl"
               } ${
@@ -6862,10 +7018,13 @@ function App() {
                         exit={{ opacity: 0, x: -10 }}
                         className="flex items-center gap-3"
                       >
-                        <div className={`relative w-12 h-12 flex items-center justify-center rounded-full ${isDark ? "bg-purple-600/20 text-purple-400" : "bg-white shadow-sm ring-1 ring-slate-200/50"}`}>
-                          <Play size={24} fill="currentColor" />
-                        </div>
-                        <span className="font-bold text-sm tracking-tight text-white/80">Media Player</span>
+                         <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl bg-orange-600 text-white shadow-xl shadow-orange-600/20`}>
+                           <Play size={24} fill="currentColor" />
+                         </div>
+                         <div className="flex flex-col">
+                            <span className="font-bold text-sm tracking-tight text-white/90">Vplay</span>
+                            <span className="text-[10px] font-black text-orange-500 tracking-widest uppercase">Canary</span>
+                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -7256,7 +7415,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.02</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.03</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
