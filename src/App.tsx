@@ -3001,7 +3001,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100000] bg-[#212121] text-white flex flex-col font-sans overflow-hidden"
+      className="fixed inset-0 z-[100000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
     >
        <AnimatePresence mode="wait">
          {isLoading ? (
@@ -3016,11 +3016,11 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
                  <img 
                    src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
                    alt="Loading" 
-                   className="w-16 h-16 filter brightness-200 opacity-60"
+                   className="w-24 h-24 filter brightness-200 opacity-60"
                    referrerPolicy="no-referrer"
                  />
               </div>
-              <p className="text-xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
            </motion.div>
          ) : (
            <motion.div 
@@ -3030,7 +3030,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
              className="flex-1 flex flex-col overflow-hidden"
            >
               {/* Top Bar */}
-              <div className="h-16 w-full flex items-center justify-between px-12 bg-[#004275] border-b border-white/10 shrink-0">
+              <div className="h-16 w-full flex items-center justify-between px-12 bg-[#212121] border-b border-white/10 shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                        <Sparkles size={18} />
@@ -3101,7 +3101,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
               </div>
 
               {/* Bottom Bar */}
-              <div className="h-24 w-full flex items-center justify-end px-12 bg-[#004275] border-t border-white/10 shrink-0">
+              <div className="h-24 w-full flex items-center justify-end px-12 bg-[#212121] border-t border-white/10 shrink-0">
                  <div className="flex items-center gap-4">
                     <button 
                        onClick={onContinue}
@@ -3794,7 +3794,9 @@ function SettingsContent({
             <button 
               onClick={() => {
                 onAlert("Resetting", "All settings and local data will be wiped.");
+                const wasDev = localStorage.getItem("vplay_dev_mode") === "true";
                 localStorage.clear();
+                if (wasDev) localStorage.setItem("vplay_dev_mode", "true");
                 window.location.reload();
               }}
               className={`p-6 rounded-[32px] border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 text-red-500 flex items-center justify-between gap-4 transition-all`}
