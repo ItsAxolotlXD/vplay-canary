@@ -2987,14 +2987,35 @@ function MusicSettingsContent({
 }
 
 const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => void }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "final_loading_1" | "final_loading_2">("initial_loading");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (phase === "initial_loading") {
+      const timer = setTimeout(() => {
+        setPhase("wizard");
+      }, 10000);
+      return () => clearTimeout(timer);
+    } else if (phase === "final_loading_1") {
+      const timer = setTimeout(() => {
+        setPhase("final_loading_2");
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else if (phase === "final_loading_2") {
+      const timer = setTimeout(() => {
+        onContinue();
+      }, 20000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, onContinue]);
+
+  const handleContinue = () => {
+    // Mobile audio context unlock on user interaction
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume().then(() => {
+      console.log("AudioContext resumed via OOBE interaction");
+    });
+    setPhase("final_loading_1");
+  };
 
   return (
     <motion.div 
@@ -3004,9 +3025,9 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
       className="fixed inset-0 z-[100000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
     >
        <AnimatePresence mode="wait">
-         {isLoading ? (
+         {phase === "initial_loading" ? (
            <motion.div 
-             key="loading"
+             key="loading_initial"
              initial={{ opacity: 0 }}
              animate={{ opacity: 1 }}
              exit={{ opacity: 0 }}
@@ -3022,6 +3043,42 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
               </div>
               <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
            </motion.div>
+         ) : phase === "final_loading_1" ? (
+           <motion.div 
+             key="loading_final_1"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="flex-1 flex flex-col items-center justify-center space-y-8"
+           >
+              <div className="relative">
+                 <img 
+                   src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                   alt="Loading" 
+                   className="w-24 h-24 filter brightness-200 opacity-60"
+                   referrerPolicy="no-referrer"
+                 />
+              </div>
+              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+           </motion.div>
+         ) : phase === "final_loading_2" ? (
+           <motion.div 
+             key="loading_final_2"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="flex-1 flex flex-col items-center justify-center space-y-8 text-center px-8"
+           >
+              <div className="relative">
+                 <img 
+                   src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
+                   alt="Loading" 
+                   className="w-24 h-24 filter brightness-200 opacity-60"
+                   referrerPolicy="no-referrer"
+                 />
+              </div>
+              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Getting your experience ready...</p>
+           </motion.div>
          ) : (
            <motion.div 
              key="content"
@@ -3030,7 +3087,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
              className="flex-1 flex flex-col overflow-hidden"
            >
               {/* Top Bar */}
-              <div className="h-16 w-full flex items-center justify-between px-12 bg-[#212121] border-b border-white/10 shrink-0">
+              <div className="h-24 w-full flex items-center justify-between px-12 bg-[#212121] border-b border-white/10 shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                        <Sparkles size={18} />
@@ -3084,7 +3141,7 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
                            key={item.title}
                            initial={{ opacity: 0, y: 20 }}
                            animate={{ opacity: 1, y: 0 }}
-                           transition={{ delay: 0.6 + (idx * 0.1) }}
+                           transition={{ delay: 0.4 + (idx * 0.1) }}
                            className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left space-y-4"
                          >
                             <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
@@ -3102,15 +3159,25 @@ const OOBEView = ({ isDark, onContinue }: { isDark: boolean, onContinue: () => v
 
               {/* Bottom Bar */}
               <div className="h-24 w-full flex items-center justify-end px-12 bg-[#212121] border-t border-white/10 shrink-0">
-                 <div className="flex items-center gap-4">
-                    <button 
-                       onClick={onContinue}
-                       className="px-10 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-normal rounded-lg text-xs active:scale-95 text-white/60"
+                 <div className="flex flex-wrap items-center gap-4">
+                    <a 
+                       href="https://vplay-dev.vercel.app"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="px-6 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-normal rounded-lg text-xs active:scale-95 text-white/60"
                     >
-                       Remind later
-                    </button>
+                       Chuyển sang Vplay Dev
+                    </a>
+                    <a 
+                       href="https://vplaybyota.vercel.app"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="px-6 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all font-normal rounded-lg text-xs active:scale-95 text-white/60"
+                    >
+                       Chuyển sang Vplay Release
+                    </a>
                     <button 
-                       onClick={onContinue}
+                       onClick={handleContinue}
                        className="px-10 py-4 bg-[#0078d4] hover:bg-[#1a85d9] transition-all font-normal rounded-lg text-xs shadow-2xl active:scale-95"
                     >
                        Tiếp tục với Vplay Canary
