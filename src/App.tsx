@@ -5312,6 +5312,7 @@ function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [showOOBE, setShowOOBE] = useState(false);
   const [activeTab, setActiveTab] = useState("Trang chủ");
   const [xamlHomeLoading, setXamlHomeLoading] = useState(false);
   const loadingHomeRef = useRef(false);
@@ -5356,7 +5357,7 @@ function App() {
       loadingHomeRef.current = true;
       const timer = setTimeout(() => {
         setXamlHomeLoading(false);
-      }, 10000);
+      }, 3000);
       return () => clearTimeout(timer);
     } else if (activeTab !== "Trang chủ") {
       loadingHomeRef.current = false;
@@ -5697,10 +5698,19 @@ function App() {
 
   const handleEnterApp = useCallback(() => {
     setShowSplash(false);
+    // Show OOBE after splash if not seen in this session
+    if (!sessionStorage.getItem("vplay_oobe_seen")) {
+      setShowOOBE(true);
+    }
     // This empty play/pause logic unblocks audio globally for the session
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioContext.resume();
   }, []);
+
+  const handleCloseOOBE = () => {
+    setShowOOBE(false);
+    sessionStorage.setItem("vplay_oobe_seen", "true");
+  };
 
   return (
     <MotionConfig 
@@ -5740,9 +5750,52 @@ function App() {
         {showSplash ? (
           <SplashScreen 
             isDark={isDark} 
-            onEnter={() => setShowSplash(false)} 
+            onEnter={handleEnterApp} 
             isSessionChange={false}
           />
+        ) : showOOBE ? (
+          <div className="fixed inset-0 z-[2000] bg-[#0078d4] text-white flex flex-col items-center justify-center p-8 font-sans">
+             <div className="max-w-4xl w-full space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="space-y-4">
+                   <h1 className="text-4xl md:text-5xl font-light tracking-tight">Bạn đang trải nghiệm Vplay Canary</h1>
+                   <p className="text-lg md:text-xl text-white/80 leading-relaxed font-light">
+                      Vplay Canary là một phiên bản trải nghiệm sớm, thử nghiệm các tính năng lặt vặt và test giao diện là chính. 
+                      Trong quá trình sử dụng, bạn sẽ gặp phải rất nhiều lỗi và các tính năng đều chưa hoàn thiện. 
+                      Các bản build Canary sẽ cao hơn và không được cập nhật hoặc vá lỗi thường xuyên. 
+                      Để có một trải nghiệm tốt nhất, vui lòng chuyển qua phiên bản Dev hoặc phiên bản Release chính thức của Vplay. 
+                      Trân trọng cảm ơn!
+                   </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-8">
+                   <button 
+                     onClick={handleCloseOOBE}
+                     className="px-6 py-4 bg-white text-[#0078d4] hover:bg-white/90 transition-colors font-semibold text-sm uppercase tracking-wider"
+                   >
+                     Tiếp tục với Vplay Canary
+                   </button>
+                   <a 
+                     href="https://vplay-dev.vercel.app" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="px-6 py-4 bg-transparent border-2 border-white/40 hover:bg-white/10 transition-colors font-semibold text-sm text-center uppercase tracking-wider"
+                   >
+                     Vplay Dev
+                   </a>
+                   <a 
+                     href="https://vplaybyota.vercel.app" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="px-6 py-4 bg-transparent border-2 border-white/40 hover:bg-white/10 transition-colors font-semibold text-sm text-center uppercase tracking-wider"
+                   >
+                     Vplay Release
+                   </a>
+                </div>
+             </div>
+             <div className="absolute bottom-10 left-10 text-white/40 text-xs font-light">
+                Vplay Media Player © 2026. Một trải nghiệm hệ sinh thái Vplay.
+             </div>
+          </div>
         ) : isUpdating ? (
           <SplashScreen 
             isDark={isDark}
