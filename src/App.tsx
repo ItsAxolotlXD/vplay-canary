@@ -747,7 +747,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   isFloating?: boolean,
   setIsFloating?: (f: boolean) => void
 }) {
-  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.1]", "Type /help for all available commands."]);
+  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.04]", "Type /help for all available commands."]);
   const [input, setInput] = useState("");
   const [currentView, setCurrentView] = useState<"terminal" | "code" | "flags">("terminal");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -782,7 +782,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
       setIsDev(true);
       newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.03 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.04 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
@@ -1992,7 +1992,13 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
                         <ChannelCard 
                           key={`${ch.name}-${ch.stream}`} 
                           ch={ch} 
-                          onClick={() => setActive(ch)} 
+                          onClick={() => {
+                            if (activeTab === "Phát sóng") {
+                              setShowCanaryWarning(true);
+                            } else {
+                              setActive(ch);
+                            }
+                          }} 
                           isDark={isDark} 
                           isActive={active.name === ch.name} 
                           favorites={favorites} 
@@ -2632,6 +2638,31 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
 
   const logs = [
     {
+      id: 'canary-28000-04',
+      version: 'Vplay Canary - Build 28000.04',
+      tag: '🚀',
+      type: 'Bản cập nhật SMR26 Update 4',
+      sections: [
+        {
+          title: '✨ OOBE EXPERIENCE',
+          items: [
+            'Thêm giai đoạn "Almost there" sau khi thiết lập xong',
+            'Tối ưu hóa thời gian chờ loading OOBE',
+            'Fix các lỗi UI nhỏ trong màn hình thiết lập'
+          ],
+          color: 'text-blue-400'
+        },
+        {
+          title: '🛠️ SYSTEM STABILITY',
+          items: [
+            'Cập nhật mã phiên bản hệ thống lên 28000.04',
+            'Cải thiện hiệu năng render các thành phần XAML'
+          ],
+          color: 'text-green-400'
+        }
+      ]
+    },
+    {
       id: 'canary-28000-03',
       version: 'Vplay Canary - Build 28000.03',
       tag: '🔥',
@@ -2997,45 +3028,45 @@ const BroadcastExperimentalView = ({ onContinue, onSwitchToRelease }: { onContin
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[120000] bg-[#004275] text-white flex flex-col font-sans overflow-hidden"
     >
-      <div className="h-16 w-full flex items-center justify-between px-8 bg-black/10 shrink-0">
+      <div className="h-16 w-full flex items-center justify-between px-6 md:px-8 bg-black/10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center">
             <Sparkles size={14} />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest">Vplay Canary Status</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Vplay Canary Status</span>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 text-center">
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="max-w-4xl space-y-12"
+          className="max-w-4xl space-y-8 md:space-y-12"
         >
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">Vplay Canary chỉ để phục vụ thử nghiệm!</h1>
-            <p className="text-xl md:text-2xl text-white/70 font-light max-w-3xl mx-auto leading-relaxed">
+          <div className="space-y-4 md:space-y-6">
+            <h1 className="text-4xl md:text-7xl font-light tracking-tight leading-tight">Vplay Canary chỉ để phục vụ thử nghiệm!</h1>
+            <p className="text-base md:text-2xl text-white/70 font-light max-w-3xl mx-auto leading-relaxed">
               Vplay Canary chỉ để phục vụ thử nghiệm giao diện. Để xem được các kênh truyền hình, vui lòng chuyển đổi sang các phiên bản ổn định hơn của Vplay như Dev hoặc khuyến nghị hơn là phiên bản Release chính thức
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-4 md:pt-8 w-full max-w-lg mx-auto">
             <button 
               onClick={onSwitchToRelease}
-              className="px-10 py-5 bg-white/10 hover:bg-white/20 border border-white/20 transition-all font-normal rounded-xl text-sm"
+              className="w-full sm:flex-1 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 transition-all font-normal rounded-xl text-sm"
             >
               Chuyển sang Vplay Release
             </button>
             <button 
               onClick={onContinue}
-              className="px-12 py-5 bg-white text-[#004275] hover:bg-white/90 transition-all font-bold rounded-xl text-sm shadow-2xl active:scale-95"
+              className="w-full sm:flex-1 px-8 py-4 bg-white text-[#004275] hover:bg-white/90 transition-all font-bold rounded-xl text-sm shadow-2xl active:scale-95"
             >
-              Tôi đã hiểu, tiếp tục thử nghiệm
+              Tiếp tục thử nghiệm
             </button>
           </div>
           
-          <div className="pt-8">
+          <div className="pt-4 md:pt-8">
             <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">Cảm ơn bạn đã đồng hành cùng Vplay Canary</p>
           </div>
         </motion.div>
@@ -3045,23 +3076,23 @@ const BroadcastExperimentalView = ({ onContinue, onSwitchToRelease }: { onContin
 };
 
 const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDark: boolean, onContinue: () => void, featureFlags: any, setFeatureFlags: (f: any) => void }) => {
-  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "final_loading_1" | "final_loading_2">("initial_loading");
-  const [currentExpIndex, setCurrentExpIndex] = useState(0);
+  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "music" | "final_loading_1" | "final_loading_2" | "almost_there">("initial_loading");
+  const [selectedMusicUrl, setSelectedMusicUrl] = useState<string>("");
 
   const experiments = [
-    { id: 'xaml_home', name: 'XAML Home Page', desc: 'Sử dụng giao diện Home mới dựa trên XAML Components mượt mà hơn.' },
-    { id: 'xaml_search', name: 'Improved Search', desc: 'Trải nghiệm tìm kiếm được cải tiến với khả năng lọc thông minh.' },
-    { id: 'settings_vertical', name: 'Vertical Settings', desc: 'Bố cục cài đặt dạng danh sách đứng giúp tối ưu không gian.' },
-    { id: 'minecraft_mode', name: 'Minecraft Mode', desc: 'Biến toàn bộ giao diện thành phong cách khối vuông Minecraft pixelated.' },
-    { id: 'win8_metro', name: 'Metro Mode', desc: 'Trải nghiệm phong cách Windows 8 Metro UI với các ô vuông đặc trưng.' },
-    { id: 'music_background', name: 'Background Music', desc: 'Kích hoạt âm nhạc nền thư giãn trong suốt quá trình sử dụng.' }
+    { id: 'xaml_home', name: 'XAML Home Page', desc: 'Giao diện Home mới mượt mà hơn.' },
+    { id: 'xaml_search', name: 'Improved Search', desc: 'Tìm kiếm cải tiến thông minh.' },
+    { id: 'settings_vertical', name: 'Vertical Settings', desc: 'Bố cục cài đặt danh sách đứng.' },
+    { id: 'minecraft_mode', name: 'Minecraft Mode', desc: 'Phong cách pixelated pixel.' },
+    { id: 'win8_metro', name: 'Metro Mode', desc: 'Phong cách Windows 8 Metro UI.' },
+    { id: 'music_background', name: 'Background Music', desc: 'Âm nhạc nền thư giãn.' }
   ];
 
   useEffect(() => {
     if (phase === "initial_loading") {
       const timer = setTimeout(() => {
         setPhase("wizard");
-      }, 10000);
+      }, 5000);
       return () => clearTimeout(timer);
     } else if (phase === "final_loading_1") {
       const timer = setTimeout(() => {
@@ -3070,28 +3101,26 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
       return () => clearTimeout(timer);
     } else if (phase === "final_loading_2") {
       const timer = setTimeout(() => {
+        setPhase("almost_there");
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else if (phase === "almost_there") {
+      const timer = setTimeout(() => {
         onContinue();
-      }, 20000);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [phase, onContinue]);
 
-  const handleStartExperiments = () => {
-    // Mobile audio context unlock on user interaction
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.resume().then(() => {
-      console.log("AudioContext resumed via OOBE interaction");
-    });
-    setPhase("experiments");
-  };
-
-  const handleToggleExperiment = (id: string, active: boolean) => {
+  const handleToggleSingleFlag = (id: string, active: boolean) => {
     const newFlags = { ...featureFlags, [id]: active };
     setFeatureFlags(newFlags);
     localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
-    
-    if (currentExpIndex < experiments.length - 1) {
-      setCurrentExpIndex(prev => prev + 1);
+  };
+
+  const handleFinishExperiments = () => {
+    if (featureFlags.music_background) {
+      setPhase("music");
     } else {
       setPhase("final_loading_1");
     }
@@ -3121,16 +3150,7 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                    referrerPolicy="no-referrer"
                  />
               </div>
-              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                onClick={() => setPhase("wizard")}
-                className="mt-8 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
-              >
-                Skip Waiting
-              </motion.button>
+              <p className="text-3xl md:text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
            </motion.div>
          ) : phase === "experiments" ? (
            <motion.div 
@@ -3202,7 +3222,15 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                    referrerPolicy="no-referrer"
                  />
               </div>
-              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+              <p className="text-3xl md:text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+              <div className="absolute bottom-12 left-0 right-0 flex justify-center px-6">
+                 <button 
+                    onClick={() => setPhase("final_loading_2")}
+                    className="w-full max-w-sm py-5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] active:scale-95 transition-all"
+                 >
+                    Bypass Loading
+                 </button>
+              </div>
            </motion.div>
          ) : phase === "final_loading_2" ? (
            <motion.div 
@@ -3220,20 +3248,32 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                    referrerPolicy="no-referrer"
                  />
               </div>
-              <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Getting your experience ready...</p>
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2 }}
-                onClick={onContinue}
-                className="mt-8 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
-              >
-                Bypass Loading
-              </motion.button>
+              <p className="text-3xl md:text-4xl font-light tracking-tight text-white/60 animate-pulse">Getting your experience ready...</p>
+              <div className="absolute bottom-12 left-0 right-0 flex justify-center px-6">
+                 <button 
+                    onClick={onContinue}
+                    className="w-full max-w-sm py-5 bg-white/10 hover:bg-white/20 border border-white/30 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] active:scale-95 transition-all"
+                 >
+                    Bypass Loading
+                 </button>
+              </div>
            </motion.div>
-         ) : (
-           <motion.div 
-             key="content"
+          ) : phase === "almost_there" ? (
+            <motion.div 
+              key="almost_there"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="fixed inset-0 z-[100001] bg-black flex items-center justify-center font-sans"
+            >
+              <div className="text-center">
+                 <p className="text-3xl md:text-5xl font-light tracking-tight text-white/90">Almost there.</p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="content"
              initial={{ opacity: 0 }}
              animate={{ opacity: 1 }}
              className="flex-1 flex flex-col overflow-hidden"
@@ -4576,7 +4616,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.03</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.04</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -5740,7 +5780,7 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
         <span>Vplay OS Preview</span>
         <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-        <span>Build 28000.03</span>
+        <span>Build 28000.04</span>
       </div>
     </motion.div>
   );
@@ -7433,7 +7473,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.03</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.04</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
