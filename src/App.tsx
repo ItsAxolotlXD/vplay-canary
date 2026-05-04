@@ -747,7 +747,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   isFloating?: boolean,
   setIsFloating?: (f: boolean) => void
 }) {
-  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.04]", "Type /help for all available commands."]);
+  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.05]", "Type /help for all available commands."]);
   const [input, setInput] = useState("");
   const [currentView, setCurrentView] = useState<"terminal" | "code" | "flags">("terminal");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -782,7 +782,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
       setIsDev(true);
       newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.04 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.05 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
@@ -1064,7 +1064,11 @@ function IndividualPlayer({ channel, isMuted, volume, isDark }: { channel: Chann
   );
 }
 
-function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user, onLogin, isDev, liquidGlass, sortOrder, setSortOrder, showSplash, featureFlags, searchQuery, minimalMode = false }: { 
+function TVContent({ 
+  active, setActive, isDark, favorites, toggleFavorite, user, onLogin, isDev, liquidGlass, 
+  sortOrder, setSortOrder, showSplash, featureFlags, searchQuery, 
+  minimalMode = false, activeTab, setShowCanaryWarning 
+}: { 
   active: Channel, 
   setActive: (ch: Channel) => void, 
   isDark: boolean,
@@ -1079,7 +1083,9 @@ function TVContent({ active, setActive, isDark, favorites, toggleFavorite, user,
   showSplash?: boolean,
   featureFlags: { [key: string]: boolean },
   searchQuery: string,
-  minimalMode?: boolean
+  minimalMode?: boolean,
+  activeTab?: string,
+  setShowCanaryWarning?: (val: boolean) => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -3078,6 +3084,7 @@ const BroadcastExperimentalView = ({ onContinue, onSwitchToRelease }: { onContin
 const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDark: boolean, onContinue: () => void, featureFlags: any, setFeatureFlags: (f: any) => void }) => {
   const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "music" | "final_loading_1" | "final_loading_2" | "almost_there">("initial_loading");
   const [selectedMusicUrl, setSelectedMusicUrl] = useState<string>("");
+  const [currentExpIndex, setCurrentExpIndex] = useState(0);
 
   const experiments = [
     { id: 'xaml_home', name: 'XAML Home Page', desc: 'Giao diện Home mới mượt mà hơn.' },
@@ -3087,6 +3094,41 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
     { id: 'win8_metro', name: 'Metro Mode', desc: 'Phong cách Windows 8 Metro UI.' },
     { id: 'music_background', name: 'Background Music', desc: 'Âm nhạc nền thư giãn.' }
   ];
+
+  const handleFinishExperiments = () => {
+    if (featureFlags.music_background) {
+      setPhase("music");
+    } else {
+      setPhase("final_loading_1");
+    }
+  };
+
+  const handleStartExperiments = () => {
+    // Mobile audio context unlock on user interaction
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext.resume().then(() => {
+      console.log("AudioContext resumed via OOBE interaction");
+    });
+    setPhase("experiments");
+  };
+
+  const handleToggleExperiment = (id: string, active: boolean) => {
+    const newFlags = { ...featureFlags, [id]: active };
+    setFeatureFlags(newFlags);
+    localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+    
+    if (currentExpIndex < experiments.length - 1) {
+      setCurrentExpIndex(prev => prev + 1);
+    } else {
+      handleFinishExperiments();
+    }
+  };
+
+  const handleToggleSingleFlag = (id: string, active: boolean) => {
+    const newFlags = { ...featureFlags, [id]: active };
+    setFeatureFlags(newFlags);
+    localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+  };
 
   useEffect(() => {
     if (phase === "initial_loading") {
@@ -3107,24 +3149,10 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
     } else if (phase === "almost_there") {
       const timer = setTimeout(() => {
         onContinue();
-      }, 1000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [phase, onContinue]);
-
-  const handleToggleSingleFlag = (id: string, active: boolean) => {
-    const newFlags = { ...featureFlags, [id]: active };
-    setFeatureFlags(newFlags);
-    localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
-  };
-
-  const handleFinishExperiments = () => {
-    if (featureFlags.music_background) {
-      setPhase("music");
-    } else {
-      setPhase("final_loading_1");
-    }
-  };
 
   return (
     <motion.div 
@@ -3250,12 +3278,6 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
               </div>
               <p className="text-3xl md:text-4xl font-light tracking-tight text-white/60 animate-pulse">Getting your experience ready...</p>
               <div className="absolute bottom-12 left-0 right-0 flex justify-center px-6">
-                 <button 
-                    onClick={onContinue}
-                    className="w-full max-w-sm py-5 bg-white/10 hover:bg-white/20 border border-white/30 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] active:scale-95 transition-all"
-                 >
-                    Bypass Loading
-                 </button>
               </div>
            </motion.div>
           ) : phase === "almost_there" ? (
@@ -3323,29 +3345,7 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                       </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
-                       {[
-                         { title: "Fluid UI", icon: Layers, desc: "Giao diện mượt mà với XAML Components" },
-                         { title: "Operator Console", icon: Terminal, desc: "Điều khiển hệ thống bằng dòng lệnh" },
-                         { title: "Background Music", icon: Music, desc: "Âm nhạc nền chill từ Joakim Karud" }
-                       ].map((item, idx) => (
-                         <motion.div 
-                           key={item.title}
-                           initial={{ opacity: 0, y: 20 }}
-                           animate={{ opacity: 1, y: 0 }}
-                           transition={{ delay: 0.4 + (idx * 0.1) }}
-                           className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left space-y-4"
-                         >
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                               <item.icon size={20} />
-                            </div>
-                            <div>
-                               <h3 className="font-bold text-sm">{item.title}</h3>
-                               <p className="text-xs text-white/50 mt-1">{item.desc}</p>
-                            </div>
-                         </motion.div>
-                       ))}
-                    </div>
+
                  </div>
               </div>
 
@@ -4616,7 +4616,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.04</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.05</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -5780,7 +5780,7 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
         <span>Vplay OS Preview</span>
         <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-        <span>Build 28000.04</span>
+        <span>Build 28000.05</span>
       </div>
     </motion.div>
   );
@@ -6542,6 +6542,8 @@ function App() {
                           featureFlags={featureFlags}
                           searchQuery=""
                           minimalMode={true}
+                          activeTab={activeTab}
+                          setShowCanaryWarning={setShowCanaryWarning}
                         />
                     </div>
                   )}
@@ -6917,6 +6919,8 @@ function App() {
                   showSplash={showSplash}
                   featureFlags={featureFlags}
                   searchQuery={searchQuery}
+                  activeTab={activeTab}
+                  setShowCanaryWarning={setShowCanaryWarning}
                 />
               )}
               {displayTab === "Cài đặt" && (
@@ -7473,7 +7477,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.04</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.05</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
