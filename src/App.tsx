@@ -3122,6 +3122,15 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                  />
               </div>
               <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Just a moment...</p>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                onClick={() => setPhase("wizard")}
+                className="mt-8 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                Skip Waiting
+              </motion.button>
            </motion.div>
          ) : phase === "experiments" ? (
            <motion.div 
@@ -3212,6 +3221,15 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
                  />
               </div>
               <p className="text-4xl font-light tracking-tight text-white/60 animate-pulse">Getting your experience ready...</p>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2 }}
+                onClick={onContinue}
+                className="mt-8 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                Bypass Loading
+              </motion.button>
            </motion.div>
          ) : (
            <motion.div 
