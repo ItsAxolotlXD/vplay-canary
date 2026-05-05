@@ -20,11 +20,11 @@ const SettingsIcon = ({ className }: { className?: string }) => (
   <Settings className={`${className} flex-shrink-0`} />
 );
 
-const vplayLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi";
-const splashLogo = "https://static.wikia.nocookie.net/ftv/images/9/93/Vpl.png/revision/latest?cb=20260412135144&path-prefix=vi";
+const vplayLogo = "https://static.wikia.nocookie.net/ftv/images/0/0f/Nx626.png/revision/latest/scale-to-width-down/1000?cb=20260505125314&path-prefix=vi";
+const splashLogo = "https://static.wikia.nocookie.net/ftv/images/0/0f/Nx626.png/revision/latest/scale-to-width-down/1000?cb=20260505125314&path-prefix=vi";
 const startIcon = "https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi";
 
-const splashBg = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/271eaa23-7e5c-47f8-90dd-bb7ccaf7c682/d4wgzdk-66e11cd6-72c2-4c61-9a02-50f01bd0e7fc.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi8yNzFlYWEyMy03ZTVjLTQ3ZjgtOTBkZC1iYjdjY2FmN2M2ODIvZDR3Z3pkay02NmUxMWNkNi03MmMyLTRjNjEtOWEwMi01MGYwMWJkMGU3ZmMucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.j-0Mw5AwyBsypFP8qSCvRP_vuzErttnrS2k4mo0IWHA";
+const splashBg = "https://static.wikia.nocookie.net/ftv/images/f/f4/Nx262.png/revision/latest/scale-to-width-down/1000?cb=20260505131224&path-prefix=vi";
 
 const STANDARD_LOADING_GIF = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif";
 const REVAMPED_LOADING_GIF = "https://cdn.pixabay.com/animation/2023/10/08/03/19/03-19-26-213_512.gif";
@@ -172,7 +172,7 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           src={vplayLogo} 
           alt="Vplay Logo" 
-          className="h-64 w-64 md:h-80 md:w-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.3)]"
+          className="h-[520px] w-[520px] md:h-[680px] md:w-[680px] object-contain drop-shadow-[0_0_100px_rgba(255,255,255,0.4)] transition-all duration-700"
           referrerPolicy="no-referrer"
         />
 
@@ -308,14 +308,15 @@ const backgroundTracks = [
 ];
 
 const baseTabs = [
-  { name: "Trang chủ", icon: Home, id: "Trang chủ" },
+  { name: "Home", icon: Home, id: "Trang chủ" },
+  { name: "Search or use commands", icon: Search, id: "Search", tooltip: "Search for channels or use console commands" },
   { name: "Phát sóng", icon: Tv, id: "Phát sóng" },
+  { name: "Copilot in Vplay (preview)", icon: "https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300", id: "Copilot" },
   { name: "Bảo tàng lưu trữ", icon: Calendar, id: "Lưu trữ" },
   { name: "Phát nhạc", icon: Music, id: "Phát nhạc" },
   { name: "Video", icon: Video, id: "Video" },
   { name: "Quản trị", icon: Shield, id: "Quản trị" },
   { name: "Cài đặt", icon: Settings, id: "Cài đặt" },
-  { name: "Debug", icon: Wrench, id: "Debug" },
 ];
 
 // Channel type is imported from channels.ts
@@ -510,10 +511,10 @@ function ChannelCard({ ch, onClick, isDark, isActive, favorites, toggleFavorite,
 
 const slides = [
   { 
-    url: "https://media.discordapp.net/attachments/1491785835912237209/1492909965617270784/image.png?ex=69f17b80&is=69f02a00&hm=964af4caa71a48dbb4abbc418c695bffdf32250ab7eab716c356bba75f5d4ece&=&format=webp&quality=lossless&width=800&height=450", 
-    title: "Giải trí không giới hạn", 
-    desc: "Hơn 200+ kênh truyền hình HD chất lượng cao hoàn toàn miễn phí mỗi ngày.",
-    tag: "Vplay Web"
+    url: "https://static.wikia.nocookie.net/ftv/images/f/f4/Nx262.png/revision/latest/scale-to-width-down/1000?cb=20260505131224&path-prefix=vi", 
+    title: "Vplay OS Canary", 
+    desc: "Trải nghiệm truyền hình tương lai với giao diện mượt mà và kho nội dung khổng lồ.",
+    tag: "Vplay Canary"
   },
   { 
     url: "https://media.discordapp.net/attachments/1491785835912237209/1492904393862025467/spc_20260412_220807.png?ex=69f17650&is=69f024d0&hm=ea45aa8e541ca18266a4b0557a2bd5e5bcb040060d1ef4949a4ca4c09a0a7d8b&=&format=webp&quality=lossless&width=605&height=340", 
@@ -760,14 +761,18 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const availableFlags = [
-    { id: 'windows_mode', name: 'Vplay OS (preview)', desc: 'Chuyển sang giao diện hệ điều hành thông minh và tiện lợi.' },
     { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả' },
     { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc' },
     { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu' },
     { id: 'settings_vertical', name: 'List settings', desc: 'Chuyển layout settings về dạng danh sách thay vì dạng ô (Yêu cầu XAML View)' },
     { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style' },
     { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page' },
-    { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience' }
+    { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience' },
+    { id: 'win8_metro', name: 'Metro Mode', desc: 'Turns the interface into Windows 8\'s Metro UI style' },
+    { id: 'revamp_process_animation', name: 'Revamped Process', desc: 'Use the updated version of the processing loading circle' },
+    { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar' },
+    { id: 'microslop_copilot', name: 'Copilot (preview)', desc: 'The Microslop Copilot Experience (TM)' },
+    { id: 'scrollable_bar', name: 'Scrollable Bar', desc: 'Makes the Navigation Bar scrollable' }
   ];
 
   useEffect(() => {
@@ -2078,7 +2083,8 @@ function SearchPopup({
   setLiquidGlass,
   onLogin,
   onLogout,
-  setSortOrder
+  setSortOrder,
+  position = "bottom"
 }: {
   isDark: boolean,
   searchQuery: string,
@@ -2091,7 +2097,8 @@ function SearchPopup({
   setLiquidGlass: (val: "glassy" | "tinted") => void,
   onLogin: () => void,
   onLogout: () => void,
-  setSortOrder: (val: "az" | "za") => void
+  setSortOrder: (val: "az" | "za") => void,
+  position?: "top" | "bottom"
 }) {
   if (searchQuery.trim() === "") return null;
 
@@ -2122,11 +2129,11 @@ function SearchPopup({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.8, rotateX: -15 }}
+      initial={{ opacity: 0, y: position === "top" ? -40 : 40, scale: 0.8, rotateX: position === "top" ? 15 : -15 }}
       animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-      exit={{ opacity: 0, y: 40, scale: 0.8, rotateX: -15 }}
+      exit={{ opacity: 0, y: position === "top" ? -40 : 40, scale: 0.8, rotateX: position === "top" ? 15 : -15 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
-      className={`absolute bottom-full mb-6 w-[90vw] md:w-full max-w-[400px] border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden ${
+      className={`absolute ${position === "top" ? "top-full mt-4" : "bottom-full mb-6"} w-[90vw] md:w-full max-w-[400px] border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden ${
         liquidGlass ? "rounded-[32px] backdrop-blur-3xl" : "rounded-xl backdrop-blur-none"
       } bg-white/95 border-white/80 shadow-2xl`}
     >
@@ -2563,6 +2570,43 @@ function VidsContent({ isDark, user, liquidGlass, onLogin, featureFlags }: { isD
            <h3 className="text-xl font-black uppercase text-slate-500 tracking-tighter">Chưa có hoạt động nào</h3>
         </div>
       )}
+    </div>
+  );
+}
+
+function CopilotContent({ isDark, liquidGlass }: { isDark: boolean, liquidGlass: "glassy" | "tinted" }) {
+  return (
+    <div className="flex-1 flex flex-col h-full bg-black overflow-hidden relative">
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-0">
+        <div className="w-20 h-20 mb-6 relative">
+          <img 
+            src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300"
+            alt="Copilot Icon"
+            className="w-full h-full object-contain animate-pulse"
+          />
+        </div>
+        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter">Microslop Copilot</h2>
+        <p className="text-gray-400 max-w-md text-sm font-medium mb-8 leading-relaxed">
+          Microsoft chặn việc nhúng trực tiếp Copilot vào các ứng dụng bên thứ ba vì lý do bảo mật. 
+          Vui lòng nhấn nút bên dưới để bắt đầu trải nghiệm.
+        </p>
+        <button 
+          onClick={() => window.open("https://copilot.microsoft.com", "_blank")}
+          className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-2xl hover:scale-105 active:scale-95 ${
+            isDark ? "bg-white text-black" : "bg-blue-600 text-white"
+          }`}
+        >
+          Mở Copilot (Tab mới)
+        </button>
+        <p className="mt-6 text-[10px] text-gray-600 uppercase font-bold tracking-[0.2em]">The Microslop Experience (TM)</p>
+      </div>
+
+      <iframe 
+        src="https://copilot.microsoft.com/?isMobile=1" 
+        className="w-full h-full border-none relative z-10 opacity-100"
+        title="Copilot in Vplay (preview)"
+        allow="microphone; camera; clipboard-read; clipboard-write; geolocation"
+      />
     </div>
   );
 }
@@ -3104,8 +3148,14 @@ const BroadcastExperimentalView = ({ onContinue, onSwitchToRelease }: { onContin
   );
 };
 
-const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDark: boolean, onContinue: () => void, featureFlags: any, setFeatureFlags: (f: any) => void }) => {
-  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "music" | "final_loading_1" | "final_loading_2" | "almost_there">("initial_loading");
+const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags, forcedInfo }: { 
+  isDark: boolean, 
+  onContinue: () => void, 
+  featureFlags: any, 
+  setFeatureFlags: (f: any) => void,
+  forcedInfo?: { title: string, subtitle: string }
+}) => {
+  const [phase, setPhase] = useState<"initial_loading" | "wizard" | "experiments" | "music" | "final_loading_1" | "final_loading_2" | "almost_there" | "forced_info">(forcedInfo ? "forced_info" : "initial_loading");
   const [selectedMusicUrl, setSelectedMusicUrl] = useState<string>("");
   const [currentExpIndex, setCurrentExpIndex] = useState(0);
 
@@ -3115,17 +3165,14 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
     { id: 'settings_vertical', name: 'Vertical Settings', desc: 'Bố cục cài đặt danh sách đứng.' },
     { id: 'minecraft_mode', name: 'Minecraft Mode', desc: 'Phong cách pixelated pixel.' },
     { id: 'win8_metro', name: 'Metro Mode', desc: 'Phong cách Windows 8 Metro UI.' },
-    { id: 'music_background', name: 'Background Music', desc: 'Âm nhạc nền thư giãn.' },
     { id: 'revamp_process_animation', name: 'Revamped Process', desc: 'Use the updated version of the processing loading circle' },
-    { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar' }
+    { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar' },
+    { id: 'microslop_copilot', name: 'Copilot (preview)', desc: 'The Microslop Copilot Experience (TM)' },
+    { id: 'scrollable_bar', name: 'Scrollable Bar', desc: 'Makest the Navigation Bar scrollable' }
   ];
 
   const handleFinishExperiments = () => {
-    if (featureFlags.music_background) {
-      setPhase("music");
-    } else {
-      setPhase("final_loading_1");
-    }
+    setPhase("final_loading_1");
   };
 
   const handleStartExperiments = () => {
@@ -3316,6 +3363,32 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
             >
               <div className="text-center">
                  <p className="text-3xl md:text-5xl font-light tracking-tight text-white/90">Almost there.</p>
+              </div>
+            </motion.div>
+          ) : phase === "forced_info" ? (
+            <motion.div 
+              key="forced_info"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center"
+            >
+              <div className="max-w-3xl space-y-8">
+                <div className="w-24 h-24 mx-auto mb-8 bg-white/10 rounded-full flex items-center justify-center animate-pulse">
+                  <span className="text-4xl text-white">i</span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic">
+                  {forcedInfo?.title || "Cảm ơn bạn đã trải nghiệm!"}
+                </h2>
+                <p className="text-lg md:text-xl text-white/70 font-medium leading-relaxed">
+                  {forcedInfo?.subtitle || "VplayOS là một dự án cực lớn..."}
+                </p>
+                <button 
+                  onClick={onContinue}
+                  className="px-12 py-5 bg-white text-blue-900 rounded-full font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-2xl"
+                >
+                  Tiếp tục
+                </button>
               </div>
             </motion.div>
           ) : (
@@ -3576,8 +3649,8 @@ function SettingsContent({
                 </div>
               </div>
               <img 
-                src="https://static.wikia.nocookie.net/ftv/images/d/d9/SMR26.png/revision/latest/scale-to-width-down/1000?cb=20260427024320&path-prefix=vi" 
-                alt="SMR26 Logo" 
+                src={vplayLogo} 
+                alt="Vplay Logo" 
                 className="h-32 w-auto object-contain drop-shadow-2xl"
                 referrerPolicy="no-referrer"
               />
@@ -3998,7 +4071,6 @@ function SettingsContent({
 
         <div className={featureFlags.xaml_view_test && featureFlags.settings_vertical ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
           {([
-            { id: 'windows_mode', name: 'Vplay OS (preview)', desc: 'Chuyển sang giao diện hệ điều hành thông minh và tiện lợi.', active: featureFlags.windows_mode },
             { id: 'sidebar_resizable', name: 'Resizable sidebar', desc: 'Cho phép điều chỉnh độ rộng của sidebar bằng cách kéo thả', active: featureFlags.sidebar_resizable },
             { id: 'multiview_experimental', name: 'Multiview', desc: 'Xem nhiều kênh truyền hình cùng một lúc', active: featureFlags.multiview_experimental },
             { id: 'disable_animation', name: 'Reduce Animation', desc: 'Giảm hiệu ứng chuyển động trên trang web. Thích hợp cho các thiết bị yếu', active: featureFlags.disable_animation },
@@ -4006,7 +4078,11 @@ function SettingsContent({
             { id: 'minecraft_mode', name: 'Minecraft Mode (tag FUN)', desc: 'Turns the interface into Minecraft pixelated style', active: featureFlags.minecraft_mode },
             { id: 'xaml_home', name: 'XAML Home Page', desc: 'Use the new XAML version of the Home page', active: featureFlags.xaml_home },
             { id: 'win8_metro', name: 'Metro Mode', desc: 'Turns the interface into Windows 8\'s Metro UI style', active: featureFlags.win8_metro },
-            { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search }
+            { id: 'xaml_search', name: 'Improved Search', desc: 'Improving search box experience', active: featureFlags.xaml_search },
+            { id: 'revamp_process_animation', name: 'Revamped Process', desc: 'Use the updated version of the processing loading circle', active: featureFlags.revamp_process_animation },
+            { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar', active: featureFlags.search_merge },
+            { id: 'microslop_copilot', name: 'Copilot (preview)', desc: 'The Microslop Copilot Experience (TM)', active: featureFlags.microslop_copilot },
+            { id: 'scrollable_bar', name: 'Scrollable Bar', desc: 'Makes the Navigation Bar scrollable', active: featureFlags.scrollable_bar }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -5630,6 +5706,24 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featu
       <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isImprovedSearch ? "bg-white/10" : (isGlassy ? "bg-white/20" : "bg-black/10")} group-focus-within:bg-purple-500 group-focus-within:shadow-[0_0_15px_rgba(168,85,247,0.6)]`} />
       <div className="flex items-center gap-4">
         <button 
+          onClick={() => {
+            // Logic to open copilot
+            const copilotTab = baseTabs.find(t => t.id === "Copilot");
+            if (copilotTab) {
+              const url = "https://isnt-vplay-mediaplayer-l.glitch.me/"; 
+               window.open(url, "_blank");
+            }
+          }}
+          className={`p-2 rounded-full transition-all hover:scale-110 active:scale-95 ${isImprovedSearch ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"}`}
+          title="Copilot"
+        >
+          <img 
+            src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" 
+            className="w-5 h-5 object-contain" 
+            alt="Copilot"
+          />
+        </button>
+        <button 
           onClick={startVoiceSearch}
           className={`p-2 rounded-full transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : `${iconColor} hover:opacity-70`}`}
           title="Đang nghe..."
@@ -5964,6 +6058,14 @@ export default function App() {
   const [userData, setUserData] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showOOBE, setShowOOBE] = useState(false);
+  const [forcedOOBEInfo, setForcedOOBEInfo] = useState<{ title: string, subtitle: string } | null>(null);
+  const handleForceOOBE = () => {
+    setForcedOOBEInfo({
+      title: "Cảm ơn bạn đã trải nghiệm!",
+      subtitle: "VplayOS là một dự án cực lớn, khó thực hiện, hoàn thiện và không nằm trong roadmap các tính năng cập nhật của Vplay trong tương lai. Chúng tôi chỉ sử dụng VplayOS để test một số tính năng technical và không có đự định ra mắt là một hệ điều hành chính thức. Cảm ơn bạn đã trải nghiệm VplayOS!"
+    });
+    setShowOOBE(true);
+  };
   const [activeTab, setActiveTab] = useState("Trang chủ");
   const [showCanaryWarning, setShowCanaryWarning] = useState(false);
   const [hasSeenCanaryWarning, setHasSeenCanaryWarning] = useState(false);
@@ -5994,7 +6096,9 @@ export default function App() {
         win8_metro: false,
         revamp_process_animation: false,
         vids_for_uploads: true,
-        search_merge: false
+        search_merge: false,
+        microslop_copilot: false,
+        scrollable_bar: false
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -6015,7 +6119,9 @@ export default function App() {
         win8_metro: false,
         revamp_process_animation: false,
         vids_for_uploads: true,
-        search_merge: false
+        search_merge: false,
+        microslop_copilot: false,
+        scrollable_bar: false
       };
     }
   });
@@ -6062,6 +6168,7 @@ export default function App() {
   const [sortOrder, setSortOrder] = useState<"default" | "az" | "za">("default");
   const [slideIndex, setSlideIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [navPage, setNavPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Channel[]>([]);
@@ -6135,8 +6242,8 @@ export default function App() {
 
   // Sync wallpaper with theme if it's the default ones
   useEffect(() => {
-    const lightWp = "https://images.unsplash.com/photo-1620121478277-ad640a5a0f21?w=1600&q=80";
-    const darkWp = "https://images.unsplash.com/photo-1620121692029-d088224efc74?w=1600&q=80";
+    const lightWp = "https://static.wikia.nocookie.net/ftv/images/f/f4/Nx262.png/revision/latest/scale-to-width-down/1000?cb=20260505131224&path-prefix=vi";
+    const darkWp = "https://static.wikia.nocookie.net/ftv/images/f/f4/Nx262.png/revision/latest/scale-to-width-down/1000?cb=20260505131224&path-prefix=vi";
     const currentWp = localStorage.getItem("vplay_desktop_wallpaper");
     
     if (!currentWp || currentWp === lightWp || currentWp === darkWp || currentWp.includes("4kwallpapers.com")) {
@@ -6360,8 +6467,30 @@ export default function App() {
   const tabs = baseTabs.filter(t => {
     if (t.id === "Quản trị" && !isDev && !isAdmin) return false;
     if (t.id === "Vids" && !featureFlags?.vids_for_uploads) return false;
+    if (t.id === "Copilot" && !featureFlags?.microslop_copilot) return false;
     return true;
   });
+  
+  const navItems = useMemo(() => {
+    if (!featureFlags.scrollable_bar) return tabs;
+    return tabs;
+  }, [tabs, featureFlags.scrollable_bar]);
+
+  const itemsPerPage = 4;
+  const totalNavPages = Math.ceil(navItems.length / itemsPerPage);
+  const effectiveNavPage = Math.min(navPage, Math.max(0, totalNavPages - 1));
+
+  const currentNavItems = featureFlags.scrollable_bar 
+    ? navItems.slice(effectiveNavPage * itemsPerPage, (effectiveNavPage + 1) * itemsPerPage)
+    : navItems;
+
+  const tabsToDisplay = featureFlags.scrollable_bar 
+    ? currentNavItems.filter(item => !item.isSearch)
+    : tabs;
+
+  const showSearchInBar = featureFlags.search_merge && searchBoxPosition === "sidebar" && (
+    !featureFlags.scrollable_bar || currentNavItems.some(item => item.isSearch)
+  );
 
   const displayTab = activeTab;
 
@@ -6386,13 +6515,21 @@ export default function App() {
       transition={featureFlags?.disable_animation ? { duration: 0 } : undefined}
       reducedMotion={featureFlags?.disable_animation ? "always" : "user"}
     >
-      <div className={`${
-        featureFlags?.xaml_view_test
-          ? (isDark ? "bg-[#202020] text-white" : "bg-[#f5f6f7] text-slate-900")
-          : (isDark 
-              ? "bg-[#202020] text-white" 
-              : "bg-gradient-to-br from-rose-200 via-purple-200 to-red-100 text-slate-950")
-      } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""} ${featureFlags?.minecraft_mode ? "minecraft-mode" : ""} ${featureFlags?.win8_metro ? "metro-mode" : ""}`}>
+      <div 
+        className={`${
+          featureFlags?.xaml_view_test
+            ? (isDark ? "bg-[#202020] text-white" : "bg-[#f5f6f7] text-slate-900")
+            : (isDark 
+                ? "bg-[#111] text-white" 
+                : "bg-gradient-to-br from-rose-200 via-purple-200 to-red-100 text-slate-950")
+        } min-h-screen flex transition-colors duration-500 ${useSidebar ? "flex-row" : "flex-col"} ${featureFlags?.disable_animation ? "reduce-animations" : ""} ${featureFlags?.minecraft_mode ? "minecraft-mode" : ""} ${featureFlags?.win8_metro ? "metro-mode" : ""} relative`}
+        style={!featureFlags?.xaml_view_test ? {
+          backgroundImage: `url(${currentWallpaper})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        } : {}}
+      >
       {/* Global Immersive Background Blur */}
       <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
         <AnimatePresence mode="wait">
@@ -6424,7 +6561,13 @@ export default function App() {
             featureFlags={featureFlags}
           />
         ) : showOOBE ? (
-          <OOBEView isDark={isDark} onContinue={handleCloseOOBE} featureFlags={featureFlags} setFeatureFlags={setFeatureFlags} />
+          <OOBEView 
+            isDark={isDark} 
+            onContinue={handleCloseOOBE} 
+            featureFlags={featureFlags} 
+            setFeatureFlags={setFeatureFlags} 
+            forcedInfo={forcedOOBEInfo || undefined} 
+          />
         ) : showCanaryWarning ? (
           <BroadcastExperimentalView 
             onContinue={() => {
@@ -6706,7 +6849,7 @@ export default function App() {
 
         <div className={`flex-1 overflow-y-auto pb-32 flex flex-col transition-all duration-1000`}>
           {searchBoxPosition === "top" && (
-            <div className="flex justify-center p-6 sticky top-0 z-[100]">
+            <div className="flex flex-col items-center p-6 sticky top-0 z-[100] gap-4">
               <div className="relative group w-full max-w-xl transition-all duration-500">
                 <div className={`relative flex items-center transition-all duration-500 overflow-hidden shadow-2xl ${
                   featureFlags.xaml_search
@@ -6721,14 +6864,42 @@ export default function App() {
                   <SearchBar 
                     isDark={isDark} 
                     query={searchQuery} 
-                    setQuery={setSearchQuery} 
-                    onClose={() => setSearchQuery("")} 
+                    setQuery={(q) => {
+                      setSearchQuery(q);
+                      if (q.length > 0) setIsSearchOpen(true);
+                    }} 
+                    onClose={() => {
+                      setSearchQuery("");
+                      setIsSearchOpen(false);
+                    }} 
                     liquidGlass={liquidGlass}
                     isTop={true} 
                     featureFlags={featureFlags}
                   />
                 </div>
               </div>
+              
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <div className="w-full max-w-xl relative flex justify-center">
+                    <SearchPopup 
+                      isDark={isDark} 
+                      searchQuery={searchQuery} 
+                      setActiveChannel={handleChannelSelect} 
+                      onClose={() => setIsSearchOpen(false)} 
+                      favorites={favorites}
+                      liquidGlass={liquidGlass}
+                      setActiveTab={setActiveTab}
+                      setIsDark={setIsDark}
+                      setLiquidGlass={setLiquidGlass}
+                      onLogin={handleLogin}
+                      onLogout={handleLogout}
+                      setSortOrder={setSortOrder}
+                      position="top"
+                    />
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           )}
           <AnimatePresence mode="wait">
@@ -6741,14 +6912,14 @@ export default function App() {
               className="h-full flex flex-col"
             >
               {(displayTab === "Trang chủ") && (
-                <div className={`flex-1 flex flex-col transition-colors duration-500 ${featureFlags.xaml_home ? "bg-black" : "p-8"}`}>
+                <div className={`flex-1 flex flex-col transition-colors duration-500 ${featureFlags.xaml_home ? "bg-black/40 backdrop-blur-3xl" : "p-8"}`}>
                   {featureFlags.xaml_home ? (
                     xamlHomeLoading ? (
                       <motion.div 
                         initial={{ y: 0 }}
                         exit={{ y: "-100%" }}
                         transition={{ duration: 1, ease: [0.76, 0, 0.24, 1] }}
-                        className="flex-1 flex flex-col items-center justify-start pt-20 space-y-8 bg-black z-50 fixed inset-0"
+                        className="flex-1 flex flex-col items-center justify-start pt-20 space-y-8 bg-black/60 backdrop-blur-3xl z-50 fixed inset-0"
                       >
                         <div className="text-center space-y-4">
                            <h2 className="text-2xl font-normal tracking-tight text-white/60">Working on it...</h2>
@@ -6817,7 +6988,7 @@ export default function App() {
                               Trải nghiệm Vplay OS
                             </h2>
                             <div 
-                              onClick={() => handleToggleOS(true)}
+                              onClick={() => handleForceOOBE()}
                               className="group relative overflow-hidden rounded-none bg-slate-400 p-8 cursor-pointer border border-white/5"
                             >
                                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -6828,7 +6999,7 @@ export default function App() {
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleToggleOS(true);
+                                      handleForceOOBE();
                                     }}
                                     className="px-10 py-5 bg-slate-900 rounded-none border border-white/10 group-hover:bg-slate-700 transition-all font-black text-sm uppercase tracking-[0.3em] text-white"
                                   >
@@ -6847,7 +7018,7 @@ export default function App() {
                          animate={{ opacity: 1, y: 0 }}
                         className="mb-10 relative overflow-hidden rounded-[40px] bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 p-8 md:p-12 shadow-2xl border border-white/10 group"
                       >
-                          <div className="absolute inset-0 bg-[url('https://4kwallpapers.com/images/walls/thumbs_3t/16795.png')] opacity-20 bg-cover bg-center mix-blend-overlay" />
+                          <div className={`absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-20`} style={{ backgroundImage: `url(https://static.wikia.nocookie.net/ftv/images/f/f4/Nx262.png/revision/latest/scale-to-width-down/1000?cb=20260505131224&path-prefix=vi)` }} />
                           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="space-y-4 text-center md:text-left">
                               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -6862,7 +7033,7 @@ export default function App() {
                               </p>
                             </div>
                             <button 
-                              onClick={() => handleToggleOS(true)}
+                              onClick={() => handleForceOOBE()}
                               className="px-10 py-5 bg-white hover:bg-slate-100 text-blue-900 rounded-[32px] font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl whitespace-nowrap flex items-center gap-3"
                             >
                               Thử ngay bây giờ
@@ -6893,50 +7064,63 @@ export default function App() {
               {displayTab === "Video" && (
                 <VidsContent isDark={isDark} user={user} liquidGlass={liquidGlass} onLogin={handleLogin} featureFlags={featureFlags} />
               )}
+              {displayTab === "Copilot" && featureFlags.microslop_copilot && (
+                <CopilotContent isDark={isDark} liquidGlass={liquidGlass} />
+              )}
               {displayTab === "Quản trị" && (isAdmin || isDev) && (
                 <AdminContent isDark={isDark} liquidGlass={liquidGlass} />
               )}
-              {displayTab === "Debug" && (
-                <div className="h-full">
-                  {!isConsoleFloating ? (
-                    <DebugContent 
+              {displayTab === "Search" && (
+                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                  <div className={`p-8 border-b ${isDark ? "bg-black border-white/5" : "bg-white border-black/5"}`}>
+                    <SearchBar 
                       isDark={isDark} 
+                      query={searchQuery} 
+                      setQuery={setSearchQuery} 
+                      onClose={() => setSearchQuery("")} 
+                      liquidGlass={liquidGlass} 
                       featureFlags={featureFlags} 
-                      setFeatureFlags={(f) => {
-                        setFeatureFlags(f);
-                        localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
-                        
-                        // Start configuration sequence
-                        sessionStorage.setItem("vplay_configuring_experiments", "true");
-                        window.location.reload();
-                      }}
-                      setUser={setUser}
-                      setIsAdmin={setIsAdmin}
-                      setIsDev={setIsDev}
-                      setIsDark={setIsDark}
-                      setLiquidGlass={setLiquidGlass}
-                      setIsSidebarRight={setIsSidebarRight}
-                      setUseSidebar={setUseSidebar}
-                      onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
-                      setIsFloating={setIsConsoleFloating}
                     />
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
-                      <div className={`p-8 rounded-full ${isDark ? "bg-white/5" : "bg-black/5"} animate-pulse`}>
-                        <Terminal size={48} className="opacity-20" />
+                  </div>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    {!isConsoleFloating ? (
+                      <DebugContent 
+                        isDark={isDark} 
+                        featureFlags={featureFlags} 
+                        setFeatureFlags={(f) => {
+                          setFeatureFlags(f);
+                          localStorage.setItem("vplay_feature_flags", JSON.stringify(f));
+                          sessionStorage.setItem("vplay_configuring_experiments", "true");
+                          window.location.reload();
+                        }}
+                        setUser={setUser}
+                        setIsAdmin={setIsAdmin}
+                        setIsDev={setIsDev}
+                        setIsDark={setIsDark}
+                        setLiquidGlass={setLiquidGlass}
+                        setIsSidebarRight={setIsSidebarRight}
+                        setUseSidebar={setUseSidebar}
+                        onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
+                        setIsFloating={setIsConsoleFloating}
+                      />
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 h-full">
+                        <div className={`p-8 rounded-full ${isDark ? "bg-white/5" : "bg-black/5"} animate-pulse`}>
+                          <Terminal size={48} className="opacity-20" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-bold text-xl uppercase tracking-widest opacity-40">Console Popped Out</h3>
+                          <p className="text-sm opacity-30">Phòng điều khiển hiện đang được mở trong cửa sổ riêng.</p>
+                        </div>
+                        <button 
+                          onClick={() => setIsConsoleFloating(false)}
+                          className="px-6 py-3 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold transition-all shadow-lg active:scale-95"
+                        >
+                          Thu hồi về chính chủ
+                        </button>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="font-bold text-xl uppercase tracking-widest opacity-40">Console Popped Out</h3>
-                        <p className="text-sm opacity-30">Phòng điều khiển hiện đang được mở trong cửa sổ riêng.</p>
-                      </div>
-                      <button 
-                        onClick={() => setIsConsoleFloating(false)}
-                        className="px-6 py-3 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold transition-all shadow-lg active:scale-95"
-                      >
-                        Thu hồi về chính chủ
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
               {displayTab === "Phát sóng" && (
@@ -7082,7 +7266,7 @@ export default function App() {
                     ? `top-0 h-full !rounded-none !m-0 ${isSidebarRight ? "!right-0" : "!left-0"} border-r border-white/5`
                     : "top-6 !rounded-[32px] border shadow-2xl"
               } ${
-                isDark ? "bg-[#1c1c1c] border-white/5 shadow-black/50" : "bg-white/80 border-slate-200 shadow-slate-200 backdrop-blur-md"
+                isDark ? "bg-black/60 border-white/5 shadow-black/50 backdrop-blur-3xl" : "bg-white/80 border-slate-200 shadow-slate-200 backdrop-blur-md"
               }`}
             >
               {/* Resize Handle */}
@@ -7116,9 +7300,9 @@ export default function App() {
                         exit={{ opacity: 0, x: -10 }}
                         className="flex items-center gap-3"
                       >
-                         <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl bg-orange-600 text-white shadow-xl shadow-orange-600/20`}>
-                           <Play size={24} fill="currentColor" />
-                         </div>
+                         <div className={`relative w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 shadow-xl`}>
+                            <img src={vplayLogo} alt="Vplay" className="w-8 h-8 object-contain" />
+                          </div>
                          <div className="flex flex-col">
                             <span className="font-bold text-sm tracking-tight text-white/90">Vplay</span>
                             <span className="text-[10px] font-black text-orange-500 tracking-widest uppercase">Canary</span>
@@ -7140,8 +7324,8 @@ export default function App() {
                   >
                     <div className={`relative group flex items-center gap-3 px-4 py-2 rounded-xl overflow-hidden transition-all ${
                       featureFlags.xaml_search 
-                        ? "bg-black !rounded-none !border-x-0 !border-t-0 !border-b-2 border-b-white/20 focus-within:border-b-purple-500" 
-                        : (isDark ? "bg-[#333333] hover:bg-[#3d3d3d]" : "bg-slate-50 hover:bg-slate-100")
+                        ? "bg-black/40 !rounded-none !border-x-0 !border-t-0 !border-b-2 border-b-white/20 focus-within:border-b-purple-500" 
+                        : (isDark ? "bg-white/5 hover:bg-white/10" : "bg-slate-50 hover:bg-slate-100")
                     } border border-white/5`}>
                       <input 
                         type="text" 
@@ -7150,6 +7334,16 @@ export default function App() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={`flex-1 bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-400" : "text-slate-900 placeholder-slate-400"}`}
                       />
+                      <button 
+                        onClick={() => setActiveTab("Copilot")}
+                        className="opacity-40 hover:opacity-100 transition-opacity"
+                      >
+                         <img 
+                          src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" 
+                          className="w-4 h-4 object-contain" 
+                          alt="Copilot"
+                        />
+                      </button>
                       <Search size={16} className={`${isDark ? "text-slate-400" : "text-slate-400"}`} />
                     </div>
 
@@ -7221,6 +7415,10 @@ export default function App() {
                     <button
                       key={tab.name}
                       onClick={() => {
+                        if (tab.id === "Search") {
+                          setIsSearchOpen(true);
+                          return;
+                        }
                         setActiveTab(tab.id || tab.name);
                         if (isMobile) setIsSidebarExpanded(false);
                       }}
@@ -7236,7 +7434,16 @@ export default function App() {
                           className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-600 rounded-r-full" 
                         />
                       )}
-                      <Icon size={24} className={`flex-shrink-0 transition-all ${isActive ? "text-purple-500" : "group-hover:scale-110"}`} />
+                      {typeof tab.icon === "string" ? (
+                        <img 
+                          src={tab.icon} 
+                          alt={tab.name} 
+                          className={`h-6 w-6 flex-shrink-0 object-contain transition-all ${isActive ? "scale-110" : "group-hover:scale-110"}`} 
+                          referrerPolicy="no-referrer" 
+                        />
+                      ) : (
+                        <Icon size={24} className={`flex-shrink-0 transition-all ${isActive ? "text-purple-500" : "group-hover:scale-110"}`} />
+                      )}
                       {isSidebarExpanded && (
                         <span className="font-bold text-base whitespace-nowrap">{tab.name}</span>
                       )}
@@ -7367,11 +7574,52 @@ export default function App() {
                       : `rounded-none border-t w-full justify-around backdrop-blur-none shadow-2xl ${isDark ? "bg-slate-900/95 border-white/5" : "bg-white/60 border-white/40"}`
                 } flex-row`}>
                 <div className={`flex items-center ${liquidGlass ? "gap-4 md:gap-6" : "gap-0 w-full justify-around"}`}>
-                  {tabs.map((tab) => {
+                  {featureFlags.scrollable_bar && totalNavPages > 1 && (
+                    <button 
+                      onClick={() => setNavPage(p => Math.max(0, p - 1))}
+                      disabled={effectiveNavPage === 0}
+                      className={`p-2 transition-all ${effectiveNavPage === 0 ? "opacity-20 cursor-default" : "opacity-100 hover:scale-110 active:scale-90"}`}
+                    >
+                      <ChevronLeft className={isDark || liquidGlass === "glassy" ? "text-white" : "text-black"} size={20} />
+                    </button>
+                  )}
+
+                  {currentNavItems.map((item, idx) => {
+                    const isSearchItem = item.isSearch;
+                    
+                    if (isSearchItem) {
+                      return (
+                        <div key="search-item" className="relative">
+                          <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className={`relative flex flex-col items-center justify-center px-2 md:px-4 py-2 transition-all duration-300 group z-10 ${
+                              liquidGlass ? "rounded-2xl" : "rounded-none flex-1"
+                            } ${
+                              liquidGlass === "glassy" ? "text-white/70 hover:text-white" : liquidGlass === "tinted" ? "text-black/60 hover:text-black" : isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-black"
+                            }`}
+                          >
+                             <motion.div
+                              whileTap={{ scale: 0.9 }}
+                              className="z-10"
+                            >
+                               <img 
+                                src="https://static.wikia.nocookie.net/ftv/images/6/63/Search_uci.png/revision/latest?cb=20260411084053&path-prefix=vi" 
+                                alt="Search" 
+                                className={`h-7 w-7 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 object-contain ${
+                                  liquidGlass === "glassy" ? "invert brightness-200" : "grayscale brightness-0 contrast-200"
+                                }`} 
+                                referrerPolicy="no-referrer" 
+                              />
+                            </motion.div>
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    const tab = item;
                     const Icon = tab.icon;
                     const isActive = activeTab === (tab.id || tab.name);
                     const userAvatar = ((tab.id === "Cài đặt" || tab.name === "Cài đặt") && user) ? (userData?.photoURL || user.photoURL) : null;
-                    
                     const isGlassy = liquidGlass === "glassy";
 
                     return (
@@ -7385,7 +7633,13 @@ export default function App() {
                             setHoveredTab(null);
                             setHoveredTabRect(null);
                           }}
-                          onClick={() => setActiveTab(tab.name)}
+                          onClick={() => {
+                            if (tab.id === "Search") {
+                              setIsSearchOpen(true);
+                              return;
+                            }
+                            setActiveTab(tab.name);
+                          }}
                           className={`relative flex flex-col items-center justify-center px-2 md:px-4 py-2 transition-all duration-300 group z-10 ${
                             liquidGlass ? "rounded-2xl" : "rounded-none flex-1"
                           } ${
@@ -7416,6 +7670,13 @@ export default function App() {
                                 className={`h-7 w-7 flex-shrink-0 rounded-full object-cover transition-transform duration-300 border ${isActive ? "scale-110 border-purple-500" : "group-hover:scale-110 border-transparent"}`} 
                                 referrerPolicy="no-referrer" 
                               />
+                            ) : typeof tab.icon === "string" ? (
+                              <img 
+                                src={tab.icon} 
+                                alt={tab.name} 
+                                className={`h-7 w-7 flex-shrink-0 object-contain transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} 
+                                referrerPolicy="no-referrer" 
+                              />
                             ) : (
                               <Icon className={`h-7 w-7 flex-shrink-0 transition-transform duration-300 ${
                                 isActive ? "scale-110" : "group-hover:scale-110"
@@ -7427,7 +7688,7 @@ export default function App() {
                     );
                   })}
                   
-                  {featureFlags.search_merge && searchBoxPosition === "sidebar" && (
+                  {!featureFlags.scrollable_bar && featureFlags.search_merge && searchBoxPosition === "sidebar" && (
                     <div className="relative">
                       <button
                         onClick={() => setIsSearchOpen(true)}
@@ -7452,6 +7713,16 @@ export default function App() {
                         </motion.div>
                       </button>
                     </div>
+                  )}
+
+                  {featureFlags.scrollable_bar && totalNavPages > 1 && (
+                    <button 
+                      onClick={() => setNavPage(p => Math.min(totalNavPages - 1, p + 1))}
+                      disabled={effectiveNavPage === totalNavPages - 1}
+                      className={`p-2 transition-all ${effectiveNavPage === totalNavPages - 1 ? "opacity-20 cursor-default" : "opacity-100 hover:scale-110 active:scale-90"}`}
+                    >
+                      <ChevronRight className={isDark || liquidGlass === "glassy" ? "text-white" : "text-black"} size={20} />
+                    </button>
                   )}
                 </div>
 
@@ -7484,24 +7755,26 @@ export default function App() {
                   onLogout={handleLogout}
                   setSortOrder={setSortOrder}
                 />
-                <motion.div 
-                  key="search-expanded"
-                  initial={{ y: 200, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 200, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className={`p-1.5 flex items-center border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden rounded-full ${
-                    liquidGlass === "glassy" ? "backdrop-blur-[100px] bg-white/10 border-white/20" : liquidGlass === "tinted" ? "backdrop-blur-[100px] bg-white/90 border-white/80" : "backdrop-blur-none bg-white/60 border-white/40"
-                  }`}
-                >
-                  <SearchBar 
-                    isDark={isDark} 
-                    query={searchQuery} 
-                    setQuery={setSearchQuery} 
-                    onClose={() => setIsSearchOpen(false)} 
-                    liquidGlass={liquidGlass}
-                  />
-                </motion.div>
+                {searchBoxPosition === "sidebar" && (
+                  <motion.div 
+                    key="search-expanded"
+                    initial={{ y: 200, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 200, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className={`p-1.5 flex items-center border shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden rounded-full ${
+                      liquidGlass === "glassy" ? "backdrop-blur-[100px] bg-white/10 border-white/20" : liquidGlass === "tinted" ? "backdrop-blur-[100px] bg-white/90 border-white/80" : "backdrop-blur-none bg-white/60 border-white/40"
+                    }`}
+                  >
+                    <SearchBar 
+                      isDark={isDark} 
+                      query={searchQuery} 
+                      setQuery={setSearchQuery} 
+                      onClose={() => setIsSearchOpen(false)} 
+                      liquidGlass={liquidGlass}
+                    />
+                  </motion.div>
+                )}
               </div>
             ) : (
               (liquidGlass === "glassy" || liquidGlass === "tinted") && searchBoxPosition === "sidebar" && !featureFlags.search_merge && (
