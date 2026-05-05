@@ -26,7 +26,29 @@ const startIcon = "https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjn
 
 const splashBg = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/271eaa23-7e5c-47f8-90dd-bb7ccaf7c682/d4wgzdk-66e11cd6-72c2-4c61-9a02-50f01bd0e7fc.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi8yNzFlYWEyMy03ZTVjLTQ3ZjgtOTBkZC1iYjdjY2FmN2M2ODIvZDR3Z3pkay02NmUxMWNkNi03MmMyLTRjNjEtOWEwMi01MGYwMWJkMGU3ZmMucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.j-0Mw5AwyBsypFP8qSCvRP_vuzErttnrS2k4mo0IWHA";
 
-const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
+const STANDARD_LOADING_GIF = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif";
+const REVAMPED_LOADING_GIF = "https://cdn.pixabay.com/animation/2023/10/08/03/19/03-19-26-213_512.gif";
+
+const LoadingAnimation = ({ isDark, featureFlags, className = "w-10 h-10" }: { isDark?: boolean, featureFlags?: any, className?: string }) => {
+  const isRevamped = featureFlags?.revamp_process_animation;
+  const src = isRevamped ? REVAMPED_LOADING_GIF : STANDARD_LOADING_GIF;
+  
+  const filterStyle = isRevamped 
+    ? (isDark ? "brightness(0) invert(1)" : "") 
+    : (isDark ? "invert(1)" : "brightness(200)"); 
+
+  return (
+    <img 
+      src={src} 
+      alt="Loading" 
+      className={`${className} pointer-events-none transition-all duration-500`} 
+      style={{ filter: filterStyle }}
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
+const SplashView = ({ text, subtext, featureFlags }: { text: string, subtext?: string, featureFlags?: any }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -38,7 +60,6 @@ const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
       style={{ backgroundImage: `url(${splashBg})` }}
     />
     <div className="absolute inset-0 bg-black/20" />
-
     <div className="relative z-10 flex flex-col items-center space-y-12">
       <motion.img 
         initial={{ scale: 0.9 }}
@@ -50,12 +71,7 @@ const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
         referrerPolicy="no-referrer"
       />
       <div className="flex flex-col items-center gap-6">
-        <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-          alt="Loading" 
-          className="w-10 h-10 filter brightness-200" 
-          referrerPolicy="no-referrer"
-        />
+        <LoadingAnimation featureFlags={featureFlags} isDark={true} className="w-10 h-10" />
         <div className="text-center space-y-2">
           <h2 className="text-white text-3xl font-light tracking-tight drop-shadow-lg">
             {text}
@@ -71,14 +87,14 @@ const SplashView = ({ text, subtext }: { text: string, subtext?: string }) => (
   </motion.div>
 );
 
-const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = false }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean, isUpdating?: boolean }) => {
+const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = false, featureFlags }: { isDark: boolean, onEnter: () => void, isSessionChange?: boolean, isUpdating?: boolean, featureFlags?: any }) => {
   const isWelcome = !isUpdating && !isSessionChange;
   const [showBypass, setShowBypass] = useState(isWelcome);
   const [progress, setProgress] = useState(0);
   const [showPassPrompt, setShowPassPrompt] = useState(false);
   const [passInput, setPassInput] = useState("");
   const [passError, setPassError] = useState(false);
-
+  
   useEffect(() => {
     const configuring = sessionStorage.getItem("vplay_configuring_experiments") === "true";
     
@@ -178,12 +194,7 @@ const SplashScreen = ({ isDark, onEnter, isSessionChange = false, isUpdating = f
           >
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-4">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-                  alt="Loading" 
-                  className="w-8 h-8 filter brightness-200" 
-                  referrerPolicy="no-referrer"
-                />
+                <LoadingAnimation featureFlags={featureFlags} isDark={true} className="w-8 h-8" />
                 <span className="text-white/70 text-xl font-medium tracking-wide">
                   {statusText}
                 </span>
@@ -301,6 +312,7 @@ const baseTabs = [
   { name: "Phát sóng", icon: Tv, id: "Phát sóng" },
   { name: "Bảo tàng lưu trữ", icon: Calendar, id: "Lưu trữ" },
   { name: "Phát nhạc", icon: Music, id: "Phát nhạc" },
+  { name: "Video", icon: Video, id: "Video" },
   { name: "Quản trị", icon: Shield, id: "Quản trị" },
   { name: "Cài đặt", icon: Settings, id: "Cài đặt" },
   { name: "Debug", icon: Wrench, id: "Debug" },
@@ -511,7 +523,7 @@ const slides = [
   }
 ];
 
-function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev: () => void }) {
+function HomeContent({ isDark, onSwitchToDev, featureFlags }: { isDark: boolean, onSwitchToDev: () => void, featureFlags?: any }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 select-none">
       <motion.div
@@ -522,12 +534,7 @@ function HomeContent({ isDark, onSwitchToDev }: { isDark: boolean, onSwitchToDev
       >
         <div className="relative group">
           <div className="absolute -inset-8 bg-purple-500/20 blur-[80px] rounded-full opacity-60" />
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-            alt="Loading" 
-            className={`w-16 h-16 relative z-10 ${isDark ? "filter brightness-0 invert" : ""}`} 
-            referrerPolicy="no-referrer"
-          />
+          <LoadingAnimation featureFlags={featureFlags} isDark={isDark} className="w-16 h-16 relative z-10" />
         </div>
 
         <motion.button
@@ -747,7 +754,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
   isFloating?: boolean,
   setIsFloating?: (f: boolean) => void
 }) {
-  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version 28000.05]", "Type /help for all available commands."]);
+  const [history, setHistory] = useState<any[]>(["Vplay Canary Operator Console [Version Codename (C) Nx626]", "Type /help for all available commands."]);
   const [input, setInput] = useState("");
   const [currentView, setCurrentView] = useState<"terminal" | "code" | "flags">("terminal");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -782,7 +789,7 @@ function DebugContent({ isDark, featureFlags, setFeatureFlags, setUser, setIsAdm
       setIsDev(true);
       newHistory.push({ type: 'text', text: "AUTH BYPASS SUCCESSFUL: Operator privileges granted." });
     } else if (cmd === "/version") {
-      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: 28000.05 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
+      newHistory.push({ type: 'text', text: "Vplay Canary SMR26" }, { type: 'text', text: "Build: Codename (C) Nx626 (Experimental)" }, { type: 'text', text: "Environment: Cloud Sandbox" });
     } else if (cmd === "/interface") {
       const mode = args[1]?.toLowerCase();
       if (mode === "desktop") {
@@ -912,13 +919,33 @@ import { motion, AnimatePresence } from "motion/react";
 import { initializeApp } from "firebase/app";
 
 /** 
- * Build 28000.02 
+ * Build Codename (C) Nx626 
  * SMR26 Canary Branch
  */
-export default function App() {
-  const [activeTab, setActiveTab] = useState("Home");
-  // ... core logic hidden for security ...
-}`}</pre>
+const STANDARD_LOADING_GIF = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif";
+const REVAMPED_LOADING_GIF = "https://cdn.pixabay.com/animation/2023/10/08/03/19/03-19-26-213_512.gif";
+
+const LoadingAnimation = ({ isDark, featureFlags, className = "w-10 h-10" }: { isDark?: boolean, featureFlags?: any, className?: string }) => {
+  const isRevamped = featureFlags?.revamp_process_animation;
+  const src = isRevamped ? REVAMPED_LOADING_GIF : STANDARD_LOADING_GIF;
+  
+  // Logic for color: standard uses brightness-200 or invert.
+  // Revamped needs to be white in dark mode. 
+  // For revamped, if isDark is true, we want white. Original is blue.
+  // brightness(0) invert(1) makes everything white.
+  const filterStyle = isRevamped 
+    ? (isDark ? "brightness(0) invert(1)" : "") 
+    : (isDark ? "invert(1)" : "brightness(200)"); 
+
+  return (
+    <img 
+      src={src} 
+      alt="Loading" 
+      className="loading-anim pointer-events-none" 
+    />
+  );
+};
+`}</pre>
         </div>
       </div>
     );
@@ -935,7 +962,7 @@ export default function App() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableFlags.map((flag) => (
-            <div key={flag.id} className={`p-6 rounded-[32px] border ${isDark ? "bg-[#1a1c23] border-white/5" : "bg-white border-slate-200"} flex flex-col justify-between gap-4 transition-all hover:scale-[1.02]`}>
+            <div key={flag.id} className={isDark ? "p-6 rounded-[32px] border bg-[#1a1c23] border-white/5 flex flex-col justify-between gap-4 transition-all hover:scale-[1.02]" : "p-6 rounded-[32px] border bg-white border-slate-200 flex flex-col justify-between gap-4 transition-all hover:scale-[1.02]"}>
               <div className="space-y-1">
                 <span className="font-bold text-xs uppercase tracking-wider">{flag.name}</span>
                 <p className="text-[10px] opacity-40 font-mono">{flag.id}</p>
@@ -2229,7 +2256,7 @@ function EventsContent({ isDark, liquidGlass }: { isDark: boolean, liquidGlass: 
   );
 }
 
-function VidsContent({ isDark, user, liquidGlass, onLogin }: { isDark: boolean, user: FirebaseUser | null, liquidGlass: "glassy" | "tinted", onLogin: () => void }) {
+function VidsContent({ isDark, user, liquidGlass, onLogin, featureFlags }: { isDark: boolean, user: FirebaseUser | null, liquidGlass: "glassy" | "tinted", onLogin: () => void, featureFlags?: any }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -2464,7 +2491,7 @@ function VidsContent({ isDark, user, liquidGlass, onLogin }: { isDark: boolean, 
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" className={`w-12 h-12 mb-4 ${isDark ? "invert" : ""}`} />
+            <LoadingAnimation featureFlags={featureFlags} isDark={isDark} className="w-12 h-12 mb-4" />
             <p className="font-black text-xs tracking-widest uppercase opacity-40">Loading items...</p>
         </div>
       ) : items.length > 0 ? (
@@ -2618,7 +2645,7 @@ function AdminContent({ isDark, liquidGlass }: { isDark: boolean, liquidGlass: "
 }
 
 
-function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => void }) {
+function UpdateLogsContent({ isDark, onBack, featureFlags }: { isDark: boolean, onBack: () => void, featureFlags?: any }) {
   const [isLoading, setIsLoading] = useState(true);
   const [logSearchQuery, setLogSearchQuery] = useState("");
 
@@ -2630,11 +2657,7 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4">
-        <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Windows-loading-cargando.gif" 
-          alt="Loading" 
-          className={`w-12 h-12 ${isDark ? "filter brightness-0 invert" : ""}`}
-        />
+        <LoadingAnimation featureFlags={featureFlags} isDark={isDark} className="w-12 h-12" />
         <span className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${isDark ? "text-white/40" : "text-slate-400"}`}>
           Đang tải dữ liệu...
         </span>
@@ -2644,8 +2667,8 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
 
   const logs = [
     {
-      id: 'canary-28000-04',
-      version: 'Vplay Canary - Build 28000.04',
+      id: 'canary-codename-c-nx626-04',
+      version: 'Vplay Canary - Build Codename (C) Nx626.04',
       tag: '🚀',
       type: 'Bản cập nhật SMR26 Update 4',
       sections: [
@@ -2661,7 +2684,7 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
         {
           title: '🛠️ SYSTEM STABILITY',
           items: [
-            'Cập nhật mã phiên bản hệ thống lên 28000.04',
+            'Cập nhật mã phiên bản hệ thống lên Codename (C) Nx626.04',
             'Cải thiện hiệu năng render các thành phần XAML'
           ],
           color: 'text-green-400'
@@ -2669,8 +2692,8 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
       ]
     },
     {
-      id: 'canary-28000-03',
-      version: 'Vplay Canary - Build 28000.03',
+      id: 'canary-codename-c-nx626-03',
+      version: 'Vplay Canary - Build Codename (C) Nx626.03',
       tag: '🔥',
       type: 'Bản cập nhật Trải nghiệm người dùng',
       sections: [
@@ -2697,8 +2720,8 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
       ]
     },
     {
-      id: 'canary-28000-01',
-      version: 'Vplay Canary - Build 28000.01',
+      id: 'canary-codename-c-nx626-01',
+      version: 'Vplay Canary - Build Codename (C) Nx626.01',
       tag: '🚀',
       type: 'Phiên bản VplayOS đầu tiên',
       sections: [
@@ -2714,8 +2737,8 @@ function UpdateLogsContent({ isDark, onBack }: { isDark: boolean, onBack: () => 
       ]
     },
     {
-      id: 'canary-28000',
-      version: 'Vplay Canary - Build 28000',
+      id: 'canary-codename-c-nx626',
+      version: 'Vplay Canary - Build Codename (C) Nx626',
       tag: '🐦',
       type: 'Phiên bản thử nghiệm sớm',
       content: 'Bản build chỉ mới được để cập thông qua Github'
@@ -3092,7 +3115,9 @@ const OOBEView = ({ isDark, onContinue, featureFlags, setFeatureFlags }: { isDar
     { id: 'settings_vertical', name: 'Vertical Settings', desc: 'Bố cục cài đặt danh sách đứng.' },
     { id: 'minecraft_mode', name: 'Minecraft Mode', desc: 'Phong cách pixelated pixel.' },
     { id: 'win8_metro', name: 'Metro Mode', desc: 'Phong cách Windows 8 Metro UI.' },
-    { id: 'music_background', name: 'Background Music', desc: 'Âm nhạc nền thư giãn.' }
+    { id: 'music_background', name: 'Background Music', desc: 'Âm nhạc nền thư giãn.' },
+    { id: 'revamp_process_animation', name: 'Revamped Process', desc: 'Use the updated version of the processing loading circle' },
+    { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar' }
   ];
 
   const handleFinishExperiments = () => {
@@ -4616,7 +4641,7 @@ function WindowsDesktop({
 
       {/* Watermark only on Desktop */}
       <div className="absolute bottom-24 right-6 z-[1] text-right pointer-events-none select-none">
-        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build 28000.05</div>
+        <div className="text-[12px] font-normal text-white/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Vplay Canary - Build Codename (C) Nx626</div>
         <div className="text-[10px] leading-tight mt-1.5 font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
           Working in progress - For testing purposes only so there will be lots of bugs<br />
           Some features may or may not made their way to Dev and final releases
@@ -5780,13 +5805,13 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
         <span>Vplay OS Preview</span>
         <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-        <span>Build 28000.05</span>
+        <span>Build Codename (C) Nx626</span>
       </div>
     </motion.div>
   );
 };
 
-function App() {
+export default function App() {
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   
@@ -5966,7 +5991,10 @@ function App() {
         xaml_home: false,
         xaml_search: false,
         xaml_oobe_force: false,
-        win8_metro: false
+        win8_metro: false,
+        revamp_process_animation: false,
+        vids_for_uploads: true,
+        search_merge: false
       };
       if (!saved) return defaults;
       const parsed = JSON.parse(saved);
@@ -5984,7 +6012,10 @@ function App() {
         xaml_home: false,
         xaml_search: false,
         xaml_oobe_force: false,
-        win8_metro: false
+        win8_metro: false,
+        revamp_process_animation: false,
+        vids_for_uploads: true,
+        search_merge: false
       };
     }
   });
@@ -6390,6 +6421,7 @@ function App() {
             isDark={isDark} 
             onEnter={handleEnterApp} 
             isSessionChange={false}
+            featureFlags={featureFlags}
           />
         ) : showOOBE ? (
           <OOBEView isDark={isDark} onContinue={handleCloseOOBE} featureFlags={featureFlags} setFeatureFlags={setFeatureFlags} />
@@ -6408,9 +6440,10 @@ function App() {
             isDark={isDark}
             onEnter={() => {}} // Controlled by setTimeout in handleToggleOS
             isUpdating={true}
+            featureFlags={featureFlags}
           />
         ) : isChangingSession ? (
-          <SplashView text="Preparing new experience..." />
+          <SplashView text="Preparing new experience..." featureFlags={featureFlags} />
         ) : (featureFlags.windows_mode && isLocked) ? (
           <LockScreen 
             isDark={isDark}
@@ -6856,6 +6889,9 @@ function App() {
                   setCustomMusicId={setCustomMusicId}
                   onAlert={(title, msg) => setCustomAlert({ title, message: msg })}
                 />
+              )}
+              {displayTab === "Video" && (
+                <VidsContent isDark={isDark} user={user} liquidGlass={liquidGlass} onLogin={handleLogin} featureFlags={featureFlags} />
               )}
               {displayTab === "Quản trị" && (isAdmin || isDev) && (
                 <AdminContent isDark={isDark} liquidGlass={liquidGlass} />
@@ -7390,6 +7426,33 @@ function App() {
                       </div>
                     );
                   })}
+                  
+                  {featureFlags.search_merge && searchBoxPosition === "sidebar" && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className={`relative flex flex-col items-center justify-center px-2 md:px-4 py-2 transition-all duration-300 group z-10 ${
+                          liquidGlass ? "rounded-2xl" : "rounded-none flex-1"
+                        } ${
+                          liquidGlass === "glassy" ? "text-white/70 hover:text-white" : liquidGlass === "tinted" ? "text-black/60 hover:text-black" : isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-black"
+                        }`}
+                      >
+                         <motion.div
+                          whileTap={{ scale: 0.9 }}
+                          className="z-10"
+                        >
+                           <img 
+                            src="https://static.wikia.nocookie.net/ftv/images/6/63/Search_uci.png/revision/latest?cb=20260411084053&path-prefix=vi" 
+                            alt="Search" 
+                            className={`h-7 w-7 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 object-contain ${
+                              liquidGlass === "glassy" ? "invert brightness-200" : "grayscale brightness-0 contrast-200"
+                            }`} 
+                            referrerPolicy="no-referrer" 
+                          />
+                        </motion.div>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* AUTH / LOGOUT */}
@@ -7441,7 +7504,7 @@ function App() {
                 </motion.div>
               </div>
             ) : (
-              (liquidGlass === "glassy" || liquidGlass === "tinted") && searchBoxPosition === "sidebar" && (
+              (liquidGlass === "glassy" || liquidGlass === "tinted") && searchBoxPosition === "sidebar" && !featureFlags.search_merge && (
                 <motion.button
                   key="search-circle"
                   layoutId="search-button"
@@ -7477,7 +7540,7 @@ function App() {
       {/* Global Watermark (Only visible when NOT in Windows Mode) */}
       {!featureFlags.windows_mode && (
         <div className="fixed bottom-24 right-6 z-[9999] text-right pointer-events-none select-none transition-all duration-500 opacity-50 mix-blend-difference">
-          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build 28000.05</div>
+          <div className="text-[12px] font-normal text-white/40">Vplay Canary - Build Codename (C) Nx626</div>
           <div className="text-[10px] leading-tight mt-1.5 font-medium text-white/90">
             Working in progress - For testing purposes only so there will be lots of bugs<br />
             Some features may or may not made their way to Dev and final releases
@@ -7713,4 +7776,3 @@ function App() {
 );
 }
 
-export default App;
