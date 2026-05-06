@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, ChangeEvent, FormEvent, MouseEvent, ReactNode, Fragment, Dispatch, SetStateAction } from "react";
 import { Search, User, Copy, Tv, Calendar, Home, Play, Pause, Radio, Info, Sun, Moon, Maximize, Settings, Volume2, VolumeX, CheckCircle2, Shield, LogOut, LogIn, Heart, X, Lock, Terminal, Zap, Clock, History, MousePointer2, Sliders, ChevronLeft, ChevronRight, Mic, Layers, Filter, Sparkles, Camera, Palette, Layout, MessageSquare, Eye, EyeOff, ExternalLink, Monitor, Columns, Maximize2, Circle, AlertCircle, RotateCcw, Droplet, Trophy, Film, Music, Globe, Users, Activity, ShieldCheck, LayoutGrid, LayoutDashboard, ArrowRight, ArrowLeft, TrendingUp, Star, Crown, Menu, Pin, Wrench, Settings2, FileCode, Minus, Square, Minimize2, FlaskConical as Flask, MapPin, Cloud, Plus, Folder, File, HardDrive, SkipBack, SkipForward, RefreshCw, Wifi, Battery, ChevronUp, ChevronDown, Image as ImageIcon, ShieldAlert, Trash2, Video } from "lucide-react";
 import Hls from "hls.js";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
@@ -16,11 +16,22 @@ import { channels, Channel } from "./channels";
 // Test connection as per critical directive
 // Test connection removed
 
-const SettingsIcon = ({ className }: { className?: string }) => (
-  <Settings className={`${className} flex-shrink-0`} />
+const SettingsIcon = ({ className, size = 24 }: { className?: string, size?: number }) => (
+  <Settings size={size} className={`${className} flex-shrink-0`} />
 );
 
 const vplayLogo = "https://static.wikia.nocookie.net/ftv/images/0/0f/Nx626.png/revision/latest/scale-to-width-down/1000?cb=20260505125314&path-prefix=vi";
+
+const SEARCH_TREATMENTS = [
+  "Search Vplay",
+  "Search or use commands",
+  "Search channels",
+  "Find channels",
+  "Search",
+  "Find",
+  "Find and search",
+  "Find and operate"
+];
 const splashLogo = "https://static.wikia.nocookie.net/ftv/images/0/0f/Nx626.png/revision/latest/scale-to-width-down/1000?cb=20260505125314&path-prefix=vi";
 const startIcon = "https://static.wikia.nocookie.net/ftv/images/a/a6/Imagedskvjndkv.png/revision/latest?cb=20260430103502&path-prefix=vi";
 
@@ -311,7 +322,7 @@ const baseTabs = [
   { name: "Home", icon: Home, id: "Trang chủ" },
   { name: "Search or use commands", icon: Search, id: "Search", tooltip: "Search for channels or use console commands" },
   { name: "Phát sóng", icon: Tv, id: "Phát sóng" },
-  { name: "Copilot in Vplay (preview)", icon: "https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300", id: "Copilot" },
+  { name: "AI Tools", icon: "https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300", id: "Copilot" },
   { name: "Bảo tàng lưu trữ", icon: Calendar, id: "Lưu trữ" },
   { name: "Phát nhạc", icon: Music, id: "Phát nhạc" },
   { name: "Video", icon: Video, id: "Video" },
@@ -1099,7 +1110,7 @@ function IndividualPlayer({ channel, isMuted, volume, isDark }: { channel: Chann
 function TVContent({ 
   active, setActive, isDark, favorites, toggleFavorite, user, onLogin, isDev, liquidGlass, 
   sortOrder, setSortOrder, showSplash, featureFlags, searchQuery, 
-  minimalMode = false, activeTab, setShowCanaryWarning 
+  minimalMode = false, activeTab, setShowCanaryWarning, activeSearchPlaceholder = "Search Vplay"
 }: { 
   active: Channel, 
   setActive: (ch: Channel) => void, 
@@ -1117,7 +1128,8 @@ function TVContent({
   searchQuery: string,
   minimalMode?: boolean,
   activeTab?: string,
-  setShowCanaryWarning?: (val: boolean) => void
+  setShowCanaryWarning?: (val: boolean) => void,
+  activeSearchPlaceholder?: string
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -1469,7 +1481,7 @@ function TVContent({
             <Search size={18} className="text-slate-500 group-focus-within:text-purple-500 transition-colors" />
             <input 
               type="text"
-              placeholder="Tìm tên kênh hoặc thể loại..."
+              placeholder={activeSearchPlaceholder}
               value={channelSearch}
               onChange={(e) => setChannelSearch(e.target.value)}
               className={`bg-transparent border-none outline-none text-sm font-bold w-full placeholder-slate-500 ${isDark ? "text-white" : "text-slate-900"}`}
@@ -2574,7 +2586,170 @@ function VidsContent({ isDark, user, liquidGlass, onLogin, featureFlags }: { isD
   );
 }
 
-function CopilotContent({ isDark, liquidGlass }: { isDark: boolean, liquidGlass: "glassy" | "tinted" }) {
+function CopilotContent({ isDark, liquidGlass, featureFlags }: { isDark: boolean, liquidGlass: "glassy" | "tinted", featureFlags: any }) {
+  const [activeAIApp, setActiveAIApp] = useState<string | null>(null);
+  const [chatQuery, setChatQuery] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai', text: string }[]>([]);
+
+  if (featureFlags?.ai_tools) {
+    if (activeAIApp === "AI Tools Chat") {
+      return (
+        <div className={`flex-1 flex flex-col h-full overflow-hidden relative ${isDark ? "bg-[#0a0a0b]" : "bg-white"}`}>
+          <div className={`p-6 border-b flex items-center justify-between z-10 ${isDark ? "border-white/10" : "border-black/5"}`}>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setActiveAIApp(null)} 
+                className={`p-2 rounded-xl transition-colors ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}
+              >
+                <ArrowLeft className={isDark ? "text-white" : "text-slate-900"} />
+              </button>
+              <div className="flex items-center gap-3">
+                <img src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" className="w-6 h-6" alt="AI Tools" />
+                <h2 className={`text-xl font-medium tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>AI Tools Chat</h2>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-[10px] font-normal border border-purple-500/20">Native App</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            {chatHistory.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                <Sparkles size={48} className="text-purple-500 mb-4 animate-pulse" />
+                <h3 className={`text-xl font-medium ${isDark ? "text-white" : "text-slate-900"}`}>How can I help you today?</h3>
+                <p className={`text-xs max-w-xs ${isDark ? "text-white/60" : "text-slate-500"}`}>Chat with AI Tools about anything on Vplay or beyond.</p>
+              </div>
+            ) : (
+              chatHistory.map((chat, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[80%] p-4 rounded-2xl ${
+                    chat.role === 'user' 
+                      ? 'bg-purple-600 text-white rounded-tr-none' 
+                      : `${isDark ? "bg-white/5 text-white/90 border-white/10" : "bg-black/5 text-slate-900 border-black/5"} border rounded-tl-none`
+                  }`}>
+                    <p className="text-sm font-normal leading-relaxed">{chat.text}</p>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+
+          <div className={`p-6 backdrop-blur-3xl border-t ${isDark ? "bg-black/40 border-white/10" : "bg-white border-black/5"}`}>
+            <div className="max-w-4xl mx-auto relative group flex items-center gap-3 transition-colors">
+              <input 
+                value={chatQuery}
+                onChange={(e) => setChatQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && chatQuery.trim()) {
+                    setChatHistory([...chatHistory, { role: 'user', text: chatQuery }]);
+                    const q = chatQuery;
+                    setChatQuery("");
+                    setTimeout(() => {
+                      setChatHistory(prev => [...prev, { role: 'ai', text: `Chào mừng bạn đến với Vplay AI! Tôi đã nhận được câu hỏi: "${q}". Đây là một demo UI cho native AI Experience.` }]);
+                    }, 1000);
+                  }
+                }}
+                placeholder="Ask AI Tools anything..."
+                className={`flex-1 bg-transparent border-none outline-none py-4 text-sm font-normal ${isDark ? "text-white placeholder-white/20" : "text-slate-900 placeholder-slate-400"}`}
+              />
+              <button 
+                onClick={() => {
+                  if (chatQuery.trim()) {
+                    setChatHistory([...chatHistory, { role: 'user', text: chatQuery }]);
+                    const q = chatQuery;
+                    setChatQuery("");
+                    setTimeout(() => {
+                      setChatHistory(prev => [...prev, { role: 'ai', text: `Chào mừng bạn đến với Vplay AI! Tôi đã nhận được câu hỏi: "${q}". Đây là một demo UI cho native AI Experience.` }]);
+                    }, 1000);
+                  }
+                }}
+                className="p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all shadow-lg active:scale-95"
+              >
+                <ArrowRight size={20} />
+              </button>
+              <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/5"} group-focus-within:bg-purple-500`} />
+            </div>
+            <p className={`text-center mt-4 text-[8px] font-normal leading-none ${isDark ? "text-white/20" : "text-slate-300"}`}>Powered by Gemini & Vplay Intelligence</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`flex-1 flex flex-col h-full overflow-hidden relative ${isDark ? "bg-[#0a0a0b]" : "bg-white"}`}>
+        <div className={`absolute inset-0 pointer-events-none ${isDark ? "bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10" : "bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"}`} />
+        
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={`w-24 h-24 mb-8 p-6 rounded-3xl border shadow-2xl relative group ${isDark ? "bg-white/5 border-white/10" : "bg-white border-black/5"}`}
+          >
+            <div className="absolute -inset-4 bg-purple-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <img 
+              src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300"
+              alt="Copilot"
+              className="w-full h-full object-contain relative z-10"
+            />
+          </motion.div>
+          
+          <h2 className={`text-4xl font-medium mb-4 tracking-tighter leading-none ${isDark ? "text-white" : "text-slate-900"}`}>AI Tools</h2>
+          <p className={`max-w-xl text-sm font-normal mb-10 leading-relaxed ${isDark ? "text-white/60" : "text-slate-500"}`}>
+            Native AI experience powered by Gemini. Experience faster, more secure, and integrated intelligence across Vplay.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl px-4">
+            {[
+              { name: "Gemini Chat", desc: "Trò chuyện trực tiếp với Gemini 1.5 Pro", icon: <MessageSquare />, color: "from-blue-500 to-purple-500" },
+              { name: "AI TV Search", desc: "Tìm kiếm kênh thông minh bằng ngôn ngữ tự nhiên", icon: <Search />, color: "from-purple-500 to-pink-500" },
+              { name: "Content Pilot", desc: "Tóm tắt và gợi ý nội dung truyền hình", icon: <Sparkles />, color: "from-orange-500 to-red-500" },
+              { name: "Vision Insight", desc: "Phân tích nội dung đang phát sóng", icon: <Eye />, color: "from-emerald-500 to-teal-500" }
+            ].map((tool, idx) => (
+              <motion.button
+                key={tool.name}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: idx * 0.1 }}
+                onClick={() => setActiveAIApp(tool.name)}
+                className={`p-6 rounded-3xl border transition-all text-left group relative overflow-hidden ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-black/5 border-black/5 hover:bg-black/10"}`}
+              >
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${tool.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`} />
+                <div className={`p-3 w-fit rounded-2xl mb-4 group-hover:scale-110 transition-transform ${isDark ? "bg-white/5" : "bg-white shadow-sm"}`}>
+                  {React.cloneElement(tool.icon as any, { size: 24, className: isDark ? "text-white" : "text-slate-900" })}
+                </div>
+                <h3 className={`text-lg font-medium mb-1 ${isDark ? "text-white" : "text-slate-900"}`}>{tool.name}</h3>
+                <p className={`text-xs font-normal ${isDark ? "text-white/40" : "text-slate-400"}`}>{tool.desc}</p>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+        
+        <div className={`p-10 border-t backdrop-blur-3xl z-20 ${isDark ? "bg-black/40 border-white/5" : "bg-white border-black/5"}`}>
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
+            <div className="flex-1 relative group flex items-center gap-3 transition-colors">
+              <Sparkles size={20} className="text-purple-500" />
+              <input 
+                placeholder="Ask AI anything about Vplay..."
+                onFocus={() => setActiveAIApp("AI Tools Chat")}
+                className={`flex-1 py-4 text-sm font-normal bg-transparent border-none outline-none ${isDark ? "text-white placeholder-white/20" : "text-slate-900 placeholder-slate-400"}`}
+              />
+              <button className="p-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500 transition-colors">
+                <ArrowRight size={20} />
+              </button>
+              <div className={`absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/5"} group-focus-within:bg-purple-500`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col h-full bg-black overflow-hidden relative">
       <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-0">
@@ -3517,8 +3692,8 @@ function SettingsContent({
   setIsDark: (val: boolean) => void, 
   isDev: boolean, 
   setIsDev: (val: boolean) => void,
-  featureFlags: { [key: string]: boolean },
-  setFeatureFlags: (val: { [key: string]: boolean } | ((prev: { [key: string]: boolean }) => { [key: string]: boolean })) => void,
+  featureFlags: { [key: string]: any },
+  setFeatureFlags: (val: { [key: string]: any } | ((prev: { [key: string]: any }) => { [key: string]: any })) => void,
   liquidGlass: "glassy" | "tinted",
   setLiquidGlass: (val: "glassy" | "tinted") => void,
   useSidebar: boolean,
@@ -4082,7 +4257,11 @@ function SettingsContent({
             { id: 'revamp_process_animation', name: 'Revamped Process', desc: 'Use the updated version of the processing loading circle', active: featureFlags.revamp_process_animation },
             { id: 'search_merge', name: 'Merge Search', desc: 'Merge the search button with the navigation bar', active: featureFlags.search_merge },
             { id: 'microslop_copilot', name: 'Copilot (preview)', desc: 'The Microslop Copilot Experience (TM)', active: featureFlags.microslop_copilot },
-            { id: 'scrollable_bar', name: 'Scrollable Bar', desc: 'Makes the Navigation Bar scrollable', active: featureFlags.scrollable_bar }
+            { id: 'scrollable_bar', name: 'Scrollable Bar', desc: 'Makes the Navigation Bar scrollable', active: featureFlags.scrollable_bar },
+            { id: 'ai_tools', name: 'AI Tools', desc: 'Enable native Gemini-powered AI tools and applications', active: featureFlags.ai_tools },
+            { id: 'ai_sidebar', name: 'AI Sidebar', desc: 'Open AI Tools as sidebar', active: featureFlags.ai_sidebar },
+            { id: 'taskbar_experimental', name: 'Use Taskbar Mode', desc: 'Turns sidebar into taskbar', active: featureFlags.taskbar_experimental },
+            { id: 'search_placeholder_treatment', name: 'Search Placeholder Treatment', desc: 'Enable experimental placeholder treatments for the search box', active: featureFlags.search_placeholder_treatment }
           ].filter(f => f.name.toLowerCase().includes(flagSearch.toLowerCase()) || f.desc.toLowerCase().includes(flagSearch.toLowerCase()) || f.id.toLowerCase().includes(flagSearch.toLowerCase())).map(flag => (
                     <div key={flag.id} className={`p-5 md:p-6 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
               <div className="space-y-2 pr-4 min-w-0 flex-1">
@@ -4117,6 +4296,60 @@ function SettingsContent({
               </button>
             </div>
           )))}
+
+          {featureFlags.search_placeholder_treatment && (
+            <div className={`col-span-full p-6 h-auto rounded-[32px] border transition-all ${isDark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500">
+                  <Search size={20} />
+                </div>
+                <div>
+                  <h4 className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>Treatment Selection</h4>
+                  <p className={`text-[10px] ${isDark ? "text-slate-400" : "text-slate-500"} font-medium`}>Choose the placeholder text for your search experience</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  "Search Vplay (Default)",
+                  "Search or use commands",
+                  "Search channels",
+                  "Find channels",
+                  "Search",
+                  "Find",
+                  "Find and search",
+                  "Find and operate",
+                  "Random (Refresh each time)"
+                ].map((t, i) => {
+                  const treatmentId = i + 1;
+                  const isActive = (featureFlags.search_placeholder_treatment_id || 1) === treatmentId;
+                  return (
+                    <button 
+                      key={t}
+                      onClick={() => {
+                        const newFlags = { ...featureFlags, search_placeholder_treatment_id: treatmentId };
+                        setFeatureFlags(newFlags);
+                        localStorage.setItem("vplay_feature_flags", JSON.stringify(newFlags));
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        isActive 
+                          ? "bg-purple-600 border-purple-500 text-white shadow-lg" 
+                          : isDark ? "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-black uppercase opacity-40">Treatment {treatmentId}</span>
+                          <p className="text-xs font-bold leading-tight">{t}</p>
+                        </div>
+                        {isActive && <CheckCircle2 size={16} />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -4615,7 +4848,8 @@ function WindowsDesktop({
   weatherCity,
   userName,
   onLock,
-  searchBoxPosition
+  searchBoxPosition,
+  activeSearchPlaceholder
 }: any) {
   const [showWidgets, setShowWidgets] = useState(false);
   const [showStartMenu, setShowStartMenu] = useState(false);
@@ -5258,7 +5492,7 @@ function WindowsDesktop({
                 <Search className={`absolute left-5 top-1/2 -translate-y-1/2 opacity-40 ${isDark ? "text-white" : "text-black"}`} size={20} />
                 <input 
                   autoFocus
-                  placeholder="Search Vplay"
+                  placeholder={activeSearchPlaceholder}
                   className={`w-full bg-transparent border-none rounded-full py-4 pl-14 pr-6 outline-none transition-all font-medium text-sm ${isDark ? "text-white" : "text-black"}`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -5459,7 +5693,7 @@ function WindowsDesktop({
                   className={`flex items-center gap-3 px-4 h-10 w-44 rounded-full border transition-all cursor-pointer relative group overflow-hidden ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
                 >
                   <Search size={14} className="opacity-40" />
-                  <span className="text-[10px] font-medium leading-none">Search Vplay</span>
+                  <span className="text-[10px] font-medium leading-none">{activeSearchPlaceholder}</span>
                   <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/10"} group-hover:bg-purple-500`} />
                 </div>
               )}
@@ -5506,7 +5740,7 @@ function WindowsDesktop({
                    className={`flex items-center gap-3 px-4 h-10 w-44 rounded-full border transition-all cursor-pointer relative group overflow-hidden ${isDark ? "bg-white/5 border-white/10 text-white/40 hover:bg-white/10" : "bg-black/5 border-black/5 text-black/60 hover:bg-black/10"}`}
                  >
                    <Search size={14} className="opacity-40" />
-                   <span className="text-[10px] font-medium leading-none">Search Vplay</span>
+                   <span className="text-[10px] font-medium leading-none">{activeSearchPlaceholder}</span>
                    <div className={`absolute bottom-0 left-0 h-[2.5px] w-full transition-all duration-300 ${isDark ? "bg-white/10" : "bg-black/10"} group-hover:bg-purple-500`} />
                  </div>
                )}
@@ -5652,7 +5886,7 @@ function WindowsDesktop({
 }
 
 
-function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featureFlags }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted", isTop?: boolean, featureFlags?: any }) {
+function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featureFlags, placeholder, onNavigate }: { isDark: boolean, query: string, setQuery: (q: string) => void, onClose: () => void, liquidGlass: "glassy" | "tinted", isTop?: boolean, featureFlags?: any, placeholder?: string, onNavigate?: (tab: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -5697,7 +5931,7 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featu
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search Vplay"
+          placeholder={placeholder || "Search Vplay"}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className={`flex-1 bg-transparent border-none outline-none ${isTop ? "text-sm" : "text-base"} font-medium ${textColor} ${placeholderColor}`}
@@ -5707,28 +5941,34 @@ function SearchBar({ isDark, query, setQuery, onClose, liquidGlass, isTop, featu
       <div className="flex items-center gap-4">
         <button 
           onClick={() => {
-            // Logic to open copilot
-            const copilotTab = baseTabs.find(t => t.id === "Copilot");
-            if (copilotTab) {
-              const url = "https://isnt-vplay-mediaplayer-l.glitch.me/"; 
-               window.open(url, "_blank");
+            if (featureFlags?.ai_tools) {
+              onNavigate?.("Copilot");
+            } else {
+              window.open("https://copilot.microsoft.com", "_blank");
             }
           }}
           className={`p-2 rounded-full transition-all hover:scale-110 active:scale-95 ${isImprovedSearch ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"}`}
-          title="Copilot"
+          title="Microsoft Copilot"
         >
           <img 
             src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" 
             className="w-5 h-5 object-contain" 
-            alt="Copilot"
+            alt="Copilot" 
           />
         </button>
         <button 
+          onClick={() => onNavigate?.("Search")}
+          className={`p-2 rounded-full transition-all hover:scale-110 active:scale-95 ${isImprovedSearch ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"}`}
+          title="Operator Console"
+        >
+          <Terminal size={20} className={iconColor} />
+        </button>
+        <button 
           onClick={startVoiceSearch}
-          className={`p-2 rounded-full transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : `${iconColor} hover:opacity-70`}`}
+          className={`p-2 rounded-full transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : `${iconColor} hover:opacity-70 group`}`}
           title="Đang nghe..."
         >
-          <Mic className={`${isTop ? "h-5 w-5" : "h-7 w-7"}`} />
+          <Mic className={`${isTop ? "h-5 w-5" : "h-7 w-7"} group-hover:scale-110 transition-transform`} />
         </button>
       </div>
     </div>
@@ -5906,6 +6146,72 @@ const LockScreen = ({ isDark, userName, weatherCity, onSignIn, setUserName, setW
 };
 
 export default function App() {
+  const [featureFlags, setFeatureFlags] = useState<{ [key: string]: any }>(() => {
+    try {
+      const saved = localStorage.getItem("vplay_feature_flags");
+      const defaults = { 
+        multiview_experimental: false, 
+        disable_animation: false, 
+        sidebar_resizable: false, 
+        windows_mode: false,
+        xaml_view_test: true,
+        settings_vertical: true,
+        music_background: true,
+        minecraft_mode: false,
+        xaml_home: false,
+        xaml_search: false,
+        xaml_oobe_force: false,
+        win8_metro: false,
+        revamp_process_animation: false,
+        vids_for_uploads: true,
+        search_merge: false,
+        microslop_copilot: false,
+        scrollable_bar: false,
+        search_placeholder_treatment: false,
+        search_placeholder_treatment_id: 1,
+        ai_tools: false,
+        ai_sidebar: false,
+        taskbar_experimental: false
+      };
+      if (!saved) return defaults;
+      const parsed = JSON.parse(saved);
+      return { ...defaults, ...parsed };
+    } catch (e) {
+      return { 
+        multiview_experimental: false, 
+        disable_animation: false, 
+        sidebar_resizable: false, 
+        windows_mode: false,
+        xaml_view_test: true,
+        settings_vertical: true,
+        music_background: true,
+        minecraft_mode: false,
+        xaml_home: false,
+        xaml_search: false,
+        xaml_oobe_force: false,
+        win8_metro: false,
+        revamp_process_animation: false,
+        vids_for_uploads: true,
+        search_merge: false,
+        microslop_copilot: false,
+        scrollable_bar: false,
+        search_placeholder_treatment: false,
+        search_placeholder_treatment_id: 1,
+        ai_tools: false,
+        ai_sidebar: false
+      };
+    }
+  });
+
+  const [randomSearchSeed] = useState(() => Math.floor(Math.random() * SEARCH_TREATMENTS.length));
+  
+  const activeSearchPlaceholder = useMemo(() => {
+    if (!featureFlags?.search_placeholder_treatment) return "Search Vplay";
+    const id = featureFlags.search_placeholder_treatment_id || 1;
+    if (id === 9) return SEARCH_TREATMENTS[randomSearchSeed];
+    return SEARCH_TREATMENTS[id - 1] || "Search Vplay";
+  }, [featureFlags?.search_placeholder_treatment, featureFlags?.search_placeholder_treatment_id, randomSearchSeed]);
+
   const [windows, setWindows] = useState<AppWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   
@@ -5920,7 +6226,7 @@ export default function App() {
           setHasUpdatedOS(true);
           localStorage.setItem("vplay_canary_updated", "true");
           setIsUpdating(false);
-          setFeatureFlags({ ...featureFlags, windows_mode: true });
+          setFeatureFlags(prev => ({ ...prev, windows_mode: true }));
         }, 60000);
         return;
       }
@@ -5929,7 +6235,7 @@ export default function App() {
 
     setIsChangingSession(true);
     setTimeout(() => {
-      setFeatureFlags({ ...featureFlags, windows_mode: val });
+      setFeatureFlags(prev => ({ ...prev, windows_mode: val }));
       setTimeout(() => {
         setIsChangingSession(false);
       }, 500);
@@ -6067,6 +6373,173 @@ export default function App() {
     setShowOOBE(true);
   };
   const [activeTab, setActiveTab] = useState("Trang chủ");
+  const [isAISidebarOpen, setIsAISidebarOpen] = useState(false);
+  const [isCopilotRotating, setIsCopilotRotating] = useState(false);
+  const [showCopilotMenu, setShowCopilotMenu] = useState(false);
+  const [showCopilotMenuMobile, setShowCopilotMenuMobile] = useState(false);
+  const [showCopilotMenuSidebar, setShowCopilotMenuSidebar] = useState(false);
+  const [isCopilotSearchActive, setIsCopilotSearchActive] = useState(false);
+  const [showAIToolsOOBE, setShowAIToolsOOBE] = useState(false);
+
+  const onCopilotAction = (action: string) => {
+    if (action === "rotate_copilot") {
+      setIsCopilotRotating(true);
+      setTimeout(() => setIsCopilotRotating(false), 800);
+      return;
+    }
+    setShowCopilotMenu(false);
+    setShowCopilotMenuMobile(false);
+    setShowCopilotMenuSidebar(false);
+    if (action === "copilot") {
+      if (featureFlags.ai_sidebar) {
+        setIsAISidebarOpen(true);
+      } else {
+        setActiveTab("Copilot");
+      }
+    } else if (action === "search") {
+      setIsCopilotSearchActive(true);
+    } else if (action === "operator") {
+      setIsConsoleFloating(false);
+    }
+  };
+
+  function TaskBar({ items, activeTab, onTabClick, isDark, featureFlags, onAction, showCopilotMenu, setShowCopilotMenu, isCopilotRotating }: any) {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }, []);
+
+    return (
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className={`fixed bottom-0 left-0 right-0 h-16 z-[7000] flex items-center justify-between px-6 border-t ${isDark ? "bg-black/60 border-white/10 backdrop-blur-3xl shadow-2xl" : "bg-white/70 border-slate-200 backdrop-blur-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)]"}`}
+      >
+         {/* Left Side: Spacer for centering */}
+         <div className="flex-1 hidden md:block" />
+
+         <div className="flex items-center gap-2 justify-center py-2 flex-grow-[2] scroll-smooth max-w-4xl mx-auto">
+           {items.filter((t: any) => t.id !== "Cài đặt" && !t.isSearch).map((tab: any) => {
+             const Icon = tab.icon;
+             const isActive = activeTab === (tab.id || tab.name);
+             if (tab.id === "Copilot") return null; 
+             return (
+               <motion.button 
+                 key={tab.name}
+                 whileHover={{ scale: 1.1, y: -2 }}
+                 whileTap={{ scale: 0.95 }}
+                 onClick={() => onTabClick(tab.id || tab.name)}
+                 className={`flex items-center justify-center w-12 h-11 rounded-xl transition-all relative group ${isActive ? (isDark ? "bg-white/10 text-white shadow-lg ring-1 ring-white/20" : "bg-white text-slate-900 shadow-md border border-black/5") : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-black/5")}`}
+                 title={tab.name}
+               >
+                  <div className="flex-shrink-0">
+                    {typeof tab.icon === "string" ? <img src={tab.icon} alt={tab.name} className="w-6 h-6 object-contain" /> : <Icon size={22} />}
+                  </div>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="taskbarActiveIndicator"
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-purple-500 rounded-full"
+                    />
+                  )}
+               </motion.button>
+             )
+           })}
+           <motion.button
+              whileHover={{ scale: 1.1, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onTabClick("Cài đặt")}
+              className={`flex items-center justify-center w-12 h-11 rounded-xl transition-all relative group ${activeTab === "Cài đặt" ? (isDark ? "bg-white/10 text-white shadow-lg ring-1 ring-white/20" : "bg-white text-slate-900 shadow-md border border-black/5") : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:bg-black/5")}`}
+              title="Cài đặt"
+            >
+              <SettingsIcon size={22} />
+              {activeTab === "Cài đặt" && (
+                <motion.div 
+                  layoutId="taskbarActiveIndicator"
+                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-purple-500 rounded-full"
+                />
+              )}
+            </motion.button>
+         </div>
+         
+         <div className="flex items-center gap-4 flex-1 justify-end">
+           {featureFlags.ai_tools && (
+             <div className="relative">
+               <AnimatePresence>
+                 {showCopilotMenu && (
+                   <CopilotMenu onAction={onAction} align="bottom-right" />
+                 )}
+               </AnimatePresence>
+               <motion.button
+                 whileHover={{ scale: 1.05 }}
+                 whileTap={{ scale: 0.95 }}
+                 onClick={() => {
+                   onAction('rotate_copilot');
+                   setShowCopilotMenu(!showCopilotMenu);
+                 }}
+                 className={`w-11 h-11 ${isDark ? "bg-white/10 hover:bg-white/15" : "bg-black/5 hover:bg-black/10"} rounded-xl flex items-center justify-center relative transition-all ${showCopilotMenu ? "ring-2 ring-purple-500" : "hover:shadow-lg"}`}
+                 title="AI Tools"
+               >
+                  <motion.img 
+                    src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300"
+                    alt="Copilot"
+                    className="w-6 h-6 object-contain"
+                    animate={isCopilotRotating ? { rotate: 360 } : { rotate: 0 }}
+                    transition={{ duration: 0.8, ease: "linear" }}
+                  />
+               </motion.button>
+             </div>
+           )}
+           
+           <div className={`flex flex-col items-end leading-tight font-bold pr-2 ${isDark ? "text-white/90" : "text-slate-900"}`}>
+             <span className="text-xs tabular-nums">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+             <span className="text-[10px] opacity-50 font-medium">{currentTime.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+           </div>
+         </div>
+      </motion.div>
+    );
+  }
+
+
+  const CopilotMenu = ({ onAction, align = "bottom" }: { onAction: (action: string) => void, align?: "top" | "bottom" | "right" | "left" | "bottom-right" }) => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: (align === "bottom" || align === "bottom-right") ? -10 : (align === "top" ? 10 : 0), x: align === "right" ? -10 : (align === "left" || align === "bottom-right" ? 10 : 0) }}
+      animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: (align === "bottom" || align === "bottom-right") ? -10 : (align === "top" ? 10 : 0), x: align === "right" ? -10 : (align === "left" || align === "bottom-right" ? 10 : 0) }}
+      className={`absolute z-[1001] p-2 min-w-[240px] border shadow-2xl rounded-3xl backdrop-blur-3xl overflow-hidden bg-white border-black/5 shadow-xl ${
+        align === "bottom" ? "bottom-full left-0 mb-3" : 
+        align === "bottom-right" ? "bottom-full right-0 mb-3" :
+        align === "top" ? "top-full left-0 mt-3" :
+        align === "right" ? "left-full top-0 ml-3" :
+        "right-full top-0 mr-3"
+      }`}
+    >
+      <div className="space-y-1">
+        <button 
+          onClick={() => onAction("copilot")}
+          className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover:bg-black/5 text-slate-900`}
+        >
+          <img src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" className="w-5 h-5 object-contain" />
+          <span className="text-sm font-normal">Open AI Tools</span>
+        </button>
+        <button 
+          onClick={() => onAction("search")}
+          className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover:bg-black/5 text-slate-900`}
+        >
+          <Search size={18} className="text-blue-500" />
+          <span className="text-sm font-normal">Open Search</span>
+        </button>
+        <button 
+          onClick={() => onAction("operator")}
+          className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover:bg-black/5 text-slate-900`}
+        >
+          <Terminal size={18} className="text-green-500" />
+          <span className="text-sm font-normal">Open Operator Console</span>
+        </button>
+      </div>
+    </motion.div>
+  );
   const [showCanaryWarning, setShowCanaryWarning] = useState(false);
   const [hasSeenCanaryWarning, setHasSeenCanaryWarning] = useState(false);
 
@@ -6078,53 +6551,13 @@ export default function App() {
   const [xamlHomeLoading, setXamlHomeLoading] = useState(false);
   const loadingHomeRef = useRef(false);
 
-  const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>(() => {
-    try {
-      const saved = localStorage.getItem("vplay_feature_flags");
-      const defaults = { 
-        multiview_experimental: false, 
-        disable_animation: false, 
-        sidebar_resizable: false, 
-        windows_mode: false,
-        xaml_view_test: true,
-        settings_vertical: true,
-        music_background: true,
-        minecraft_mode: false,
-        xaml_home: false,
-        xaml_search: false,
-        xaml_oobe_force: false,
-        win8_metro: false,
-        revamp_process_animation: false,
-        vids_for_uploads: true,
-        search_merge: false,
-        microslop_copilot: false,
-        scrollable_bar: false
-      };
-      if (!saved) return defaults;
-      const parsed = JSON.parse(saved);
-      return { ...defaults, ...parsed };
-    } catch (e) {
-      return { 
-        multiview_experimental: false, 
-        disable_animation: false, 
-        sidebar_resizable: false, 
-        windows_mode: false,
-        xaml_view_test: true,
-        settings_vertical: true,
-        music_background: true,
-        minecraft_mode: false,
-        xaml_home: false,
-        xaml_search: false,
-        xaml_oobe_force: false,
-        win8_metro: false,
-        revamp_process_animation: false,
-        vids_for_uploads: true,
-        search_merge: false,
-        microslop_copilot: false,
-        scrollable_bar: false
-      };
+
+
+  useEffect(() => {
+    if (featureFlags.ai_tools && !localStorage.getItem("vplay_seen_aitools_oobe")) {
+      setTimeout(() => setShowAIToolsOOBE(true), 1500);
     }
-  });
+  }, [featureFlags.ai_tools]);
 
   useEffect(() => {
     if (activeTab === "Trang chủ" && featureFlags.xaml_home && !loadingHomeRef.current) {
@@ -6467,7 +6900,9 @@ export default function App() {
   const tabs = baseTabs.filter(t => {
     if (t.id === "Quản trị" && !isDev && !isAdmin) return false;
     if (t.id === "Vids" && !featureFlags?.vids_for_uploads) return false;
-    if (t.id === "Copilot" && !featureFlags?.microslop_copilot) return false;
+    if (t.id === "Copilot" && (featureFlags?.ai_tools)) return false;
+    if (t.id === "Copilot" && !featureFlags?.microslop_copilot && !featureFlags?.ai_tools) return false;
+    if (t.id === "Search" && featureFlags?.ai_tools) return false;
     return true;
   });
   
@@ -6648,6 +7083,7 @@ export default function App() {
               userName={userName}
               onLock={() => setIsLocked(true)}
               searchBoxPosition={searchBoxPosition}
+              activeSearchPlaceholder={activeSearchPlaceholder}
             />
             <AnimatePresence>
               {windows.filter(w => !w.isMinimized).map(win => (
@@ -6720,6 +7156,7 @@ export default function App() {
                           minimalMode={true}
                           activeTab={activeTab}
                           setShowCanaryWarning={setShowCanaryWarning}
+                          activeSearchPlaceholder={activeSearchPlaceholder}
                         />
                     </div>
                   )}
@@ -6786,6 +7223,40 @@ export default function App() {
         )}
 
         <AnimatePresence>
+          {isAISidebarOpen && featureFlags.ai_sidebar && (
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className={`fixed right-0 top-0 bottom-0 w-full sm:w-[450px] z-[5000] border-l bg-white border-black/10 shadow-2xl backdrop-blur-3xl overflow-hidden`}
+            >
+              <div className="h-full flex flex-col">
+                <div className="p-4 border-b border-black/5 flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                      <img 
+                        src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300"
+                        alt="AI Tools"
+                        className="w-5 h-5 object-contain"
+                      />
+                      <span className="font-medium text-xs uppercase tracking-widest text-slate-400">AI Tools</span>
+                   </div>
+                   <button 
+                     onClick={() => setIsAISidebarOpen(false)}
+                     className="p-2 hover:bg-black/5 rounded-full transition-all text-slate-400 hover:text-slate-900"
+                   >
+                     <X size={18} />
+                   </button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <CopilotContent isDark={false} liquidGlass={liquidGlass} featureFlags={featureFlags} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
           {useSidebar && !isMobile && (
             <div className="fixed inset-0 pointer-events-none z-[40]">
                {/* This space is reserved for the floating sidebar shadows/click-through */}
@@ -6847,7 +7318,7 @@ export default function App() {
           </button>
         </LiquidModal>
 
-        <div className={`flex-1 overflow-y-auto pb-32 flex flex-col transition-all duration-1000`}>
+        <div className={`flex-1 overflow-y-auto pb-32 flex flex-col transition-all duration-1000 ${featureFlags.taskbar_experimental && !isMobile ? "mb-16" : ""}`}>
           {searchBoxPosition === "top" && (
             <div className="flex flex-col items-center p-6 sticky top-0 z-[100] gap-4">
               <div className="relative group w-full max-w-xl transition-all duration-500">
@@ -6875,6 +7346,8 @@ export default function App() {
                     liquidGlass={liquidGlass}
                     isTop={true} 
                     featureFlags={featureFlags}
+                    placeholder={activeSearchPlaceholder}
+                    onNavigate={setActiveTab}
                   />
                 </div>
               </div>
@@ -6949,6 +7422,7 @@ export default function App() {
                          </motion.header>
 
                          <motion.section 
+                           layout
                            initial={{ opacity: 0, y: 20 }}
                            animate={{ opacity: 1, y: 0 }}
                            transition={{ delay: 0.2 }}
@@ -6979,6 +7453,7 @@ export default function App() {
                          </motion.section>
 
                          <motion.section 
+                           layout
                            initial={{ opacity: 0, y: 20 }}
                            animate={{ opacity: 1, y: 0 }}
                            transition={{ delay: 0.4 }}
@@ -7064,8 +7539,8 @@ export default function App() {
               {displayTab === "Video" && (
                 <VidsContent isDark={isDark} user={user} liquidGlass={liquidGlass} onLogin={handleLogin} featureFlags={featureFlags} />
               )}
-              {displayTab === "Copilot" && featureFlags.microslop_copilot && (
-                <CopilotContent isDark={isDark} liquidGlass={liquidGlass} />
+              {displayTab === "Copilot" && (featureFlags.microslop_copilot || featureFlags.ai_tools) && (
+                <CopilotContent isDark={isDark} liquidGlass={liquidGlass} featureFlags={featureFlags} />
               )}
               {displayTab === "Quản trị" && (isAdmin || isDev) && (
                 <AdminContent isDark={isDark} liquidGlass={liquidGlass} />
@@ -7080,6 +7555,8 @@ export default function App() {
                       onClose={() => setSearchQuery("")} 
                       liquidGlass={liquidGlass} 
                       featureFlags={featureFlags} 
+                      placeholder={activeSearchPlaceholder}
+                      onNavigate={setActiveTab}
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -7141,6 +7618,7 @@ export default function App() {
                   searchQuery={searchQuery}
                   activeTab={activeTab}
                   setShowCanaryWarning={setShowCanaryWarning}
+                  activeSearchPlaceholder={activeSearchPlaceholder}
                 />
               )}
               {displayTab === "Cài đặt" && (
@@ -7250,10 +7728,10 @@ export default function App() {
             <motion.div
               initial={{ x: isSidebarRight ? sidebarWidth : -sidebarWidth }}
               animate={{ 
-                x: 0, 
-                width: isSidebarExpanded ? sidebarWidth : (isMobile ? 0 : 80),
-                opacity: (isMobile && !isSidebarExpanded) ? 0 : 1,
-                visibility: (isMobile && !isSidebarExpanded) ? "hidden" : "visible" as any
+                x: (featureFlags.taskbar_experimental && !isMobile) ? (isSidebarRight ? sidebarWidth : -sidebarWidth) : 0, 
+                width: (featureFlags.taskbar_experimental && !isMobile) ? 0 : (isSidebarExpanded ? sidebarWidth : (isMobile ? 0 : 80)),
+                opacity: ((isMobile && !isSidebarExpanded) || (featureFlags.taskbar_experimental && !isMobile)) ? 0 : 1,
+                visibility: ((isMobile && !isSidebarExpanded) || (featureFlags.taskbar_experimental && !isMobile)) ? "hidden" : "visible" as any
               }}
               exit={{ x: isSidebarRight ? sidebarWidth : -sidebarWidth }}
               transition={{ type: "spring", damping: 30, stiffness: 300, width: { duration: 0.3 } }}
@@ -7315,7 +7793,7 @@ export default function App() {
 
               {/* Integrated Search Bar */}
               <AnimatePresence>
-                {isSidebarExpanded && (
+                {isSidebarExpanded && !featureFlags.ai_tools && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -7329,20 +7807,34 @@ export default function App() {
                     } border border-white/5`}>
                       <input 
                         type="text" 
-                        placeholder={featureFlags.xaml_search ? "" : "Search"}
+                        placeholder={activeSearchPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={`flex-1 bg-transparent border-none outline-none text-sm font-semibold w-full ${isDark ? "text-white placeholder-slate-400" : "text-slate-900 placeholder-slate-400"}`}
                       />
                       <button 
-                        onClick={() => setActiveTab("Copilot")}
-                        className="opacity-40 hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          if (featureFlags.ai_sidebar) {
+                            setIsAISidebarOpen(!isAISidebarOpen);
+                          } else {
+                            setActiveTab("Copilot");
+                          }
+                        }}
+                        className="opacity-40 hover:opacity-100 transition-all hover:scale-110 active:scale-95"
+                        title="Microsoft Copilot"
                       >
                          <img 
                           src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" 
                           className="w-4 h-4 object-contain" 
                           alt="Copilot"
                         />
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab("Search")}
+                        className="opacity-40 hover:opacity-100 transition-opacity"
+                        title="Operator Console"
+                      >
+                         <Terminal size={16} className={`${isDark ? "text-white" : "text-slate-900"}`} />
                       </button>
                       <Search size={16} className={`${isDark ? "text-slate-400" : "text-slate-400"}`} />
                     </div>
@@ -7408,48 +7900,70 @@ export default function App() {
 
               {/* Navigation Items */}
               <div className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+                <AnimatePresence initial={false}>
                 {tabs.filter(t => t.id !== "Cài đặt").map((tab) => {
                   const Icon = tab.icon;
-                  const isActive = activeTab === (tab.id || tab.name);
+                  const isActive = (tab.id === "Copilot" && featureFlags.ai_sidebar) ? isAISidebarOpen : activeTab === (tab.id || tab.name);
+                  const isCopilotTab = tab.id === "Copilot" && featureFlags.ai_tools;
+
                   return (
-                    <button
-                      key={tab.name}
-                      onClick={() => {
-                        if (tab.id === "Search") {
-                          setIsSearchOpen(true);
-                          return;
-                        }
-                        setActiveTab(tab.id || tab.name);
-                        if (isMobile) setIsSidebarExpanded(false);
-                      }}
-                      className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all relative group h-[50px] overflow-hidden ${
-                        isActive 
-                          ? (isDark ? "bg-[#2d2d2d] text-white" : "bg-slate-100 text-slate-900") 
-                          : (isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-600 hover:bg-slate-50")
-                      } ${!isSidebarExpanded ? "justify-center" : ""}`}
-                    >
-                      {isActive && (
-                        <motion.div 
-                          layoutId="sidebarActivePill"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-600 rounded-r-full" 
-                        />
-                      )}
-                      {typeof tab.icon === "string" ? (
-                        <img 
-                          src={tab.icon} 
-                          alt={tab.name} 
-                          className={`h-6 w-6 flex-shrink-0 object-contain transition-all ${isActive ? "scale-110" : "group-hover:scale-110"}`} 
-                          referrerPolicy="no-referrer" 
-                        />
-                      ) : (
-                        <Icon size={24} className={`flex-shrink-0 transition-all ${isActive ? "text-purple-500" : "group-hover:scale-110"}`} />
-                      )}
-                      {isSidebarExpanded && (
-                        <span className="font-bold text-base whitespace-nowrap">{tab.name}</span>
-                      )}
-                    </button>
+                    <div key={tab.name} className="relative">
+                      <motion.button
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        onClick={() => {
+                          if (isCopilotTab) {
+                            setShowCopilotMenuSidebar(!showCopilotMenuSidebar);
+                            return;
+                          }
+                          if (tab.id === "Search") {
+                            setIsSearchOpen(true);
+                            return;
+                          }
+                          if (tab.id === "Copilot" && featureFlags.ai_sidebar) {
+                            setIsAISidebarOpen(!isAISidebarOpen);
+                            return;
+                          }
+                          setActiveTab(tab.id || tab.name);
+                          if (isMobile) setIsSidebarExpanded(false);
+                        }}
+                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all relative group h-[50px] overflow-hidden ${
+                          isActive 
+                            ? (isDark ? "bg-[#2d2d2d] text-white" : "bg-slate-100 text-slate-900") 
+                            : (isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-600 hover:bg-slate-50")
+                        } ${!isSidebarExpanded ? "justify-center" : ""}`}
+                      >
+                        {isActive && (
+                          <motion.div 
+                            layoutId="sidebarActivePill"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-600 rounded-r-full" 
+                          />
+                        )}
+                        {typeof tab.icon === "string" ? (
+                          <img 
+                            src={tab.id === "Copilot" ? "https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" : tab.icon} 
+                            alt={tab.name} 
+                            className={`h-6 w-6 flex-shrink-0 object-contain transition-all ${isActive ? "scale-110" : "group-hover:scale-110"}`} 
+                            referrerPolicy="no-referrer" 
+                          />
+                        ) : (
+                          <Icon size={24} className={`flex-shrink-0 transition-all ${isActive ? "text-orange-600" : "group-hover:scale-110"}`} />
+                        )}
+                        {isSidebarExpanded && (
+                          <span className="font-bold text-base whitespace-nowrap">{tab.name}</span>
+                        )}
+                      </motion.button>
+                      <AnimatePresence>
+                        {isCopilotTab && showCopilotMenuSidebar && (
+                          <CopilotMenu onAction={onCopilotAction} align="right" />
+                        )}
+                      </AnimatePresence>
+                    </div>
                   );
                 })}
+                </AnimatePresence>
 
                 {/* Channel Pinning Section */}
                 {isPinningEnabled && favorites.length > 0 && (
@@ -7562,6 +8076,7 @@ export default function App() {
             {!isSearchOpen && (
               <motion.nav 
                 key="nav-bar"
+                layout
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 100, opacity: 0, scale: 0.95 }}
@@ -7618,9 +8133,10 @@ export default function App() {
 
                     const tab = item;
                     const Icon = tab.icon;
-                    const isActive = activeTab === (tab.id || tab.name);
+                    const isActive = (tab.id === "Copilot" && featureFlags.ai_sidebar) ? isAISidebarOpen : activeTab === (tab.id || tab.name);
                     const userAvatar = ((tab.id === "Cài đặt" || tab.name === "Cài đặt") && user) ? (userData?.photoURL || user.photoURL) : null;
                     const isGlassy = liquidGlass === "glassy";
+                    const isCopilotTab = tab.id === "Copilot" && featureFlags.ai_tools;
 
                     return (
                       <div key={tab.name} className="relative">
@@ -7628,17 +8144,23 @@ export default function App() {
                           onMouseEnter={(e) => {
                             setHoveredTab(tab.name);
                             setHoveredTabRect(e.currentTarget.getBoundingClientRect());
+                            if (isCopilotTab) setShowCopilotMenu(true);
                           }}
                           onMouseLeave={() => {
                             setHoveredTab(null);
                             setHoveredTabRect(null);
+                            if (isCopilotTab) setShowCopilotMenu(false);
                           }}
                           onClick={() => {
                             if (tab.id === "Search") {
                               setIsSearchOpen(true);
                               return;
                             }
-                            setActiveTab(tab.name);
+                            if (tab.id === "Copilot" && featureFlags.ai_sidebar) {
+                              setIsAISidebarOpen(!isAISidebarOpen);
+                              return;
+                            }
+                            setActiveTab(tab.id || tab.name);
                           }}
                           className={`relative flex flex-col items-center justify-center px-2 md:px-4 py-2 transition-all duration-300 group z-10 ${
                             liquidGlass ? "rounded-2xl" : "rounded-none flex-1"
@@ -7672,7 +8194,7 @@ export default function App() {
                               />
                             ) : typeof tab.icon === "string" ? (
                               <img 
-                                src={tab.icon} 
+                                src={tab.id === "Copilot" ? "https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300" : tab.icon} 
                                 alt={tab.name} 
                                 className={`h-7 w-7 flex-shrink-0 object-contain transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} 
                                 referrerPolicy="no-referrer" 
@@ -7684,6 +8206,11 @@ export default function App() {
                             )}
                           </motion.div>
                         </button>
+                        <AnimatePresence>
+                          {isCopilotTab && showCopilotMenu && (
+                            <CopilotMenu onAction={onCopilotAction} align="bottom" />
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}
@@ -7772,6 +8299,8 @@ export default function App() {
                       setQuery={setSearchQuery} 
                       onClose={() => setIsSearchOpen(false)} 
                       liquidGlass={liquidGlass}
+                      placeholder={activeSearchPlaceholder}
+                      onNavigate={setActiveTab}
                     />
                   </motion.div>
                 )}
@@ -8044,6 +8573,117 @@ export default function App() {
           </div>
         </form>
       </LiquidModal>
+        {featureFlags.ai_tools && !featureFlags.taskbar_experimental && (
+           <div className="fixed bottom-6 right-6 z-[6000]">
+             <AnimatePresence mode="wait">
+               {isCopilotSearchActive ? (
+                 <motion.div
+                   key="search"
+                   initial={{ width: 56, opacity: 0 }}
+                   animate={{ width: 320, opacity: 1 }}
+                   exit={{ width: 56, opacity: 0 }}
+                   className="h-14 bg-white dark:bg-[#1a1c23] rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.3)] border border-black/5 dark:border-white/10 flex items-center px-4 gap-3"
+                 >
+                   <Search size={20} className="text-slate-400" />
+                   <input 
+                     autoFocus
+                     placeholder="Search Vplay..."
+                     className="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder-slate-400"
+                     onBlur={() => setIsCopilotSearchActive(false)}
+                     onKeyDown={(e) => {
+                       if (e.key === "Escape") setIsCopilotSearchActive(false);
+                       if (e.key === "Enter") {
+                         setSearchQuery(e.currentTarget.value || "");
+                         setIsSearchOpen(true);
+                         setIsCopilotSearchActive(false);
+                       }
+                     }}
+                   />
+                   <button onClick={() => setIsCopilotSearchActive(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                     <X size={18} />
+                   </button>
+                 </motion.div>
+               ) : (
+                 <motion.div
+                   key="button"
+                   initial={{ scale: 0, opacity: 0 }}
+                   animate={{ scale: 1, opacity: 1 }}
+                   className="relative"
+                 >
+                     <button
+                       onClick={() => {
+                         setIsCopilotRotating(true);
+                         setTimeout(() => setIsCopilotRotating(false), 800);
+                         setShowCopilotMenuMobile(!showCopilotMenuMobile);
+                       }}
+                       className={`w-14 h-14 bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] rounded-full shadow-[0_10px_40px_rgba(192,80,192,0.4)] border border-white/20 flex items-center justify-center relative overflow-visible group active:scale-90 transition-transform`}
+                     >
+                       <AnimatePresence>
+                         {showCopilotMenuMobile && (
+                            <CopilotMenu onAction={onCopilotAction} align="bottom-right" />
+                         )}
+                       </AnimatePresence>
+                       <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+                       <motion.img 
+                         src="https://static.wikia.nocookie.net/logopedia/images/7/78/Microsoft_Copilot_%28Preview%29_%28Alt%29.svg/revision/latest?cb=20250104105300"
+                         alt="Copilot"
+                         className="w-7 h-7 object-contain"
+                         animate={isCopilotRotating ? { rotate: [0, 90, 180, 270, 360, 450, 540, 630, 720] } : { rotate: 0 }}
+                         transition={isCopilotRotating ? { duration: 0.8, ease: "linear" } : { duration: 0.3 }}
+                       />
+                     </button>
+
+                   {/* OOBE Overlay */}
+                   <AnimatePresence>
+                     {showAIToolsOOBE && (
+                       <motion.div
+                         initial={{ opacity: 0, y: 20 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         exit={{ opacity: 0, y: 20 }}
+                         className="absolute bottom-full right-0 mb-6 w-72 p-6 bg-gradient-to-br from-[#4158D0] via-[#C850C0] to-[#FFCC70] rounded-3xl shadow-2xl border border-white/20 pointer-events-auto z-[6001]"
+                       >
+                         <button 
+                           onClick={() => {
+                             setShowAIToolsOOBE(false);
+                             localStorage.setItem("vplay_seen_aitools_oobe", "true");
+                           }}
+                           className="absolute top-4 right-4 text-slate-400 hover:text-slate-900"
+                         >
+                           <X size={16} />
+                         </button>
+                         <h2 className="text-xl font-medium text-white mb-2 leading-none">Giới thiệu AI Tools mới!</h2>
+                         <p className="text-sm text-white/80 leading-relaxed mb-4">
+                           AI Tools, Search và Operator Console đã được hợp nhất làm một. Bạn có thể tìm kiếm hoặc sử dụng lệnh thông qua AI Tools button hiển thị ở góc phía phải màn hình
+                         </p>
+                         <div className="absolute top-[110%] right-6 text-white rotate-90">
+                           <motion.div
+                             animate={{ y: [0, 5, 0] }}
+                             transition={{ repeat: Infinity, duration: 1.5 }}
+                           >
+                             <ArrowRight size={32} />
+                           </motion.div>
+                         </div>
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
+                 </motion.div>
+               )}
+             </AnimatePresence>
+           </div>
+        )}
+        {featureFlags.taskbar_experimental && !isMobile && (
+          <TaskBar 
+            items={tabs}
+            activeTab={activeTab}
+            onTabClick={setActiveTab}
+            isDark={isDark}
+            featureFlags={featureFlags}
+            onAction={onCopilotAction}
+            showCopilotMenu={showCopilotMenuMobile}
+            setShowCopilotMenu={setShowCopilotMenuMobile}
+            isCopilotRotating={isCopilotRotating}
+          />
+        )}
     </div>
   </MotionConfig>
 );
